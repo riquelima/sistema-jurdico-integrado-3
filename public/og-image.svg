@@ -1,0 +1,54 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0f172a"/>
+  
+  <!-- Gradient overlay -->
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e40af;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:0.6" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#grad1)"/>
+  
+  <!-- Main content -->
+  <g transform="translate(80, 150)">
+    <!-- Title -->
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="64" font-weight="bold" fill="#ffffff">
+      Silva &amp; Ferrari
+    </text>
+    
+    <!-- Subtitle -->
+    <text x="0" y="80" font-family="Arial, sans-serif" font-size="36" fill="#e2e8f0">
+      Sistema Jurídico Integrado
+    </text>
+    
+    <!-- Description -->
+    <text x="0" y="140" font-family="Arial, sans-serif" font-size="24" fill="#cbd5e1">
+      Gestão completa para escritórios de advocacia
+    </text>
+    
+    <!-- Features -->
+    <g transform="translate(0, 200)">
+      <text x="0" y="0" font-family="Arial, sans-serif" font-size="20" fill="#94a3b8">
+        ✓ Gestão de Clientes  ✓ Controle de Processos  ✓ Documentos Integrados
+      </text>
+    </g>
+  </g>
+  
+  <!-- Logo/Icon area -->
+  <g transform="translate(900, 200)">
+    <!-- Simple law icon -->
+    <rect x="0" y="0" width="200" height="200" rx="20" fill="#1e40af" opacity="0.3"/>
+    <g transform="translate(50, 50)">
+      <!-- Scale of justice simplified -->
+      <rect x="45" y="10" width="10" height="120" fill="#ffffff"/>
+      <circle cx="25" cy="40" r="15" stroke="#ffffff" stroke-width="3" fill="none"/>
+      <circle cx="75" cy="40" r="15" stroke="#ffffff" stroke-width="3" fill="none"/>
+      <line x1="25" y1="25" x2="50" y2="25" stroke="#ffffff" stroke-width="2"/>
+      <line x1="75" y1="25" x2="50" y2="25" stroke="#ffffff" stroke-width="2"/>
+      <!-- Base -->
+      <rect x="30" y="130" width="40" height="8" fill="#ffffff"/>
+    </g>
+  </g>
+</svg>
