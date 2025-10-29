@@ -1,0 +1,1 @@
+ALTER TABLE `compra_venda_imoveis` ADD `step_notes` text;

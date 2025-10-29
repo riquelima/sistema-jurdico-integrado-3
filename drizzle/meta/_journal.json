@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1761689519200,
+      "tag": "0000_complex_blue_blade",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1761696690752,
+      "tag": "0001_familiar_shen",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1761700959743,
+      "tag": "0002_deep_toro",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1761704614940,
+      "tag": "0003_faithful_multiple_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1761704863642,
+      "tag": "0004_melted_zombie",
+      "breakpoints": true
+    }
+  ]
+}

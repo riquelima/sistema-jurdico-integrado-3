@@ -1,0 +1,160 @@
+/* Updated: 2025-10-29T10:05:54.405Z */
+/* Updated: 2025-10-28T22:10:15.437Z */
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+}
+
+:root {
+  --radius: 0.5rem;
+  
+  /* Paleta Preto & Dourado - Luxuoso e Elegante */
+  --background: 0 0% 96%;
+  --foreground: 0 0% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 10%;
+  
+  /* Primary = Preto Principal */
+  --primary: 0 0% 10%;
+  --primary-foreground: 0 0% 100%;
+  
+  /* Secondary = Cinza Secundário */
+  --secondary: 0 0% 42%;
+  --secondary-foreground: 0 0% 100%;
+  
+  /* Muted = Fundo Claro */
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 42%;
+  
+  /* Accent = Amarelo CTA/Destaque */
+  --accent: 51 100% 50%;
+  --accent-foreground: 0 0% 10%;
+  
+  /* Estados */
+  --destructive: 0 65% 57%;
+  --success: 145 63% 42%;
+  --warning: 45 100% 51%;
+  --error: 4 70% 57%;
+  --info: 204 70% 53%;
+  
+  /* Bordas e Inputs */
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --ring: 51 100% 50%;
+  
+  /* Sidebar */
+  --sidebar: 0 0% 10%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 51 100% 50%;
+  --sidebar-primary-foreground: 0 0% 10%;
+  --sidebar-accent: 0 0% 20%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 0 0% 20%;
+  --sidebar-ring: 51 100% 50%;
+  
+  /* Charts */
+  --chart-1: 51 100% 50%;
+  --chart-2: 0 0% 10%;
+  --chart-3: 0 0% 42%;
+  --chart-4: 204 70% 53%;
+  --chart-5: 145 63% 42%;
+}
+
+.dark {
+  --background: 0 0% 10%;
+  --foreground: 0 0% 96%;
+  --card: 0 0% 15%;
+  --card-foreground: 0 0% 96%;
+  --popover: 0 0% 15%;
+  --popover-foreground: 0 0% 96%;
+  --primary: 51 100% 50%;
+  --primary-foreground: 0 0% 10%;
+  --secondary: 0 0% 42%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 20%;
+  --muted-foreground: 0 0% 60%;
+  --accent: 51 100% 50%;
+  --accent-foreground: 0 0% 10%;
+  --destructive: 0 65% 57%;
+  --border: 0 0% 25%;
+  --input: 0 0% 25%;
+  --ring: 51 100% 50%;
+  --sidebar: 0 0% 10%;
+  --sidebar-foreground: 0 0% 96%;
+  --sidebar-primary: 51 100% 50%;
+  --sidebar-primary-foreground: 0 0% 10%;
+  --sidebar-accent: 0 0% 20%;
+  --sidebar-accent-foreground: 0 0% 96%;
+  --sidebar-border: 0 0% 25%;
+  --sidebar-ring: 51 100% 50%;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+  
+  .card {
+    @apply shadow-sm;
+  }
+}
+
+/* Hide Next.js error overlay portal */
+nextjs-portal {
+  display: none !important;
+}
