@@ -193,7 +193,7 @@ export default function DashboardLayout({
       )}
 
       {/* Desktop Header with Notification Bell */}
-      <div className="hidden lg:block fixed top-0 right-0 z-50 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+      <div className="hidden lg:block fixed top-0 right-0 z-50 bg-card">
         <div className="flex items-center justify-end px-6 py-3 gap-3">
           {isMainDashboard && <NotificationBell />}
         </div>

@@ -43,13 +43,18 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const caseId = formData.get('caseId') as string;
+    const entityId = formData.get('entityId') as string;
+    const entityType = formData.get('entityType') as string;
     const fieldName = formData.get('fieldName') as string;
-    const moduleType = formData.get('moduleType') as string || 'acoes_civeis'; // Default to acoes_civeis for backward compatibility
+    const moduleType = formData.get('moduleType') as string || entityType || 'acoes_civeis'; // Default to acoes_civeis for backward compatibility
 
-    console.log('🔹 Upload iniciado:', { caseId, fieldName, moduleType, fileName: file?.name, fileSize: file?.size });
+    // Use either caseId or entityId as the identifier
+    const recordId = caseId || entityId;
 
-    if (!file || !caseId || !fieldName) {
-      console.error('❌ Dados incompletos:', { file: !!file, caseId, fieldName, moduleType });
+    console.log('🔹 Upload iniciado:', { caseId, entityId, recordId, fieldName, moduleType, fileName: file?.name, fileSize: file?.size });
+
+    if (!file || !recordId || !fieldName) {
+      console.error('❌ Dados incompletos:', { file: !!file, caseId, entityId, recordId, fieldName, moduleType });
       return NextResponse.json(
         { error: 'Arquivo, ID do caso e nome do campo são obrigatórios' },
         { status: 400 }
@@ -91,7 +96,7 @@ export async function POST(request: NextRequest) {
     const originalName = file.name;
     const extension = originalName.split('.').pop();
     const fileNameWithTimestamp = `${fieldName}_${timestamp}.${extension}`;
-    const filePath = getFilePath.acoesCiveis(parseInt(caseId), stepFolder, fileNameWithTimestamp);
+    const filePath = getFilePath.acoesCiveis(parseInt(recordId), stepFolder, fileNameWithTimestamp);
 
     console.log('📂 Caminho do arquivo:', filePath);
 
@@ -141,7 +146,7 @@ export async function POST(request: NextRequest) {
       .from('documents')
       .insert({
         module_type: moduleType,
-        record_id: parseInt(caseId),
+        record_id: parseInt(recordId),
         file_name: originalName,
         file_path: publicUrl,
         file_type: file.type,
@@ -175,6 +180,7 @@ export async function POST(request: NextRequest) {
         tableName = 'perda_nacionalidade';
         break;
       case 'compra_venda_imoveis':
+      case 'compra-venda':
         tableName = 'compra_venda_imoveis';
         break;
       case 'vistos':
@@ -195,7 +201,7 @@ export async function POST(request: NextRequest) {
     const { error: updateError } = await supabaseAdmin
       .from(tableName)
       .update(supabaseUpdateData)
-      .eq('id', parseInt(caseId));
+      .eq('id', parseInt(recordId));
 
     if (updateError) {
       console.error('❌ Erro ao atualizar registro:', updateError);

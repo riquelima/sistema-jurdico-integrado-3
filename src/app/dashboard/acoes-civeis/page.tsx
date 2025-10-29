@@ -118,7 +118,7 @@ export default function AcoesCiveisPage() {
 
         {/* Cards de estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="bg-slate-800/50 backdrop-blur rounded-lg p-4 border border-slate-700">
+          <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-slate-400 text-sm font-medium">Total de Processos</p>
@@ -130,37 +130,37 @@ export default function AcoesCiveisPage() {
             </div>
           </div>
 
-          <div className="bg-blue-500/10 backdrop-blur rounded-lg p-4 border border-blue-500/30">
+          <div className="bg-blue-900 rounded-lg p-4 border border-blue-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-300 text-sm font-medium">Em Andamento</p>
                 <p className="text-3xl font-bold text-blue-400 mt-1">{stats.emAndamento}</p>
               </div>
-              <div className="p-3 bg-blue-500/20 rounded-lg">
+              <div className="p-3 bg-blue-800 rounded-lg">
                 <Clock className="h-6 w-6 text-blue-400" />
               </div>
             </div>
           </div>
 
-          <div className="bg-amber-500/10 backdrop-blur rounded-lg p-4 border border-amber-500/30">
+          <div className="bg-amber-900 rounded-lg p-4 border border-amber-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-amber-300 text-sm font-medium">Aguardando</p>
                 <p className="text-3xl font-bold text-amber-400 mt-1">{stats.aguardando}</p>
               </div>
-              <div className="p-3 bg-amber-500/20 rounded-lg">
+              <div className="p-3 bg-amber-800 rounded-lg">
                 <AlertCircle className="h-6 w-6 text-amber-400" />
               </div>
             </div>
           </div>
 
-          <div className="bg-emerald-500/10 backdrop-blur rounded-lg p-4 border border-emerald-500/30">
+          <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-emerald-300 text-sm font-medium">Finalizados</p>
                 <p className="text-3xl font-bold text-emerald-400 mt-1">{stats.finalizado}</p>
               </div>
-              <div className="p-3 bg-emerald-500/20 rounded-lg">
+              <div className="p-3 bg-emerald-800 rounded-lg">
                 <CheckCircle2 className="h-6 w-6 text-emerald-400" />
               </div>
             </div>
