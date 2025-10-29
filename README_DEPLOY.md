@@ -6,6 +6,8 @@
 
 Configure as seguintes variáveis de ambiente no painel do Vercel:
 
+**Importante:** Adicione essas variáveis diretamente no dashboard do Vercel em Configurações do Projeto > Variáveis de Ambiente. Não use secrets no vercel.json.
+
 ```
 TURSO_CONNECTION_URL=sua_url_de_conexao_turso
 TURSO_AUTH_TOKEN=seu_token_de_auth_turso
@@ -13,6 +15,14 @@ NEXT_PUBLIC_SUPABASE_URL=sua_url_supabase
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anonima_supabase
 SUPABASE_SERVICE_ROLE_KEY=sua_chave_service_role_supabase
 ```
+
+#### Como Adicionar Variáveis de Ambiente no Vercel:
+
+1. Vá para o dashboard do seu projeto no Vercel
+2. Clique na aba "Settings"
+3. Clique em "Environment Variables" na barra lateral
+4. Adicione cada variável com seu valor correspondente
+5. Certifique-se de definir o ambiente (Production, Preview, Development) para cada variável
 
 ### 2. Configurações do Projeto
 
