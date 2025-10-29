@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, CheckCircle2, Circle, Save, Trash2, FileUp, ChevronDown, ChevronUp, Edit2, Upload } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Circle, Save, Trash2, FileUp, ChevronDown, ChevronUp, Edit2, Upload, FileText } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -114,6 +114,8 @@ export default function AcaoCivelDetailPage() {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState("");
   const [pendingStep, setPendingStep] = useState(0);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
   
   // Step data states
   const [stepData, setStepData] = useState({
@@ -158,6 +160,7 @@ export default function AcaoCivelDetailPage() {
 
   useEffect(() => {
     fetchCase();
+    fetchDocuments();
   }, [params.id]);
 
   const fetchCase = async () => {
@@ -205,6 +208,19 @@ export default function AcaoCivelDetailPage() {
       console.error("Error fetching case:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDocuments = async () => {
+    try {
+      setLoadingDocuments(true);
+      const response = await fetch(`/api/acoes-civeis/${params.id}/documents`);
+      const data = await response.json();
+      setDocuments(data.documents || []);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+    } finally {
+      setLoadingDocuments(false);
     }
   };
 
@@ -2844,6 +2860,49 @@ export default function AcaoCivelDetailPage() {
                   {new Date(caseData.updatedAt).toLocaleDateString("pt-BR")}
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Documentos */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Documentos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingDocuments ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              ) : documents.length > 0 ? (
+                <div className="space-y-2">
+                  {documents.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center justify-between p-2 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                      onClick={() => window.open(doc.file_path, '_blank')}
+                    >
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-medium truncate">
+                          {doc.file_name}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(doc.uploaded_at).toLocaleDateString("pt-BR")}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-muted-foreground text-sm">
+                  Nenhum documento anexado ainda
+                </div>
+              )}
             </CardContent>
           </Card>
 
