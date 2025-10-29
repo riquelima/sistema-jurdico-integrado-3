@@ -1,11 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Briefcase, Search } from "lucide-react";
+import { 
+  Briefcase, 
+  Search, 
+  Plus, 
+  FileText, 
+  Eye, 
+  Clock, 
+  CheckCircle2, 
+  AlertCircle,
+  Users
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -15,11 +26,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+const CASE_TYPES = [
+  "Rescisão Indireta",
+  "Horas Extras",
+  "Adicional Noturno",
+  "Insalubridade",
+  "Periculosidade",
+  "FGTS",
+  "Seguro Desemprego",
+  "Acidente de Trabalho",
+  "Assédio Moral",
+  "Discriminação",
+  "Outros"
+];
+
 export default function AcoesTrabalhistasPage() {
   const [cases, setCases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
 
   useEffect(() => {
     fetchCases();
@@ -40,45 +66,153 @@ export default function AcoesTrabalhistasPage() {
   const filteredCases = cases.filter((c) => {
     const matchesSearch = c.clientName.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "all" || c.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesType = typeFilter === "all" || c.type === typeFilter;
+    return matchesSearch && matchesStatus && matchesType;
   });
+
+  const stats = {
+    total: cases.length,
+    emAndamento: cases.filter(c => c.status === "Em Andamento").length,
+    aguardando: cases.filter(c => c.status === "Aguardando").length,
+    finalizado: cases.filter(c => c.status === "Finalizado").length,
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Em Andamento":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300";
+        return "bg-blue-500 text-white hover:bg-blue-600";
       case "Finalizado":
-        return "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300";
+        return "bg-emerald-500 text-white hover:bg-emerald-600";
       case "Aguardando":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300";
+        return "bg-amber-500 text-white hover:bg-amber-600";
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-950 dark:text-gray-300";
+        return "bg-slate-500 text-white hover:bg-slate-600";
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "Em Andamento":
+        return <Clock className="h-3 w-3" />;
+      case "Finalizado":
+        return <CheckCircle2 className="h-3 w-3" />;
+      case "Aguardando":
+        return <AlertCircle className="h-3 w-3" />;
+      default:
+        return <FileText className="h-3 w-3" />;
     }
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Ações Trabalhistas</h1>
-        <p className="text-muted-foreground">
-          Módulo de ações trabalhistas
-        </p>
+      {/* Header com gradiente */}
+      <div className="bg-gradient-to-br from-purple-900 via-purple-800 to-purple-700 rounded-xl shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between p-8">
+          <div className="flex items-center gap-6">
+            <div className="p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+              <Briefcase className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white">Ações Trabalhistas</h1>
+              <p className="text-purple-300 mt-1">
+                Gerencie ações trabalhistas e direitos do trabalhador
+              </p>
+            </div>
+          </div>
+        </div>
+        <Link href="/dashboard/acoes-trabalhistas/novo">
+          <Button size="lg" className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold shadow-lg">
+            <Plus className="h-5 w-5 mr-2" />
+            Nova Ação
+          </Button>
+        </Link>
+
+        {/* Cards de estatísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-400 text-sm font-medium">Total de Processos</p>
+                <p className="text-3xl font-bold text-white mt-1">{stats.total}</p>
+              </div>
+              <div className="p-3 bg-slate-700 rounded-lg">
+                <FileText className="h-6 w-6 text-slate-300" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-blue-900 rounded-lg p-4 border border-blue-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-blue-300 text-sm font-medium">Em Andamento</p>
+                <p className="text-3xl font-bold text-blue-400 mt-1">{stats.emAndamento}</p>
+              </div>
+              <div className="p-3 bg-blue-800 rounded-lg">
+                <Clock className="h-6 w-6 text-blue-400" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-amber-900 rounded-lg p-4 border border-amber-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-amber-300 text-sm font-medium">Aguardando</p>
+                <p className="text-3xl font-bold text-amber-400 mt-1">{stats.aguardando}</p>
+              </div>
+              <div className="p-3 bg-amber-800 rounded-lg">
+                <AlertCircle className="h-6 w-6 text-amber-400" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-emerald-300 text-sm font-medium">Finalizados</p>
+                <p className="text-3xl font-bold text-emerald-400 mt-1">{stats.finalizado}</p>
+              </div>
+              <div className="p-3 bg-emerald-800 rounded-lg">
+                <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Card>
+      {/* Filtros */}
+      <Card className="border-slate-200 dark:border-slate-700 shadow-md">
+        <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-b border-slate-200 dark:border-slate-700">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Search className="h-5 w-5 text-amber-500" />
+            Filtros de Busca
+          </h2>
+        </CardHeader>
         <CardContent className="pt-6">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
             <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
               <Input
                 placeholder="Buscar por cliente..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+                className="pl-9 border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:ring-amber-500"
               />
             </div>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:ring-amber-500">
+                <SelectValue placeholder="Tipo de ação" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                {CASE_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:ring-amber-500">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -92,46 +226,113 @@ export default function AcoesTrabalhistasPage() {
         </CardContent>
       </Card>
 
+      {/* Lista de processos */}
       <div className="grid gap-4">
         {loading ? (
           <>
-            {[1, 2].map((i) => (
-              <Card key={i}>
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="border-slate-200 dark:border-slate-700">
                 <CardContent className="pt-6">
-                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-32 w-full" />
                 </CardContent>
               </Card>
             ))}
           </>
         ) : filteredCases.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Briefcase className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-lg font-medium">Nenhuma ação encontrada</p>
+          <Card className="border-slate-200 dark:border-slate-700 shadow-md">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
+                <Briefcase className="h-12 w-12 text-slate-400" />
+              </div>
+              <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                Nenhuma ação encontrada
+              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 mt-2">
+                {search || typeFilter !== "all" || statusFilter !== "all"
+                  ? "Tente ajustar os filtros de busca"
+                  : "Comece criando uma nova ação trabalhista"}
+              </p>
+              <Link href="/dashboard/acoes-trabalhistas/novo">
+                <Button className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Criar Primeira Ação
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         ) : (
           filteredCases.map((caseItem) => (
-            <Card key={caseItem.id} className="hover:shadow-md transition-shadow">
+            <Card 
+              key={caseItem.id} 
+              className="border-slate-200 dark:border-slate-700 hover:shadow-xl hover:border-amber-500/50 transition-all duration-200 bg-gradient-to-r from-white to-slate-50 dark:from-slate-900 dark:to-slate-800"
+            >
               <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-lg font-semibold">
-                        {caseItem.clientName}
-                      </h3>
-                      <Badge className={getStatusColor(caseItem.status)}>
-                        {caseItem.status}
-                      </Badge>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4 flex-1">
+                    {/* Ícone do processo */}
+                    <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-md flex-shrink-0">
+                      <Briefcase className="h-6 w-6 text-white" />
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Criado em{" "}
-                      {new Date(caseItem.createdAt).toLocaleDateString("pt-BR")}
-                    </p>
+
+                    {/* Informações do processo */}
+                    <div className="space-y-3 flex-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                          {caseItem.clientName}
+                        </h3>
+                        <Badge className={`${getStatusColor(caseItem.status)} flex items-center gap-1.5 px-3 py-1 shadow-md`}>
+                          {getStatusIcon(caseItem.status)}
+                          {caseItem.status}
+                        </Badge>
+                      </div>
+
+                      <div className="flex items-center gap-6 text-sm flex-wrap">
+                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                          <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded">
+                            <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <span className="font-medium">Tipo: {caseItem.type || "Trabalhista"}</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded">
+                            <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <span className="font-medium">Passo {caseItem.currentStep || 1}</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                          <div className="p-1.5 bg-slate-100 dark:bg-slate-700 rounded">
+                            <Clock className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          </div>
+                          <span>
+                            {new Date(caseItem.createdAt).toLocaleDateString("pt-BR", {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric"
+                            })}
+                          </span>
+                        </div>
+                      </div>
+
+                      {caseItem.notes && (
+                        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                          {caseItem.notes}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <Button variant="outline" size="sm">
-                    Ver Detalhes
-                  </Button>
+
+                  {/* Botão de ação */}
+                  <Link href={`/dashboard/acoes-trabalhistas/${caseItem.id}`}>
+                    <Button 
+                      size="lg"
+                      className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md"
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      Ver Detalhes
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
