@@ -110,7 +110,6 @@ export default function AcaoCivelDetailPage() {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadingFields, setUploadingFields] = useState<Record<string, boolean>>({});
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
-  const [stepDialogOpen, setStepDialogOpen] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState("");
   const [pendingStep, setPendingStep] = useState(0);
@@ -454,14 +453,58 @@ export default function AcaoCivelDetailPage() {
   const handleCompleteStep = async (stepIndex: number, e: React.MouseEvent) => {
     e.stopPropagation();
     
-    // Enviar notificação via WhatsApp para os passos 2, 3, 4, 5 e 6 (índices 1, 2, 3, 4 e 5)
-    // Não enviar para o passo 1 (índice 0)
-    if (stepIndex >= 1 && stepIndex <= 5) {
-      await sendWhatsAppNotification(stepIndex);
+    try {
+      let newCurrentStep: number;
+      
+      if (stepIndex === caseData.currentStep) {
+        newCurrentStep = stepIndex + 1;
+      } else if (stepIndex < caseData.currentStep) {
+        newCurrentStep = stepIndex;
+      } else {
+        return; // Não pode avançar para passos futuros
+      }
+      
+      // Verificar se é o último passo do workflow
+      const workflow = WORKFLOWS[caseData.type as keyof typeof WORKFLOWS] || [];
+      const isLastStep = newCurrentStep >= workflow.length - 1;
+      
+      // Preparar dados para atualização
+      const updateData: any = { currentStep: newCurrentStep };
+      
+      // Se for o último passo, automaticamente mudar status para "Finalizado"
+      if (isLastStep && stepIndex === caseData.currentStep) {
+        updateData.status = "Finalizado";
+      }
+      
+      const response = await fetch(`/api/acoes-civeis?id=${params.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updateData),
+      });
+
+      if (response.ok) {
+        await fetchCase();
+        
+        // Enviar notificação via WhatsApp para os passos 2, 3, 4, 5 e 6 (índices 1, 2, 3, 4 e 5)
+        // Só enviar se estamos concluindo o passo atual (não voltando para um passo anterior)
+        if (stepIndex === caseData.currentStep && stepIndex >= 1 && stepIndex <= 5) {
+          await sendWhatsAppNotification(stepIndex);
+        }
+        
+        if (stepIndex === caseData.currentStep) {
+          if (isLastStep) {
+            alert("Último passo concluído! Processo finalizado automaticamente.");
+          } else {
+            alert("Passo marcado como concluído!");
+          }
+        } else {
+          alert("Passo marcado como atual!");
+        }
+      }
+    } catch (error) {
+      console.error("Error completing step:", error);
+      alert("Erro ao marcar passo");
     }
-    
-    setPendingStep(stepIndex);
-    setStepDialogOpen(true);
   };
 
   const sendWhatsAppNotification = async (stepIndex: number) => {
@@ -539,55 +582,6 @@ export default function AcaoCivelDetailPage() {
     }
   };
 
-  const confirmStepChange = async () => {
-    try {
-      let newCurrentStep: number;
-      
-      if (pendingStep === caseData.currentStep) {
-        newCurrentStep = pendingStep + 1;
-      } else if (pendingStep < caseData.currentStep) {
-        newCurrentStep = pendingStep;
-      } else {
-        setStepDialogOpen(false);
-        return;
-      }
-      
-      // Verificar se é o último passo do workflow
-      const workflow = WORKFLOWS[caseData.type as keyof typeof WORKFLOWS] || [];
-      const isLastStep = newCurrentStep >= workflow.length - 1;
-      
-      // Preparar dados para atualização
-      const updateData: any = { currentStep: newCurrentStep };
-      
-      // Se for o último passo, automaticamente mudar status para "Finalizado"
-      if (isLastStep && pendingStep === caseData.currentStep) {
-        updateData.status = "Finalizado";
-      }
-      
-      const response = await fetch(`/api/acoes-civeis?id=${params.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updateData),
-      });
-
-      if (response.ok) {
-        await fetchCase();
-        if (pendingStep === caseData.currentStep) {
-          if (isLastStep) {
-            alert("Último passo concluído! Processo finalizado automaticamente.");
-          } else {
-            alert("Passo marcado como concluído!");
-          }
-        } else {
-          alert("Passo marcado como atual!");
-        }
-        setStepDialogOpen(false);
-      }
-    } catch (error) {
-      console.error("Error completing step:", error);
-      alert("Erro ao marcar passo");
-    }
-  };
 
   const handleSaveStepData = async (stepIndex: number, silent = false) => {
     try {
@@ -3229,25 +3223,7 @@ export default function AcaoCivelDetailPage() {
         </div>
       </div>
 
-      {/* Step Change Confirmation Dialog */}
-      <AlertDialog open={stepDialogOpen} onOpenChange={setStepDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar mudança de passo</AlertDialogTitle>
-            <AlertDialogDescription>
-              {pendingStep === caseData?.currentStep 
-                ? "Tem certeza que deseja marcar este passo como concluído e avançar para o próximo?"
-                : "Tem certeza que deseja voltar para este passo?"}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmStepChange}>
-              Confirmar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+
 
       {/* Save Notes Confirmation Dialog */}
       <AlertDialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>

@@ -61,7 +61,6 @@ export default function AcaoTrabalhistaDetailPage() {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [uploadingFields, setUploadingFields] = useState<Record<string, boolean>>({});
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
-  const [stepDialogOpen, setStepDialogOpen] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState("");
   const [pendingStep, setPendingStep] = useState(0);
@@ -391,21 +390,15 @@ export default function AcaoTrabalhistaDetailPage() {
   const handleCompleteStep = async (stepIndex: number, e: React.MouseEvent) => {
     e.stopPropagation();
     
-    setPendingStep(stepIndex);
-    setStepDialogOpen(true);
-  };
-
-  const confirmStepChange = async () => {
     try {
       let newCurrentStep: number;
       
-      if (pendingStep === caseData.currentStep) {
-        newCurrentStep = pendingStep + 1;
-      } else if (pendingStep < caseData.currentStep) {
-        newCurrentStep = pendingStep;
+      if (stepIndex === caseData.currentStep) {
+        newCurrentStep = stepIndex + 1;
+      } else if (stepIndex < caseData.currentStep) {
+        newCurrentStep = stepIndex;
       } else {
-        setStepDialogOpen(false);
-        return;
+        return; // Não pode avançar para passos futuros
       }
       
       const response = await fetch(`/api/acoes-trabalhistas?id=${params.id}`, {
@@ -416,18 +409,19 @@ export default function AcaoTrabalhistaDetailPage() {
 
       if (response.ok) {
         await fetchCase();
-        if (pendingStep === caseData.currentStep) {
+        if (stepIndex === caseData.currentStep) {
           alert("Passo marcado como concluído!");
         } else {
           alert("Passo marcado como atual!");
         }
-        setStepDialogOpen(false);
       }
     } catch (error) {
       console.error("Error completing step:", error);
       alert("Erro ao marcar passo");
     }
   };
+
+
 
   const handleSaveStepData = async (stepIndex: number, silent = false) => {
     try {
@@ -1535,22 +1529,7 @@ export default function AcaoTrabalhistaDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={stepDialogOpen} onOpenChange={setStepDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Alteração</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja alterar para o passo {pendingStep + 1}?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmStepChange}>
-              Confirmar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+
 
       <AlertDialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
         <AlertDialogContent>
