@@ -454,8 +454,9 @@ export default function AcaoCivelDetailPage() {
   const handleCompleteStep = async (stepIndex: number, e: React.MouseEvent) => {
     e.stopPropagation();
     
-    // Enviar notificação via WhatsApp para os passos 1, 2, 3, 4, 5 e 6 (índices 0, 1, 2, 3, 4 e 5)
-    if (stepIndex >= 0 && stepIndex <= 5) {
+    // Enviar notificação via WhatsApp para os passos 2, 3, 4, 5 e 6 (índices 1, 2, 3, 4 e 5)
+    // Não enviar para o passo 1 (índice 0)
+    if (stepIndex >= 1 && stepIndex <= 5) {
       await sendWhatsAppNotification(stepIndex);
     }
     
