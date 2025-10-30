@@ -37,8 +37,10 @@ export default function LoginPage() {
         return;
       }
 
-      // Store user session
-      localStorage.setItem("user", JSON.stringify(data));
+      // Store user session (only on client side)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem("user", JSON.stringify(data));
+      }
       
       // Small delay to ensure localStorage is set
       setTimeout(() => {

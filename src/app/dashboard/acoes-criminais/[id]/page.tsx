@@ -1,249 +1,1065 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save, Trash2, Shield } from "lucide-react";
-import Link from "next/link";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { ArrowLeft, CheckCircle2, Save, Upload, FileText, Trash2, Edit2, Check, X, ChevronDown, ChevronRight } from 'lucide-react'
 
-interface CaseData {
-  id: number;
-  clientName: string;
-  status: string;
-  notes: string;
-  createdAt: string;
-  updatedAt: string;
+const WORKFLOWS = {
+  'Ação Criminal': [
+    'Cadastro de Documentos',
+    'Análise do Caso',
+    'Petição Inicial',
+    'Protocolar Processo',
+    'Aguardar Citação',
+    'Resposta à Acusação',
+    'Instrução Processual',
+    'Alegações Finais',
+    'Sentença',
+    'Recurso (se necessário)'
+  ]
 }
 
-export default function AcaoCriminalDetail() {
-  const params = useParams();
-  const router = useRouter();
-  const [caseData, setCaseData] = useState<CaseData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [notes, setNotes] = useState("");
-  const [saving, setSaving] = useState(false);
+export default function AcoesCriminaisPage({ params }: { params: { id: string } }) {
+  const router = useRouter()
+  const [caseData, setCaseData] = useState<any>(null)
+  const [notes, setNotes] = useState('')
+  const [status, setStatus] = useState('')
+  const [expandedSteps, setExpandedSteps] = useState<{ [key: number]: boolean }>({})
+  const [documents, setDocuments] = useState<any[]>([])
+  const [uploadingFiles, setUploadingFiles] = useState<{ [key: string]: boolean }>({})
+  const [editingDocument, setEditingDocument] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState('')
+  const [isDragOver, setIsDragOver] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showStepDialog, setShowStepDialog] = useState(false)
+  const [pendingStepIndex, setPendingStepIndex] = useState<number | null>(null)
+  const [showNotesDialog, setShowNotesDialog] = useState(false)
+  const [pendingNotes, setPendingNotes] = useState('')
+  const [loading, setLoading] = useState(true)
+
+  // Estados para dados específicos de cada etapa
+  const [stepData, setStepData] = useState<{ [key: number]: any }>({})
+
+  // Estados para uploads de arquivos específicos
+  const [fileUploads, setFileUploads] = useState<{ [key: string]: File | null }>({})
+  const [uploadStatus, setUploadStatus] = useState<{ [key: string]: 'idle' | 'uploading' | 'success' | 'error' }>({})
 
   useEffect(() => {
-    fetchCase();
-  }, [params.id]);
+    fetchCase()
+    fetchDocuments()
+  }, [params.id])
 
   const fetchCase = async () => {
     try {
-      setLoading(true);
-      const response = await fetch(`/api/acoes-criminais?id=${params.id}`);
-      
-      if (!response.ok) {
-        throw new Error("Ação não encontrada");
+      setLoading(true)
+      // Simular busca de dados do caso
+      const mockCase = {
+        id: params.id,
+        title: `Ação Criminal #${params.id}`,
+        type: 'Ação Criminal',
+        status: 'Em andamento',
+        currentStep: 0,
+        notes: 'Notas do caso...',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       }
-      
-      const data = await response.json();
-      setCaseData(data);
-      setNotes(data.notes || "");
+      setCaseData(mockCase)
+      setNotes(mockCase.notes)
+      setStatus(mockCase.status)
     } catch (error) {
-      console.error("Error fetching case:", error);
+      console.error('Erro ao buscar caso:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const handleSave = async () => {
+  const fetchDocuments = async () => {
     try {
-      setSaving(true);
-      const response = await fetch(`/api/acoes-criminais?id=${params.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes }),
-      });
-
-      if (response.ok) {
-        alert("✅ Dados salvos com sucesso!");
-        await fetchCase(); // Refresh data
-      } else {
-        alert("❌ Erro ao salvar dados");
-      }
+      // Simular busca de documentos
+      const mockDocuments = [
+        { id: '1', name: 'Documento1.pdf', type: 'application/pdf', size: 1024000, uploadedAt: new Date().toISOString(), step: 0 },
+        { id: '2', name: 'Documento2.pdf', type: 'application/pdf', size: 2048000, uploadedAt: new Date().toISOString(), step: 1 }
+      ]
+      setDocuments(mockDocuments)
     } catch (error) {
-      console.error("Error saving case:", error);
-      alert("❌ Erro ao salvar dados");
+      console.error('Erro ao buscar documentos:', error)
+    }
+  }
+
+  const handleDeleteDocument = async (documentId: string) => {
+    try {
+      setDocuments(documents.filter(doc => doc.id !== documentId))
+    } catch (error) {
+      console.error('Erro ao deletar documento:', error)
+    }
+  }
+
+  const handleDocumentDoubleClick = (document: any) => {
+    setEditingDocument(document.id)
+    setEditingName(document.name)
+  }
+
+  const handleDocumentNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditingName(e.target.value)
+  }
+
+  const handleDocumentNameSave = async () => {
+    try {
+      setDocuments(documents.map(doc => 
+        doc.id === editingDocument 
+          ? { ...doc, name: editingName }
+          : doc
+      ))
+      setEditingDocument(null)
+      setEditingName('')
+    } catch (error) {
+      console.error('Erro ao salvar nome do documento:', error)
+    }
+  }
+
+  const handleDocumentNameCancel = () => {
+    setEditingDocument(null)
+    setEditingName('')
+  }
+
+  const handleDocumentNameKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleDocumentNameSave()
+    } else if (e.key === 'Escape') {
+      handleDocumentNameCancel()
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    
+    const files = Array.from(e.dataTransfer.files)
+    files.forEach(file => uploadDroppedFile(file))
+  }
+
+  const uploadDroppedFile = async (file: File) => {
+    try {
+      setUploadingFiles(prev => ({ ...prev, [file.name]: true }))
+      
+      // Simular upload
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      const newDocument = {
+        id: Date.now().toString(),
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        uploadedAt: new Date().toISOString(),
+        step: caseData?.currentStep || 0
+      }
+      
+      setDocuments(prev => [...prev, newDocument])
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error)
     } finally {
-      setSaving(false);
+      setUploadingFiles(prev => ({ ...prev, [file.name]: false }))
     }
-  };
+  }
 
-  const handleDelete = async () => {
+  const handleFileUpload = async (file: File, fieldName: string) => {
     try {
-      const response = await fetch(`/api/acoes-criminais?id=${params.id}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        router.push("/dashboard/acoes-criminais");
-      } else {
-        alert("❌ Erro ao excluir ação");
-      }
+      setUploadStatus(prev => ({ ...prev, [fieldName]: 'uploading' }))
+      
+      // Simular upload
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      setFileUploads(prev => ({ ...prev, [fieldName]: file }))
+      setUploadStatus(prev => ({ ...prev, [fieldName]: 'success' }))
     } catch (error) {
-      console.error("Error deleting case:", error);
-      alert("❌ Erro ao excluir ação");
+      console.error('Erro ao fazer upload:', error)
+      setUploadStatus(prev => ({ ...prev, [fieldName]: 'error' }))
     }
-  };
+  }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Em Andamento":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "Aguardando":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "Finalizado":
-        return "bg-green-100 text-green-800 border-green-200";
+  const handleStepClick = (stepIndex: number) => {
+    if (stepIndex <= (caseData?.currentStep || 0)) {
+      setExpandedSteps(prev => ({
+        ...prev,
+        [stepIndex]: !prev[stepIndex]
+      }))
+    } else {
+      setPendingStepIndex(stepIndex)
+      setShowStepDialog(true)
+    }
+  }
+
+  const handleCompleteStep = () => {
+    if (pendingStepIndex !== null && caseData) {
+      setCaseData(prev => ({ ...prev, currentStep: pendingStepIndex }))
+      setExpandedSteps(prev => ({ ...prev, [pendingStepIndex]: true }))
+    }
+    setShowStepDialog(false)
+    setPendingStepIndex(null)
+  }
+
+  const confirmStepChange = () => {
+    handleCompleteStep()
+  }
+
+  const handleSaveStepData = (stepIndex: number, data: any) => {
+    setStepData(prev => ({
+      ...prev,
+      [stepIndex]: { ...prev[stepIndex], ...data }
+    }))
+  }
+
+  const handleSaveNotes = () => {
+    setPendingNotes(notes)
+    setShowNotesDialog(true)
+  }
+
+  const confirmSaveNotes = () => {
+    setNotes(pendingNotes)
+    setShowNotesDialog(false)
+  }
+
+  const handleStatusChange = (newStatus: string) => {
+    setStatus(newStatus)
+  }
+
+  const handleDelete = () => {
+    setShowDeleteDialog(true)
+  }
+
+  const renderStepContent = (stepIndex: number) => {
+    if (!caseData) return null
+
+    switch (caseData.type) {
+      case 'Ação Criminal':
+        return renderAcaoCriminalStepContent(stepIndex)
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return <div>Tipo de caso não reconhecido</div>
     }
-  };
+  }
+
+  const renderAcaoCriminalStepContent = (stepIndex: number) => {
+    const currentStepData = stepData[stepIndex] || {}
+
+    switch (stepIndex) {
+      case 0: // Cadastro de Documentos
+        return (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="rg-acusado">RG do Acusado</Label>
+                <Input
+                  id="rg-acusado"
+                  value={currentStepData.rgAcusado || ''}
+                  onChange={(e) => handleSaveStepData(stepIndex, { rgAcusado: e.target.value })}
+                  placeholder="Digite o RG do acusado"
+                />
+              </div>
+              <div>
+                <Label htmlFor="nome-acusado">Nome do Acusado</Label>
+                <Input
+                  id="nome-acusado"
+                  value={currentStepData.nomeAcusado || ''}
+                  onChange={(e) => handleSaveStepData(stepIndex, { nomeAcusado: e.target.value })}
+                  placeholder="Digite o nome do acusado"
+                />
+              </div>
+              <div>
+                <Label htmlFor="cpf-acusado">CPF do Acusado</Label>
+                <Input
+                  id="cpf-acusado"
+                  value={currentStepData.cpfAcusado || ''}
+                  onChange={(e) => handleSaveStepData(stepIndex, { cpfAcusado: e.target.value })}
+                  placeholder="Digite o CPF do acusado"
+                />
+              </div>
+              <div>
+                <Label htmlFor="endereco-acusado">Endereço do Acusado</Label>
+                <Input
+                  id="endereco-acusado"
+                  value={currentStepData.enderecoAcusado || ''}
+                  onChange={(e) => handleSaveStepData(stepIndex, { enderecoAcusado: e.target.value })}
+                  placeholder="Digite o endereço do acusado"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="boletim-ocorrencia">Boletim de Ocorrência</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="boletim-ocorrencia"
+                    type="file"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleFileUpload(file, 'boletimOcorrencia')
+                    }}
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  />
+                  {uploadStatus.boletimOcorrencia === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                  {uploadStatus.boletimOcorrencia === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="documentos-identidade">Documentos de Identidade</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="documentos-identidade"
+                    type="file"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleFileUpload(file, 'documentosIdentidade')
+                    }}
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  />
+                  {uploadStatus.documentosIdentidade === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                  {uploadStatus.documentosIdentidade === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="comprovante-residencia">Comprovante de Residência</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="comprovante-residencia"
+                    type="file"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleFileUpload(file, 'comprovanteResidencia')
+                    }}
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  />
+                  {uploadStatus.comprovanteResidencia === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                  {uploadStatus.comprovanteResidencia === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+                </div>
+              </div>
+            </div>
+
+            <Button onClick={() => handleSaveStepData(stepIndex, currentStepData)} className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Dados
+            </Button>
+          </div>
+        )
+
+      case 1: // Análise do Caso
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="analise-caso">Análise Detalhada do Caso</Label>
+              <Textarea
+                id="analise-caso"
+                value={currentStepData.analiseCaso || ''}
+                onChange={(e) => handleSaveStepData(stepIndex, { analiseCaso: e.target.value })}
+                placeholder="Descreva a análise detalhada do caso criminal..."
+                rows={6}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="estrategia-defesa">Estratégia de Defesa</Label>
+              <Textarea
+                id="estrategia-defesa"
+                value={currentStepData.estrategiaDefesa || ''}
+                onChange={(e) => handleSaveStepData(stepIndex, { estrategiaDefesa: e.target.value })}
+                placeholder="Descreva a estratégia de defesa..."
+                rows={4}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="documentos-analise">Documentos de Análise</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="documentos-analise"
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file, 'documentosAnalise')
+                  }}
+                  accept=".pdf,.doc,.docx"
+                />
+                {uploadStatus.documentosAnalise === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                {uploadStatus.documentosAnalise === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+              </div>
+            </div>
+
+            <Button onClick={() => handleSaveStepData(stepIndex, currentStepData)} className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Análise
+            </Button>
+          </div>
+        )
+
+      case 2: // Petição Inicial
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="peticao-inicial">Petição Inicial</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="peticao-inicial"
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file, 'peticaoInicial')
+                  }}
+                  accept=".pdf,.doc,.docx"
+                />
+                {uploadStatus.peticaoInicial === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                {uploadStatus.peticaoInicial === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="procuracao-criminal">Procuração</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="procuracao-criminal"
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file, 'procuracaoCriminal')
+                  }}
+                  accept=".pdf,.doc,.docx"
+                />
+                {uploadStatus.procuracaoCriminal === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                {uploadStatus.procuracaoCriminal === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+              </div>
+            </div>
+
+            <Button onClick={() => handleSaveStepData(stepIndex, currentStepData)} className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Petição
+            </Button>
+          </div>
+        )
+
+      case 3: // Protocolar Processo
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="processo-protocolado">Processo Protocolado</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="processo-protocolado"
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file, 'processoProtocolado')
+                  }}
+                  accept=".pdf,.doc,.docx"
+                />
+                {uploadStatus.processoProtocolado === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                {uploadStatus.processoProtocolado === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="numero-protocolo">Número do Protocolo</Label>
+              <Input
+                id="numero-protocolo"
+                value={currentStepData.numeroProtocolo || ''}
+                onChange={(e) => handleSaveStepData(stepIndex, { numeroProtocolo: e.target.value })}
+                placeholder="Digite o número do protocolo"
+              />
+            </div>
+
+            <Button onClick={() => handleSaveStepData(stepIndex, currentStepData)} className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Protocolo
+            </Button>
+          </div>
+        )
+
+      case 4: // Aguardar Citação
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="citacao-recebida">Citação Recebida</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="citacao-recebida"
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file, 'citacaoRecebida')
+                  }}
+                  accept=".pdf,.doc,.docx"
+                />
+                {uploadStatus.citacaoRecebida === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                {uploadStatus.citacaoRecebida === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="data-citacao">Data da Citação</Label>
+              <Input
+                id="data-citacao"
+                type="date"
+                value={currentStepData.dataCitacao || ''}
+                onChange={(e) => handleSaveStepData(stepIndex, { dataCitacao: e.target.value })}
+              />
+            </div>
+
+            <Button onClick={() => handleSaveStepData(stepIndex, currentStepData)} className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Citação
+            </Button>
+          </div>
+        )
+
+      case 5: // Resposta à Acusação
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="resposta-acusacao">Resposta à Acusação</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="resposta-acusacao"
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file, 'respostaAcusacao')
+                  }}
+                  accept=".pdf,.doc,.docx"
+                />
+                {uploadStatus.respostaAcusacao === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                {uploadStatus.respostaAcusacao === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="documentos-defesa">Documentos de Defesa</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="documentos-defesa"
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file, 'documentosDefesa')
+                  }}
+                  accept=".pdf,.doc,.docx"
+                />
+                {uploadStatus.documentosDefesa === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                {uploadStatus.documentosDefesa === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+              </div>
+            </div>
+
+            <Button onClick={() => handleSaveStepData(stepIndex, currentStepData)} className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Resposta
+            </Button>
+          </div>
+        )
+
+      case 6: // Instrução Processual
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="ata-audiencia">Ata da Audiência</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="ata-audiencia"
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file, 'ataAudiencia')
+                  }}
+                  accept=".pdf,.doc,.docx"
+                />
+                {uploadStatus.ataAudiencia === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                {uploadStatus.ataAudiencia === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="provas-testemunhas">Provas e Testemunhas</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="provas-testemunhas"
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file, 'provasTestemunhas')
+                  }}
+                  accept=".pdf,.doc,.docx"
+                />
+                {uploadStatus.provasTestemunhas === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                {uploadStatus.provasTestemunhas === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+              </div>
+            </div>
+
+            <Button onClick={() => handleSaveStepData(stepIndex, currentStepData)} className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Instrução
+            </Button>
+          </div>
+        )
+
+      case 7: // Alegações Finais
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="alegacoes-finais">Alegações Finais</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="alegacoes-finais"
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file, 'alegacoesFinais')
+                  }}
+                  accept=".pdf,.doc,.docx"
+                />
+                {uploadStatus.alegacoesFinais === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                {uploadStatus.alegacoesFinais === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="memoriais">Memoriais</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="memoriais"
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file, 'memoriais')
+                  }}
+                  accept=".pdf,.doc,.docx"
+                />
+                {uploadStatus.memoriais === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                {uploadStatus.memoriais === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+              </div>
+            </div>
+
+            <Button onClick={() => handleSaveStepData(stepIndex, currentStepData)} className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Alegações
+            </Button>
+          </div>
+        )
+
+      case 8: // Sentença
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="sentenca">Sentença</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="sentenca"
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file, 'sentenca')
+                  }}
+                  accept=".pdf,.doc,.docx"
+                />
+                {uploadStatus.sentenca === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                {uploadStatus.sentenca === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="resultado-sentenca">Resultado da Sentença</Label>
+              <Textarea
+                id="resultado-sentenca"
+                value={currentStepData.resultadoSentenca || ''}
+                onChange={(e) => handleSaveStepData(stepIndex, { resultadoSentenca: e.target.value })}
+                placeholder="Descreva o resultado da sentença..."
+                rows={4}
+              />
+            </div>
+
+            <Button onClick={() => handleSaveStepData(stepIndex, currentStepData)} className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Sentença
+            </Button>
+          </div>
+        )
+
+      case 9: // Recurso (se necessário)
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="recurso">Recurso</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="recurso"
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file, 'recurso')
+                  }}
+                  accept=".pdf,.doc,.docx"
+                />
+                {uploadStatus.recurso === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                {uploadStatus.recurso === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="documentos-finais">Documentos Finais</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="documentos-finais"
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleFileUpload(file, 'documentosFinais')
+                  }}
+                  accept=".pdf,.doc,.docx"
+                />
+                {uploadStatus.documentosFinais === 'uploading' && <span className="text-sm text-blue-600">Enviando...</span>}
+                {uploadStatus.documentosFinais === 'success' && <CheckCircle2 className="h-5 w-5 text-green-600" />}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="observacoes-finais">Observações Finais</Label>
+              <Textarea
+                id="observacoes-finais"
+                value={currentStepData.observacoesFinais || ''}
+                onChange={(e) => handleSaveStepData(stepIndex, { observacoesFinais: e.target.value })}
+                placeholder="Observações finais do caso..."
+                rows={4}
+              />
+            </div>
+
+            <Button onClick={() => handleSaveStepData(stepIndex, currentStepData)} className="w-full">
+              <Save className="h-4 w-4 mr-2" />
+              Salvar Recurso
+            </Button>
+          </div>
+        )
+
+      default:
+        return <div>Etapa não encontrada</div>
+    }
+  }
 
   if (loading) {
     return (
-      <div className="space-y-6 max-w-5xl">
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-10 w-10" />
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-4 w-32" />
-          </div>
-        </div>
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <Skeleton className="h-96 w-full" />
-          </div>
-          <div>
-            <Skeleton className="h-64 w-full" />
+      <div className="container mx-auto p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   if (!caseData) {
-    return <div>Ação não encontrada</div>;
+    return (
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Caso não encontrado</h1>
+          <Button onClick={() => router.push('/dashboard/acoes-criminais')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar para Ações Criminais
+          </Button>
+        </div>
+      </div>
+    )
   }
 
+  const workflow = WORKFLOWS[caseData.type as keyof typeof WORKFLOWS] || []
+
   return (
-    <div className="space-y-6 max-w-5xl">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div 
+      className={`container mx-auto p-6 ${isDragOver ? 'bg-blue-50' : ''}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard/acoes-criminais">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
+          <Button 
+            variant="outline" 
+            onClick={() => router.push('/dashboard/acoes-criminais')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">{caseData.clientName}</h1>
-            <p className="text-muted-foreground">Ação Criminal</p>
+            <h1 className="text-2xl font-bold text-gray-900">{caseData.title}</h1>
+            <p className="text-gray-600">{caseData.type}</p>
           </div>
         </div>
-        <div className="flex-shrink-0">
-          <AlertDialog>
+        <div className="flex items-center gap-2">
+          <Select value={status} onValueChange={handleStatusChange}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Em andamento">Em andamento</SelectItem>
+              <SelectItem value="Concluído">Concluído</SelectItem>
+              <SelectItem value="Pausado">Pausado</SelectItem>
+              <SelectItem value="Cancelado">Cancelado</SelectItem>
+            </SelectContent>
+          </Select>
+          <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm" className="w-full sm:w-auto">
+              <Button variant="destructive" onClick={handleDelete}>
                 <Trash2 className="h-4 w-4 mr-2" />
                 Excluir
               </Button>
             </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-              <AlertDialogDescription>
-                Tem certeza que deseja excluir esta ação criminal? Esta ação não pode ser desfeita.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction variant="destructive" onClick={handleDelete}>
-                Excluir
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tem certeza que deseja excluir este caso? Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => router.push('/dashboard/acoes-criminais')}>
+                  Excluir
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-red-600" />
-                Detalhes da Ação Criminal
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Observações
-                </label>
-                <Textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Adicione observações sobre esta ação criminal..."
-                  className="mt-1"
-                  rows={6}
-                />
+      {/* Workflow Steps */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Fluxo do Processo</CardTitle>
+          <CardDescription>
+            Acompanhe o progresso do caso através das etapas do workflow
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {workflow.map((step, index) => (
+              <div key={index} className="border rounded-lg">
+                <Collapsible 
+                  open={expandedSteps[index]} 
+                  onOpenChange={() => handleStepClick(index)}
+                >
+                  <CollapsibleTrigger asChild>
+                    <div className={`flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 ${
+                      index <= (caseData.currentStep || 0) ? 'bg-green-50' : 'bg-gray-50'
+                    }`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                          index < (caseData.currentStep || 0) ? 'bg-green-600 text-white' :
+                          index === (caseData.currentStep || 0) ? 'bg-blue-600 text-white' :
+                          'bg-gray-300 text-gray-600'
+                        }`}>
+                          {index < (caseData.currentStep || 0) ? <CheckCircle2 className="h-4 w-4" /> : index + 1}
+                        </div>
+                        <span className="font-medium">{step}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={
+                          index < (caseData.currentStep || 0) ? 'default' :
+                          index === (caseData.currentStep || 0) ? 'secondary' :
+                          'outline'
+                        }>
+                          {index < (caseData.currentStep || 0) ? 'Concluído' :
+                           index === (caseData.currentStep || 0) ? 'Em andamento' :
+                           'Pendente'}
+                        </Badge>
+                        {expandedSteps[index] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      </div>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="p-4 border-t bg-white">
+                      {renderStepContent(index)}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
-              <Button onClick={handleSave} disabled={saving}>
-                <Save className="h-4 w-4 mr-2" />
-                {saving ? "Salvando..." : "Salvar"}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Status</label>
-                <Badge className={`mt-1 ${getStatusColor(caseData.status)}`}>
-                  {caseData.status}
-                </Badge>
+      {/* Documents Section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Documentos</CardTitle>
+          <CardDescription>
+            Documentos organizados por etapa do processo
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {workflow.map((step, stepIndex) => {
+            const stepDocuments = documents.filter(doc => doc.step === stepIndex)
+            if (stepDocuments.length === 0) return null
+
+            return (
+              <div key={stepIndex} className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-3">
+                  Etapa {stepIndex + 1}: {step}
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {stepDocuments.map((document) => (
+                    <div key={document.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          {editingDocument === document.id ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={editingName}
+                                onChange={handleDocumentNameChange}
+                                onKeyDown={handleDocumentNameKeyPress}
+                                className="text-sm"
+                                autoFocus
+                              />
+                              <Button size="sm" variant="ghost" onClick={handleDocumentNameSave}>
+                                <Check className="h-3 w-3" />
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={handleDocumentNameCancel}>
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <h5 
+                              className="font-medium text-sm cursor-pointer hover:text-blue-600"
+                              onDoubleClick={() => handleDocumentDoubleClick(document)}
+                            >
+                              {document.name}
+                            </h5>
+                          )}
+                          <p className="text-xs text-gray-500 mt-1">
+                            {(document.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(document.uploadedAt).toLocaleDateString('pt-BR')}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDocumentDoubleClick(document)}
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteDocument(document.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Cliente</label>
-                <p className="mt-1 font-medium">{caseData.clientName}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Criado em</label>
-                <p className="mt-1 text-sm">
-                  {new Date(caseData.createdAt).toLocaleDateString("pt-BR")}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Última atualização</label>
-                <p className="mt-1 text-sm">
-                  {new Date(caseData.updatedAt).toLocaleDateString("pt-BR")}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+            )
+          })}
+
+          {documents.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Nenhum documento enviado ainda</p>
+              <p className="text-sm">Arraste arquivos aqui ou use os campos de upload nas etapas</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Notes Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Observações</CardTitle>
+          <CardDescription>
+            Adicione observações e anotações sobre o caso
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Adicione suas observações sobre o caso..."
+            rows={4}
+            className="mb-4"
+          />
+          <Button onClick={handleSaveNotes}>
+            <Save className="h-4 w-4 mr-2" />
+            Salvar Observações
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Dialogs */}
+      <AlertDialog open={showStepDialog} onOpenChange={setShowStepDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Avançar para próxima etapa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja marcar a etapa atual como concluída e avançar para a próxima etapa?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmStepChange}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showNotesDialog} onOpenChange={setShowNotesDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Salvar observações</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja salvar as alterações nas observações?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSaveNotes}>
+              Salvar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {isDragOver && (
+        <div className="fixed inset-0 bg-blue-500 bg-opacity-20 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+            <Upload className="h-12 w-12 mx-auto mb-4 text-blue-600" />
+            <p className="text-lg font-medium">Solte os arquivos aqui para fazer upload</p>
+          </div>
         </div>
-      </div>
+      )}
     </div>
-  );
+  )
 }

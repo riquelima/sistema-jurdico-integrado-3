@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Globe, Eye, Plane, Briefcase, Building2, Clock, CheckCircle2, AlertCircle, FileText, Passport } from "lucide-react";
+import { Plus, Search, Globe, Eye, Plane, Briefcase, Building2, Clock, CheckCircle2, AlertCircle, FileText, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -16,8 +16,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface Visto {
+  id: string;
+  clientName: string;
+  type: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  cpf?: string;
+  rnm?: string;
+  passaporte?: string;
+}
+
 export default function VistosPage() {
-  const [vistos, setVistos] = useState<any[]>([]);
+  const [vistos, setVistos] = useState<Visto[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -41,7 +53,7 @@ export default function VistosPage() {
   };
 
   const filteredVistos = vistos.filter((v) => {
-    const matchesSearch = v.clientName.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = v.clientName?.toLowerCase().includes(search.toLowerCase()) ?? false;
     const matchesType = typeFilter === "all" || v.type === typeFilter;
     const matchesStatus = statusFilter === "all" || v.status === statusFilter;
     return matchesSearch && matchesType && matchesStatus;
@@ -128,7 +140,7 @@ export default function VistosPage() {
                 <p className="text-3xl font-bold text-white mt-1">{stats.total}</p>
               </div>
               <div className="p-3 bg-slate-700 rounded-lg">
-                <Passport className="h-6 w-6 text-slate-300" />
+                <CreditCard className="h-6 w-6 text-slate-300" />
               </div>
             </div>
           </div>
@@ -278,7 +290,7 @@ export default function VistosPage() {
 
                       <div className="flex items-center gap-6 text-sm flex-wrap">
                         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                          <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded">
+                          <div className="p-1.5 bg-purple-100 dark:bg-purple-900 rounded">
                             <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                           </div>
                           <span className="font-medium">Tipo: {visto.type}</span>

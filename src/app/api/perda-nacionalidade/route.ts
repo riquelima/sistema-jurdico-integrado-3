@@ -12,6 +12,7 @@ function mapDbFieldsToFrontend(record: any) {
     notes: record.notes,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
+    currentStep: record.current_step ?? 0,
   };
 }
 
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
         throw error;
       }
 
-      return NextResponse.json(record, { status: 200 });
+      return NextResponse.json(mapDbFieldsToFrontend(record), { status: 200 });
     }
 
     // List with pagination, search, and filtering

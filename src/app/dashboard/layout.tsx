@@ -49,28 +49,35 @@ export default function DashboardLayout({
   const isMainDashboard = pathname === "/dashboard";
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
-      router.push("/");
-      return;
-    }
-    setUser(JSON.parse(storedUser));
+    // Ensure we're on the client side before accessing localStorage
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) {
+        router.push("/");
+        return;
+      }
+      setUser(JSON.parse(storedUser));
 
-    // Load sidebar state from localStorage
-    const savedState = localStorage.getItem("sidebarCollapsed");
-    if (savedState) {
-      setSidebarCollapsed(JSON.parse(savedState));
+      // Load sidebar state from localStorage
+      const savedState = localStorage.getItem("sidebarCollapsed");
+      if (savedState) {
+        setSidebarCollapsed(JSON.parse(savedState));
+      }
     }
   }, [router]);
 
   const toggleSidebar = () => {
     const newState = !sidebarCollapsed;
     setSidebarCollapsed(newState);
-    localStorage.setItem("sidebarCollapsed", JSON.stringify(newState));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("sidebarCollapsed", JSON.stringify(newState));
+    }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem("user");
+    }
     router.push("/");
   };
 
@@ -156,7 +163,7 @@ export default function DashboardLayout({
         {/* Collapse Button - Bottom of Sidebar (Desktop only) */}
         <button
           onClick={toggleSidebar}
-          className="hidden lg:flex w-full items-center justify-center py-1 px-2 text-xs text-muted-foreground/60 hover:text-muted-foreground hover:bg-muted/50 rounded transition-colors bg-card"
+          className="hidden lg:flex w-full items-center justify-center py-1 px-2 text-xs text-muted-foreground hover:text-muted-foreground hover:bg-muted rounded transition-colors bg-card"
           title="Ocultar menu"
         >
           <ChevronLeft className="h-3 w-3 mr-1" />
@@ -185,7 +192,7 @@ export default function DashboardLayout({
       {sidebarCollapsed && (
         <button
           onClick={toggleSidebar}
-          className="hidden lg:flex fixed left-2 bottom-4 items-center justify-center p-1.5 bg-card text-muted-foreground/60 hover:text-muted-foreground hover:bg-muted/50 rounded border border-border shadow-sm transition-all z-50"
+          className="hidden lg:flex fixed left-2 bottom-4 items-center justify-center p-1.5 bg-card text-muted-foreground hover:text-muted-foreground hover:bg-muted rounded border border-border shadow-sm transition-all z-50"
           title="Expandir menu"
         >
           <ChevronRight className="h-3 w-3" />

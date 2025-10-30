@@ -138,7 +138,7 @@ export default function AcoesTrabalhistasPage() {
       <div className="bg-gradient-to-br from-purple-900 via-purple-800 to-purple-700 rounded-xl shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between p-8">
           <div className="flex items-center gap-6">
-            <div className="p-4 bg-white rounded-xl border border-white/20">
+            <div className="p-4 bg-white rounded-xl border border-white">
               <Briefcase className="h-6 w-6 text-white" />
             </div>
             <div>
@@ -301,7 +301,7 @@ export default function AcoesTrabalhistasPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="absolute top-2 right-2 z-10 h-8 w-8 p-0 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 opacity-70 hover:opacity-100 transition-all duration-200"
+                    className="absolute top-2 right-2 z-10 h-8 w-8 p-0 bg-red-50 hover:bg-red-100 dark:bg-red-900 dark:hover:bg-red-900 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 opacity-70 hover:opacity-100 transition-all duration-200"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -348,14 +348,14 @@ export default function AcoesTrabalhistasPage() {
 
                       <div className="flex items-center gap-6 text-sm flex-wrap">
                         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                          <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded">
+                          <div className="p-1.5 bg-purple-100 dark:bg-purple-900 rounded">
                             <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                           </div>
                           <span className="font-medium">Tipo: {caseItem.type || "Trabalhista"}</span>
                         </div>
                         
                         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded">
+                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900 rounded">
                             <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                           </div>
                           <span className="font-medium">Passo {caseItem.currentStep || 1}</span>

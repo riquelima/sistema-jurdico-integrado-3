@@ -46,6 +46,52 @@ export default function AcoesCiveisPage() {
 
   useEffect(() => {
     fetchCases();
+
+    // Only set up event listeners on the client side
+    if (typeof window !== 'undefined') {
+      // Listen for status updates from other pages
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'acoes-civeis-status-update') {
+          const updateData = JSON.parse(e.newValue || '{}');
+          if (updateData.id && updateData.status) {
+            // Update the specific case in the list
+            setCases(prevCases => 
+              prevCases.map(c => 
+                c.id === updateData.id 
+                  ? { ...c, status: updateData.status, updatedAt: updateData.updatedAt }
+                  : c
+              )
+            );
+            // Clear the localStorage item
+            localStorage.removeItem('acoes-civeis-status-update');
+          }
+        }
+      };
+
+      // Listen for storage events
+      window.addEventListener('storage', handleStorageChange);
+
+      // Also listen for custom events (for same-tab updates)
+      const handleCustomEvent = (e: CustomEvent) => {
+        const updateData = e.detail;
+        if (updateData.id && updateData.status) {
+          setCases(prevCases => 
+            prevCases.map(c => 
+              c.id === updateData.id 
+                ? { ...c, status: updateData.status, updatedAt: updateData.updatedAt }
+                : c
+            )
+          );
+        }
+      };
+
+      window.addEventListener('acoes-civeis-status-updated', handleCustomEvent as EventListener);
+
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('acoes-civeis-status-updated', handleCustomEvent as EventListener);
+      };
+    }
   }, []);
 
   const fetchCases = async () => {
@@ -289,7 +335,7 @@ export default function AcoesCiveisPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="absolute top-2 right-2 h-8 w-8 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 z-10"
+                    className="absolute top-2 right-2 h-8 w-8 p-0 text-red-600 hover:text-white hover:bg-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all duration-200 z-10"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -335,14 +381,14 @@ export default function AcoesCiveisPage() {
 
                       <div className="flex items-center gap-6 text-sm flex-wrap">
                         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                          <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded">
+                          <div className="p-1.5 bg-purple-100 dark:bg-purple-900 rounded">
                             <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                           </div>
                           <span className="font-medium">Tipo: {caseItem.type}</span>
                         </div>
                         
                         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded">
+                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900 rounded">
                             <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                           </div>
                           <span className="font-medium">Passo {caseItem.currentStep}</span>

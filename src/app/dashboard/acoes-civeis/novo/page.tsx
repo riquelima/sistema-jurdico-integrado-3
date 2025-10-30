@@ -17,6 +17,7 @@ import {
 import { ArrowLeft, Upload, X, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { DocumentPreview } from "@/components/ui/document-preview";
 
 const CASE_TYPES = [
   "Exame DNA",
@@ -28,9 +29,59 @@ const CASE_TYPES = [
   "Usucapião"
 ];
 
+interface FormData {
+  clientName: string;
+  type: string;
+  rnmMae: string;
+  rnmPai: string;
+  rnmSupostoPai: string;
+  nomeMae: string;
+  nomePaiRegistral: string;
+  nomeSupostoPai: string;
+  cpfMae: string;
+  cpfPai: string;
+  certidaoNascimento: string;
+  comprovanteEndereco: string;
+  passaporte: string;
+  guiaPaga: string;
+  peticaoConjunta: string;
+  termoPartilhas: string;
+  guarda: string;
+  procuracao: string;
+  peticaoCliente: string;
+  procuracaoCliente: string;
+  custas: string;
+  peticaoInicial: string;
+  matriculaImovel: string;
+  aguaLuzIptu: string;
+  camposExigencias: string;
+  notes: string;
+  rnmMaeFile: string;
+  rnmPaiFile: string;
+  rnmSupostoPaiFile: string;
+  cpfMaeFile: string;
+  cpfPaiFile: string;
+  certidaoNascimentoFile: string;
+  comprovanteEnderecoFile: string;
+  passaporteFile: string;
+  guiaPagaFile: string;
+  peticaoConjuntaFile: string;
+  termoPartilhasFile: string;
+  guardaFile: string;
+  procuracaoFile: string;
+  peticaoClienteFile: string;
+  procuracaoClienteFile: string;
+  custasFile: string;
+  peticaoInicialFile: string;
+  matriculaImovelFile: string;
+  aguaLuzIptuFile: string;
+  camposExigenciasFile: string;
+  [key: string]: string;
+}
+
 export default function NovaAcaoCivelPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     clientName: "",
     type: "",
     rnmMae: "",
@@ -349,22 +400,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.rnmMae ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("rnmMae")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.rnmMaeFile && (
+                        <DocumentPreview
+                          fileUrl={formData.rnmMaeFile}
+                          onRemove={() => removeDocument("rnmMae")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -414,22 +457,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.rnmPai ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("rnmPai")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.rnmPaiFile && (
+                        <DocumentPreview
+                          fileUrl={formData.rnmPaiFile}
+                          onRemove={() => removeDocument("rnmPai")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -479,22 +514,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.cpfMae ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("cpfMae")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.cpfMaeFile && (
+                        <DocumentPreview
+                          fileUrl={formData.cpfMaeFile}
+                          onRemove={() => removeDocument("cpfMae")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -528,22 +555,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.cpfPai ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("cpfPai")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.cpfPaiFile && (
+                        <DocumentPreview
+                          fileUrl={formData.cpfPaiFile}
+                          onRemove={() => removeDocument("cpfPai")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -573,22 +592,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.rnmSupostoPai ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("rnmSupostoPai")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.rnmSupostoPaiFile && (
+                        <DocumentPreview
+                          fileUrl={formData.rnmSupostoPaiFile}
+                          onRemove={() => removeDocument("rnmSupostoPai")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -635,22 +646,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.certidaoNascimento ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("certidaoNascimento")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.certidaoNascimentoFile && (
+                        <DocumentPreview
+                          fileUrl={formData.certidaoNascimentoFile}
+                          onRemove={() => removeDocument("certidaoNascimento")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -681,22 +684,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.comprovanteEndereco ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("comprovanteEndereco")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.comprovanteEnderecoFile && (
+                        <DocumentPreview
+                          fileUrl={formData.comprovanteEnderecoFile}
+                          onRemove={() => removeDocument("comprovanteEndereco")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -727,22 +722,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.peticaoConjunta ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("peticaoConjunta")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.peticaoConjuntaFile && (
+                        <DocumentPreview
+                          fileUrl={formData.peticaoConjuntaFile}
+                          onRemove={() => removeDocument("peticaoConjunta")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -773,22 +760,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.termoPartilhas ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("termoPartilhas")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.termoPartilhasFile && (
+                        <DocumentPreview
+                          fileUrl={formData.termoPartilhasFile}
+                          onRemove={() => removeDocument("termoPartilhas")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -819,22 +798,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.guarda ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("guarda")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.guardaFile && (
+                        <DocumentPreview
+                          fileUrl={formData.guardaFile}
+                          onRemove={() => removeDocument("guarda")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -865,22 +836,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.procuracao ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("procuracao")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.procuracaoFile && (
+                        <DocumentPreview
+                          fileUrl={formData.procuracaoFile}
+                          onRemove={() => removeDocument("procuracao")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -911,22 +874,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.passaporte ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("passaporte")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.passaporteFile && (
+                        <DocumentPreview
+                          fileUrl={formData.passaporteFile}
+                          onRemove={() => removeDocument("passaporte")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -957,22 +912,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.guiaPaga ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("guiaPaga")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.guiaPagaFile && (
+                        <DocumentPreview
+                          fileUrl={formData.guiaPagaFile}
+                          onRemove={() => removeDocument("guiaPaga")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -1003,22 +950,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.peticaoCliente ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("peticaoCliente")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.peticaoClienteFile && (
+                        <DocumentPreview
+                          fileUrl={formData.peticaoClienteFile}
+                          onRemove={() => removeDocument("peticaoCliente")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -1049,22 +988,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.procuracaoCliente ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("procuracaoCliente")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.procuracaoClienteFile && (
+                        <DocumentPreview
+                          fileUrl={formData.procuracaoClienteFile}
+                          onRemove={() => removeDocument("procuracaoCliente")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -1095,22 +1026,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.custas ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("custas")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.custasFile && (
+                        <DocumentPreview
+                          fileUrl={formData.custasFile}
+                          onRemove={() => removeDocument("custas")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -1141,22 +1064,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.peticaoInicial ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("peticaoInicial")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.peticaoInicialFile && (
+                        <DocumentPreview
+                          fileUrl={formData.peticaoInicialFile}
+                          onRemove={() => removeDocument("peticaoInicial")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -1187,22 +1102,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.matriculaImovel ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("matriculaImovel")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.matriculaImovelFile && (
+                        <DocumentPreview
+                          fileUrl={formData.matriculaImovelFile}
+                          onRemove={() => removeDocument("matriculaImovel")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -1233,22 +1140,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.aguaLuzIptu ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("aguaLuzIptu")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.aguaLuzIptuFile && (
+                        <DocumentPreview
+                          fileUrl={formData.aguaLuzIptuFile}
+                          onRemove={() => removeDocument("aguaLuzIptu")}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -1280,22 +1179,14 @@ export default function NovaAcaoCivelPage() {
                               {uploadingDocs.camposExigencias ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            <span>Documento enviado</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeDocument("camposExigencias")}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
+                      {formData.camposExigenciasFile && (
+                        <DocumentPreview
+                          fileUrl={formData.camposExigenciasFile}
+                          onRemove={() => removeDocument("camposExigencias")}
+                        />
+                      )}
                     </div>
                   )}
                 </div>

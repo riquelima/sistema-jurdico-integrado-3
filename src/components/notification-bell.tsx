@@ -196,7 +196,10 @@ export const NotificationBell = () => {
                       </div>
                       <div className="flex items-center justify-between mt-2">
                         <span className="text-xs text-slate-600">
-                          {new Date(alert.createdAt).toLocaleString("pt-BR")}
+                          {alert.createdAt && !isNaN(new Date(alert.createdAt).getTime()) 
+                            ? new Date(alert.createdAt).toLocaleString("pt-BR")
+                            : "Data não disponível"
+                          }
                         </span>
                         <Button
                           variant="ghost"

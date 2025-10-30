@@ -430,7 +430,7 @@ export default function CompraVendaDetailsPage() {
           {/* Collapsible Details Section */}
           <Card>
             <CardHeader 
-              className="cursor-pointer hover:bg-muted/50 transition-colors"
+              className="cursor-pointer hover:bg-muted transition-colors"
               onClick={() => setIsDetailsCollapsed(!isDetailsCollapsed)}
             >
               <div className="flex items-center justify-between">

@@ -7,7 +7,7 @@ const dbConfig: Config = defineConfig({
   out: './drizzle',
   dialect: 'postgresql',
   dbCredentials: {
-    url: `postgresql://postgres.phfzqvmofnqwxszdgjch:${process.env.SUPABASE_SERVICE_ROLE_KEY}@aws-0-us-west-1.pooler.supabase.com:6543/postgres`,
+    url: `postgresql://postgres.phfzqvmofnqwxszdgjch:${process.env.SUPABASE_SERVICE_ROLE_KEY}@aws-0-us-east-2.pooler.supabase.com:6543/postgres`,
   },
 });
 

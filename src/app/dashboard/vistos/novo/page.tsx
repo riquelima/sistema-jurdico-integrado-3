@@ -85,7 +85,7 @@ export default function NovoVistoPage() {
           <Button 
             variant="ghost" 
             size="icon"
-            className="hover:bg-primary/10 hover:text-primary transition-colors"
+            className="hover:bg-primary hover:text-primary-foreground transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -100,7 +100,7 @@ export default function NovoVistoPage() {
 
       <form onSubmit={handleSubmit}>
         <Card className="border-2 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b-2 border-primary/20">
+          <CardHeader className="bg-gradient-to-r from-primary to-primary border-b-2 border-primary">
             <CardTitle className="text-2xl font-semibold text-foreground flex items-center gap-2">
               <span className="w-1 h-6 bg-primary rounded-full"></span>
               Informações do Visto
@@ -147,7 +147,7 @@ export default function NovoVistoPage() {
                 {/* 1 - Documentos Pessoais */}
                 <Card className="border-2 border-border shadow-md overflow-hidden">
                   <CardHeader
-                    className="cursor-pointer bg-gradient-to-r from-muted/30 to-muted/50 hover:from-primary/10 hover:to-primary/20 transition-all duration-300 border-b-2 border-border py-4"
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
                     onClick={() => toggleSection("documentosPessoais")}
                   >
                     <div className="flex items-center justify-between">
@@ -219,7 +219,7 @@ export default function NovoVistoPage() {
                 {/* 2 - Comprovação Financeira PF */}
                 <Card className="border-2 border-border shadow-md overflow-hidden">
                   <CardHeader
-                    className="cursor-pointer bg-gradient-to-r from-muted/30 to-muted/50 hover:from-primary/10 hover:to-primary/20 transition-all duration-300 border-b-2 border-border py-4"
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
                     onClick={() => toggleSection("comprovacaoFinanceira")}
                   >
                     <div className="flex items-center justify-between">
@@ -289,7 +289,7 @@ export default function NovoVistoPage() {
                 {/* 3 - Outros Documentos */}
                 <Card className="border-2 border-border shadow-md overflow-hidden">
                   <CardHeader
-                    className="cursor-pointer bg-gradient-to-r from-muted/30 to-muted/50 hover:from-primary/10 hover:to-primary/20 transition-all duration-300 border-b-2 border-border py-4"
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
                     onClick={() => toggleSection("outrosDocumentos")}
                   >
                     <div className="flex items-center justify-between">
@@ -442,7 +442,7 @@ export default function NovoVistoPage() {
                   type="button" 
                   variant="outline" 
                   disabled={loading}
-                  className="h-12 px-8 border-2 hover:bg-muted/50 transition-colors"
+                  className="h-12 px-8 border-2 hover:bg-muted transition-colors"
                 >
                   Cancelar
                 </Button>
@@ -450,7 +450,7 @@ export default function NovoVistoPage() {
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="h-12 px-8 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all"
+                className="h-12 px-8 bg-primary hover:bg-primary text-primary-foreground shadow-md hover:shadow-lg transition-all"
               >
                 <Save className="h-4 w-4 mr-2" />
                 {loading ? "Salvando..." : "Salvar Visto"}

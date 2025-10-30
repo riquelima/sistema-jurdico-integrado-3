@@ -29,18 +29,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Check if user is logged in
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    } else if (pathname !== "/" && !pathname.startsWith("/api")) {
-      router.push("/");
+    // Check if user is logged in (only on client side)
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      } else if (pathname !== "/" && !pathname.startsWith("/api")) {
+        router.push("/");
+      }
     }
     setLoading(false);
   }, [pathname, router]);
 
   const logout = () => {
-    localStorage.removeItem("user");
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem("user");
+    }
     setUser(null);
     router.push("/");
   };

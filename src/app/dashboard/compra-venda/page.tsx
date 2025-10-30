@@ -273,7 +273,7 @@ export default function CompraVendaPage() {
                         <div className="flex items-center gap-6 text-sm flex-wrap">
                           {property.numeroMatricula && (
                             <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                              <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded">
+                              <div className="p-1.5 bg-purple-100 dark:bg-purple-900 rounded">
                                 <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                               </div>
                               <span className="font-medium">Matrícula: {property.numeroMatricula}</span>

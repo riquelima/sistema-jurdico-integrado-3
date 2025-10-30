@@ -35,7 +35,17 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
       }
 
-      return NextResponse.json(alert, { status: 200 });
+      // Map database fields to frontend format
+      const mappedAlert = {
+        id: alert.id,
+        message: alert.message,
+        moduleType: alert.module_type,
+        alertFor: alert.alert_for,
+        isRead: alert.is_read,
+        createdAt: alert.created_at
+      };
+
+      return NextResponse.json(mappedAlert, { status: 200 });
     }
 
     // List alerts with filtering
@@ -62,11 +72,21 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
-    return NextResponse.json(results || [], { status: 200 });
+    // Map database fields to frontend format
+    const mappedResults = (results || []).map(alert => ({
+      id: alert.id,
+      message: alert.message,
+      moduleType: alert.module_type,
+      alertFor: alert.alert_for,
+      isRead: alert.is_read,
+      createdAt: alert.created_at
+    }));
+
+    return NextResponse.json(mappedResults, { status: 200 });
   } catch (error) {
     console.error('GET error:', error);
     return NextResponse.json({ 
-      error: 'Internal server error: ' + error.message 
+      error: 'Internal server error: ' + (error as Error).message 
     }, { status: 500 });
   }
 }
@@ -135,11 +155,21 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
-    return NextResponse.json(newAlert, { status: 201 });
+    // Map database fields to frontend format
+    const mappedAlert = {
+      id: newAlert.id,
+      message: newAlert.message,
+      moduleType: newAlert.module_type,
+      alertFor: newAlert.alert_for,
+      isRead: newAlert.is_read,
+      createdAt: newAlert.created_at
+    };
+
+    return NextResponse.json(mappedAlert, { status: 201 });
   } catch (error) {
     console.error('POST error:', error);
     return NextResponse.json({ 
-      error: 'Internal server error: ' + error.message 
+      error: 'Internal server error: ' + (error as Error).message 
     }, { status: 500 });
   }
 }
@@ -198,11 +228,21 @@ export async function PUT(request: NextRequest) {
       throw error;
     }
 
-    return NextResponse.json(updated, { status: 200 });
+    // Map database fields to frontend format
+    const mappedAlert = {
+      id: updated.id,
+      message: updated.message,
+      moduleType: updated.module_type,
+      alertFor: updated.alert_for,
+      isRead: updated.is_read,
+      createdAt: updated.created_at
+    };
+
+    return NextResponse.json(mappedAlert, { status: 200 });
   } catch (error) {
     console.error('PUT error:', error);
     return NextResponse.json({ 
-      error: 'Internal server error: ' + error.message 
+      error: 'Internal server error: ' + (error as Error).message 
     }, { status: 500 });
   }
 }
@@ -254,7 +294,7 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     console.error('DELETE error:', error);
     return NextResponse.json({ 
-      error: 'Internal server error: ' + error.message 
+      error: 'Internal server error: ' + (error as Error).message 
     }, { status: 500 });
   }
 }

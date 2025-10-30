@@ -186,10 +186,13 @@ export default function AcaoCivelDetailPage() {
       setStepData({
         rnmMae: data.rnmMae || "",
         rnmMaeFile: data.rnmMaeFile || "",
+        nomeMae: data.nomeMae || "",
         rnmPai: data.rnmPai || "",
         rnmPaiFile: data.rnmPaiFile || "",
+        nomePaiRegistral: data.nomePaiRegistral || "",
         rnmSupostoPai: data.rnmSupostoPai || "",
         rnmSupostoPaiFile: data.rnmSupostoPaiFile || "",
+        nomeSupostoPai: data.nomeSupostoPai || "",
         cpfMae: data.cpfMae || "",
         cpfPai: data.cpfPai || "",
         certidaoNascimento: data.certidaoNascimento || "",
@@ -543,6 +546,61 @@ export default function AcaoCivelDetailPage() {
     }
   };
 
+  const handleStatusChange = async (newStatus: string) => {
+    try {
+      // Update local state immediately for better UX
+      setStatus(newStatus);
+      
+      // Update in database
+      const response = await fetch(`/api/acoes-civeis?id=${params.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: newStatus,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update status");
+      }
+
+      // Update the case data to reflect the change
+      const updatedAt = new Date().toISOString();
+      setCaseData((prev: any) => ({
+        ...prev,
+        status: newStatus,
+        updatedAt: updatedAt,
+      }));
+
+      // Notify other pages about the status change
+      const updateData = {
+        id: parseInt(params.id),
+        status: newStatus,
+        updatedAt: updatedAt,
+      };
+
+      // Store in localStorage for cross-tab communication (only on client side)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('acoes-civeis-status-update', JSON.stringify(updateData));
+
+        // Dispatch custom event for same-tab communication
+        window.dispatchEvent(new CustomEvent('acoes-civeis-status-updated', {
+          detail: updateData
+        }));
+      }
+
+      // Show success message (optional, can be removed for silent update)
+      console.log("Status atualizado com sucesso!");
+    } catch (error) {
+      console.error("Error updating status:", error);
+      // Revert the status change if the API call failed
+      setStatus(caseData?.status || "Em Andamento");
+      alert("Erro ao atualizar status");
+    }
+  };
+
   const handleDelete = async () => {
     try {
       const response = await fetch(`/api/acoes-civeis?id=${params.id}`, {
@@ -576,7 +634,7 @@ export default function AcaoCivelDetailPage() {
     switch (stepIndex) {
       case 0: // Cadastro de Documentos
         return (
-          <div className="space-y-4 mt-4 p-4 bg-muted/30 rounded-lg">
+          <div className="space-y-4 mt-4 p-4 bg-muted rounded-lg">
             <div className="grid grid-cols-1 gap-4">
               {/* RNM Mãe */}
               <div className="space-y-2">
@@ -800,7 +858,7 @@ export default function AcaoCivelDetailPage() {
 
       case 1: // Agendar Exame DNA
         return (
-          <div className="space-y-4 mt-4 p-4 bg-muted/30 rounded-lg">
+          <div className="space-y-4 mt-4 p-4 bg-muted rounded-lg">
             <div className="space-y-2">
               <Label htmlFor="dataExameDna">Data do Exame DNA</Label>
               <Input
@@ -842,9 +900,9 @@ export default function AcaoCivelDetailPage() {
           </div>
         );
 
-      case 2: // Aguardar Resultado e Procuração
-        return (
-          <div className="space-y-4 mt-4 p-4 bg-muted/30 rounded-lg">
+      case 2: // Aguardar Resultado DNA
+          return (
+            <div className="space-y-4 mt-4 p-4 bg-muted rounded-lg">
             <div className="space-y-2">
               <Label htmlFor="procuracaoAnexada">Procuração</Label>
               <Input
@@ -1314,9 +1372,9 @@ export default function AcaoCivelDetailPage() {
           </div>
         );
 
-      case 1: // Fazer Procuração
-        return (
-          <div className="space-y-4 mt-4 p-4 bg-muted/30 rounded-lg">
+      case 3: // Aguardar Procuração
+          return (
+            <div className="space-y-4 mt-4 p-4 bg-muted rounded-lg">
             <div className="space-y-2">
               <Label htmlFor="procuracaoAnexada">Procuração</Label>
               <Input
@@ -3108,7 +3166,7 @@ export default function AcaoCivelDetailPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Status</label>
-                <Select value={status} onValueChange={setStatus}>
+                <Select value={status} onValueChange={handleStatusChange}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -3223,7 +3281,11 @@ export default function AcaoCivelDetailPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => window.open(doc.file_path, '_blank')}
+                              onClick={() => {
+                                if (typeof window !== 'undefined') {
+                                  window.open(doc.file_path, '_blank');
+                                }
+                              }}
                             >
                               <Download className="h-3 w-3" />
                             </Button>

@@ -16,8 +16,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface PerdaNacionalidadeCase {
+  id: string;
+  clientName: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  currentStep: number;
+}
+
 export default function PerdaNacionalidadePage() {
-  const [cases, setCases] = useState<any[]>([]);
+  const [cases, setCases] = useState<PerdaNacionalidadeCase[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -252,7 +261,7 @@ export default function PerdaNacionalidadePage() {
 
                       <div className="flex items-center gap-6 text-sm">
                         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded">
+                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900 rounded">
                             <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                           </div>
                           <span className="font-medium">Passo {caseItem.currentStep + 1} de 9</span>
