@@ -1375,5 +1375,199 @@ export default function AcaoTrabalhistaDetailPage() {
                     </a>
                   </div>
                 )}
-                
-                {/* Alegações Finais */}
+
+                {stepData.alegacoesFinaisFile && (
+                  <div className="flex justify-between items-center p-2 bg-muted rounded">
+                    <span className="text-sm">Alegações Finais</span>
+                    <a 
+                      href={stepData.alegacoesFinaisFile} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary hover:underline truncate max-w-[150px]"
+                    >
+                      {stepData.alegacoesFinaisFile.split('/').pop()}
+                    </a>
+                  </div>
+                )}
+
+                {stepData.sentencaTrabalhistaFile && (
+                  <div className="flex justify-between items-center p-2 bg-muted rounded">
+                    <span className="text-sm">Sentença</span>
+                    <a 
+                      href={stepData.sentencaTrabalhistaFile} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary hover:underline truncate max-w-[150px]"
+                    >
+                      {stepData.sentencaTrabalhistaFile.split('/').pop()}
+                    </a>
+                  </div>
+                )}
+
+                {stepData.execucaoRecursoFile && (
+                  <div className="flex justify-between items-center p-2 bg-muted rounded">
+                    <span className="text-sm">Execução/Recurso</span>
+                    <a 
+                      href={stepData.execucaoRecursoFile} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary hover:underline truncate max-w-[150px]"
+                    >
+                      {stepData.execucaoRecursoFile.split('/').pop()}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Informações do Caso</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Cliente</Label>
+                <p className="text-sm text-muted-foreground">{caseData.clientName}</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Tipo</Label>
+                <p className="text-sm text-muted-foreground">Ação Trabalhista</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Status</Label>
+                <div className="flex items-center gap-2">
+                  <Badge 
+                    variant={
+                      caseData.status === "Finalizado" 
+                        ? "default" 
+                        : caseData.status === "Em Andamento" 
+                        ? "secondary" 
+                        : "outline"
+                    }
+                  >
+                    {caseData.status}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setStatusDialogOpen(true)}
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Progresso</Label>
+                <div className="mt-2">
+                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                    <span>Passo {caseData.currentStep + 1} de {workflow.length}</span>
+                    <span>{Math.round(((caseData.currentStep + 1) / workflow.length) * 100)}%</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div 
+                      className="bg-primary h-2 rounded-full transition-all duration-300" 
+                      style={{ width: `${((caseData.currentStep + 1) / workflow.length) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Data de Criação</Label>
+                <p className="text-sm text-muted-foreground">
+                  {new Date(caseData.createdAt).toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Observações</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Adicione observações sobre o caso..."
+                rows={4}
+              />
+              <Button onClick={handleSaveNotes} size="sm" className="w-full">
+                <Save className="h-4 w-4 mr-2" />
+                Salvar Observações
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Dialogs */}
+      <AlertDialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Alterar Status</AlertDialogTitle>
+            <AlertDialogDescription>
+              Selecione o novo status para este caso.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Select value={pendingStatus} onValueChange={setPendingStatus}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+                <SelectItem value="Pausado">Pausado</SelectItem>
+                <SelectItem value="Finalizado">Finalizado</SelectItem>
+                <SelectItem value="Cancelado">Cancelado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleStatusChange(pendingStatus)}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={stepDialogOpen} onOpenChange={setStepDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Alteração</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja alterar para o passo {pendingStep + 1}?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmStepChange}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Salvamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja salvar as observações?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSaveNotes}>
+              Salvar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
