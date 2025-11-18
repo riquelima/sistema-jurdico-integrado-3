@@ -8,10 +8,10 @@ const supabase = createClient(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
-    const { id } = params;
 
     // Buscar documentos relacionados a esta ação cível
     const { data: documents, error } = await supabase

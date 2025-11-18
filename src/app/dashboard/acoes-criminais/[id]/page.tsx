@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { use } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -34,7 +35,8 @@ const WORKFLOWS = {
   ]
 }
 
-export default function AcoesCriminaisPage({ params }: { params: { id: string } }) {
+export default function AcoesCriminaisPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter()
   const [caseData, setCaseData] = useState<any>(null)
   const [notes, setNotes] = useState('')
