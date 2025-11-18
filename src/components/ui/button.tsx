@@ -5,21 +5,21 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring focus-visible:ring-[3px] aria-invalid:ring-destructive aria-invalid:border-destructive",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-slate-300 focus-visible:ring-slate-300 focus-visible:ring-[3px] aria-invalid:ring-red-500 aria-invalid:border-red-500",
   {
     variants: {
       variant: {
         default:
-        "bg-primary text-primary-foreground shadow-md hover:bg-primary hover:shadow-lg transform hover:scale-105 active:scale-95",
+        "bg-slate-900 text-white shadow-md hover:bg-slate-800 hover:shadow-lg transform hover:scale-105 active:scale-95",
       destructive:
-        "bg-destructive text-white shadow-md hover:bg-destructive hover:shadow-lg transform hover:scale-105 active:scale-95 focus-visible:ring-destructive",
+        "bg-red-600 text-white shadow-md hover:bg-red-700 hover:shadow-lg transform hover:scale-105 active:scale-95 focus-visible:ring-red-500",
       outline:
-        "border bg-card shadow-md hover:bg-accent hover:text-accent-foreground hover:shadow-lg hover:border-primary",
+        "border bg-white shadow-md hover:bg-slate-100 hover:text-slate-700 hover:shadow-lg hover:border-slate-900 dark:bg-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-200",
       secondary:
-        "bg-secondary text-secondary-foreground shadow-md hover:bg-secondary hover:shadow-lg",
+        "bg-slate-100 text-slate-900 shadow-md hover:bg-slate-200 hover:shadow-lg dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground hover:shadow-sm",
-        link: "text-primary underline-offset-4 hover:underline",
+          "hover:bg-slate-100 hover:text-slate-700 hover:shadow-sm dark:hover:bg-slate-800 dark:hover:text-slate-200",
+        link: "text-slate-900 underline-offset-4 hover:underline dark:text-slate-100",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

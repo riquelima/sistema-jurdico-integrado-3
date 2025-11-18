@@ -78,7 +78,7 @@ export default function NovoVistoPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto px-4 py-8">
+    <div className="space-y-8 w-full px-4 py-8">
       {/* Header Elegante */}
       <div className="flex items-center gap-6 pb-6 border-b-2 border-primary/20">
         <Link href="/dashboard/vistos">
@@ -442,7 +442,7 @@ export default function NovoVistoPage() {
                   type="button" 
                   variant="outline" 
                   disabled={loading}
-                  className="h-12 px-8 border-2 hover:bg-muted transition-colors"
+                className="h-12 px-4 border-2 hover:bg-muted transition-colors"
                 >
                   Cancelar
                 </Button>
@@ -450,7 +450,7 @@ export default function NovoVistoPage() {
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="h-12 px-8 bg-primary hover:bg-primary text-primary-foreground shadow-md hover:shadow-lg transition-all"
+                className="h-12 px-4 bg-primary hover:bg-primary text-primary-foreground shadow-md hover:shadow-lg transition-all"
               >
                 <Save className="h-4 w-4 mr-2" />
                 {loading ? "Salvando..." : "Salvar Visto"}

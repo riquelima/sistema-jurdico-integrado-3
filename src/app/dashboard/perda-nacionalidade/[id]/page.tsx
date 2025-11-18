@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, CheckCircle2, Circle, Save, Trash2, FileUp, ChevronDown, ChevronUp, Edit2, Upload, FileText, Download, X } from "lucide-react";
+import { ArrowLeft, Save, Trash2, FileText, Download, X } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -30,11 +30,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -43,19 +38,54 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { DetailLayout } from "@/components/detail/DetailLayout";
+import { StepItem } from "@/components/detail/StepItem";
+import { StatusPanel } from "@/components/detail/StatusPanel";
+import { DocumentPanel } from "@/components/detail/DocumentPanel";
+import { NotesPanel } from "@/components/detail/NotesPanel";
 
-const WORKFLOWS = {
-  "Perda de Nacionalidade": [
-    "Cadastro dos Documentos",
-    "Fazer Procuração e Pedido de Perda",
-    "Enviar Procuração e Pedido - Cobrar Assinaturas",
-    "Protocolar com Procuração e Acordo Assinados",
-    "Exigências do Juiz",
-    "Processo Deferido - Enviar DOU e Solicitar Passaporte Chinês",
-    "Protocolar Exigência com Passaporte Chinês - Aguardar Portaria",
-    "Processo Ratificado (Finalizado)",
-  ],
-};
+const WORKFLOW_STEPS = [
+  {
+    id: 1,
+    title: "Cadastro dos Documentos",
+    description: "Informações iniciais do requerente",
+  },
+  {
+    id: 2,
+    title: "Fazer Procuração e Pedido de Perda",
+    description: "Elaboração de documentos legais",
+  },
+  {
+    id: 3,
+    title: "Enviar Procuração e Pedido - Cobrar Assinaturas",
+    description: "Coleta de assinaturas necessárias",
+  },
+  {
+    id: 4,
+    title: "Protocolar com Procuração e Acordo Assinados",
+    description: "Protocolo no cartório",
+  },
+  {
+    id: 5,
+    title: "Exigências do Juiz",
+    description: "Atendimento a exigências judiciais",
+  },
+  {
+    id: 6,
+    title: "Processo Deferido - Enviar DOU e Solicitar Passaporte Chinês",
+    description: "Documentação final e solicitações",
+  },
+  {
+    id: 7,
+    title: "Protocolar Exigência com Passaporte Chinês - Aguardar Portaria",
+    description: "Protocolo de exigências finais",
+  },
+  {
+    id: 8,
+    title: "Processo Ratificado (Finalizado)",
+    description: "Finalização do processo",
+  },
+];
 
 export default function PerdaNacionalidadeDetailPage() {
   const params = useParams();
@@ -568,7 +598,7 @@ export default function PerdaNacionalidadeDetailPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="w-full p-6 space-y-6">
         <div className="flex items-center gap-4">
           <Skeleton className="h-10 w-10" />
           <Skeleton className="h-8 w-64" />
@@ -590,7 +620,7 @@ export default function PerdaNacionalidadeDetailPage() {
 
   if (!caseData) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="w-full p-6">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900">Caso não encontrado</h1>
           <p className="text-gray-600 mt-2">O caso solicitado não foi encontrado.</p>
@@ -605,275 +635,13 @@ export default function PerdaNacionalidadeDetailPage() {
     );
   }
 
-  const workflow = WORKFLOWS["Perda de Nacionalidade"];
-
   return (
     <div 
-      className={`container mx-auto p-6 space-y-6 ${dragActive ? 'bg-blue-50' : ''}`}
+      className={`w-full space-y-6 ${dragActive ? 'bg-blue-50' : ''}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard/perda-nacionalidade">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{caseData.title}</h1>
-            <p className="text-gray-600">Perda de Nacionalidade</p>
-          </div>
-        </div>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="destructive" size="sm">
-              <Trash2 className="w-4 h-4 mr-2" />
-              Deletar Caso
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-              <AlertDialogDescription>
-                Esta ação não pode ser desfeita. O caso será permanentemente removido.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteCase}>
-                Deletar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Workflow Steps */}
-        <div className="lg:col-span-2 space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Fluxo do Processo</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {workflow.map((step, index) => (
-                <Collapsible
-                  key={index}
-                  open={expandedSteps.includes(index)}
-                  onOpenChange={() => toggleStep(index)}
-                >
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => toggleStepCompletion(index)}
-                        className="flex-shrink-0"
-                      >
-                        {completedSteps.includes(index) ? (
-                          <CheckCircle2 className="w-5 h-5 text-green-600" />
-                        ) : (
-                          <Circle className="w-5 h-5 text-gray-400" />
-                        )}
-                      </button>
-                      <div>
-                        <h3 className="font-medium">{step}</h3>
-                        <p className="text-sm text-gray-600">Etapa {index + 1}</p>
-                      </div>
-                    </div>
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        {expandedSteps.includes(index) ? (
-                          <ChevronUp className="w-4 h-4" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4" />
-                        )}
-                      </Button>
-                    </CollapsibleTrigger>
-                  </div>
-                  <CollapsibleContent className="px-4 pb-4">
-                    <div className="mt-4 space-y-4">
-                      {renderStepContent(index)}
-                      
-                      {/* Step Notes */}
-                      <div className="space-y-2">
-                        <Label>Notas da Etapa</Label>
-                        <Textarea
-                          value={stepNotes[index] || ""}
-                          onChange={(e) => setStepNotes(prev => ({ ...prev, [index]: e.target.value }))}
-                          placeholder="Adicione notas específicas para esta etapa..."
-                        />
-                        <Button 
-                          size="sm" 
-                          onClick={() => saveStepNotes(index, stepNotes[index] || "")}
-                        >
-                          <Save className="w-4 h-4 mr-2" />
-                          Salvar Notas
-                        </Button>
-                      </div>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Status */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Status do Caso</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Select value={status} onValueChange={saveStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pendente">Pendente</SelectItem>
-                  <SelectItem value="em_andamento">Em Andamento</SelectItem>
-                  <SelectItem value="aguardando_cliente">Aguardando Cliente</SelectItem>
-                  <SelectItem value="finalizado">Finalizado</SelectItem>
-                  <SelectItem value="cancelado">Cancelado</SelectItem>
-                </SelectContent>
-              </Select>
-              <Badge variant={
-                status === "finalizado" ? "default" :
-                status === "em_andamento" ? "secondary" :
-                status === "aguardando_cliente" ? "outline" :
-                status === "cancelado" ? "destructive" : "secondary"
-              }>
-                {status === "pendente" && "Pendente"}
-                {status === "em_andamento" && "Em Andamento"}
-                {status === "aguardando_cliente" && "Aguardando Cliente"}
-                {status === "finalizado" && "Finalizado"}
-                {status === "cancelado" && "Cancelado"}
-              </Badge>
-            </CardContent>
-          </Card>
-
-          {/* Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Notas Gerais</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Adicione notas sobre o caso..."
-                rows={6}
-              />
-              <Button onClick={saveNotes} size="sm">
-                <Save className="w-4 h-4 mr-2" />
-                Salvar Notas
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Documents */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Documentos</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <FileUp className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                <p className="text-sm text-gray-600 mb-2">
-                  Arraste arquivos aqui ou clique para selecionar
-                </p>
-                <Input
-                  type="file"
-                  multiple
-                  onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
-                  className="hidden"
-                  id="file-upload"
-                />
-                <Label htmlFor="file-upload" className="cursor-pointer">
-                  <Button variant="outline" size="sm" asChild>
-                    <span>Selecionar Arquivos</span>
-                  </Button>
-                </Label>
-              </div>
-
-              {uploading && (
-                <div className="text-center text-sm text-gray-600">
-                  Enviando arquivos...
-                </div>
-              )}
-
-              <div className="space-y-2">
-                {documents.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4" />
-                      {editingDocument === doc.id ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            value={newDocumentName}
-                            onChange={(e) => setNewDocumentName(e.target.value)}
-                            className="h-8"
-                            autoFocus
-                          />
-                          <Button
-                            size="sm"
-                            onClick={() => handleRenameDocument(doc.id, newDocumentName)}
-                          >
-                            <Save className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingDocument(null);
-                              setNewDocumentName("");
-                            }}
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <span className="text-sm truncate">{doc.name}</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditingDocument(doc.id);
-                          setNewDocumentName(doc.name);
-                        }}
-                      >
-                        <Edit2 className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => window.open(doc.url, '_blank')}
-                      >
-                        <Download className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDeleteDocument(doc.id)}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
       {/* Rename Dialog */}
       <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
         <DialogContent>
@@ -905,6 +673,140 @@ export default function PerdaNacionalidadeDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DetailLayout
+        backHref="/dashboard/perda-nacionalidade"
+        title={caseData?.title || "Perda de Nacionalidade"}
+        subtitle="Processo de perda de nacionalidade brasileira"
+        onDelete={handleDeleteCase}
+        left={
+          <div className="space-y-6">
+            {/* Workflow Steps */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Fluxo do Processo</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {WORKFLOW_STEPS.map((step, index) => (
+                  <StepItem
+                    key={step.id}
+                    index={step.id}
+                    title={step.title}
+                    description={step.description}
+                    isCurrent={false}
+                    isCompleted={completedSteps.includes(index)}
+                    isPending={false}
+                    expanded={expandedSteps.includes(index)}
+                    onToggle={() => toggleStep(index)}
+                  >
+                    {expandedSteps.includes(index) && renderStepContent(index)}
+                  </StepItem>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        }
+        right={
+          <div className="space-y-6">
+            <StatusPanel
+              status={status}
+              onStatusChange={saveStatus}
+              currentStep={completedSteps.length}
+              totalSteps={WORKFLOW_STEPS.length}
+              createdAt={caseData?.createdAt}
+              updatedAt={caseData?.updatedAt}
+            />
+
+            {/* Document Panel */}
+            <DocumentPanel
+              onDropFiles={(files) => {
+                // Handle file drop functionality
+                handleFileUpload(files);
+              }}
+              uploading={uploading}
+            />
+
+            {/* Documents List */}
+            {documents.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Documentos</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {documents.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        {editingDocument === doc.id ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={newDocumentName}
+                              onChange={(e) => setNewDocumentName(e.target.value)}
+                              className="h-8"
+                              autoFocus
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => handleRenameDocument(doc.id, newDocumentName)}
+                            >
+                              <Save className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setEditingDocument(null);
+                                setNewDocumentName("");
+                              }}
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-sm truncate">{doc.name}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingDocument(doc.id);
+                            setNewDocumentName(doc.name);
+                          }}
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => window.open(doc.url, '_blank')}
+                        >
+                          <Download className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteDocument(doc.id)}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Notes Panel */}
+            <NotesPanel
+              notes={notes}
+              onChange={setNotes}
+              onSave={saveNotes}
+            />
+          </div>
+        }
+      />
     </div>
   );
 }

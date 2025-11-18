@@ -8,6 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, Home, Eye, AlertTriangle, Clock, CheckCircle2, AlertCircle, FileText, Building2 } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingState } from "@/components/loading-state";
+import { useDataCache } from "@/hooks/useDataCache";
+import { usePrefetch } from "@/hooks/usePrefetch";
+import { OptimizedLink } from "@/components/optimized-link";
+import { prefetchCompraVendaById } from "@/utils/prefetch-functions";
 import {
   Select,
   SelectContent,
@@ -17,27 +22,19 @@ import {
 } from "@/components/ui/select";
 
 export default function CompraVendaPage() {
-  const [properties, setProperties] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: propertiesData, isLoading, error, refetch } = useDataCache(
+    "compra-venda",
+    async () => {
+      const response = await fetch("/api/compra-venda-imoveis?limit=100");
+      return response.json();
+    }
+  );
+  const properties = Array.isArray(propertiesData) ? propertiesData : [];
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-
   useEffect(() => {
-    fetchProperties();
+    // Prefetch hook disponível para navegação futura
   }, []);
-
-  const fetchProperties = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/compra-venda-imoveis?limit=100");
-      const data = await response.json();
-      setProperties(data);
-    } catch (error) {
-      console.error("Error fetching properties:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filteredProperties = properties.filter((p) => {
     const matchesSearch = !search || p.enderecoImovel?.toLowerCase().includes(search.toLowerCase());
@@ -208,16 +205,8 @@ export default function CompraVendaPage() {
 
       {/* Lista de processos */}
       <div className="grid gap-4">
-        {loading ? (
-          <>
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="border-slate-200 dark:border-slate-700">
-                <CardContent className="pt-6">
-                  <Skeleton className="h-32 w-full" />
-                </CardContent>
-              </Card>
-            ))}
-          </>
+        {isLoading ? (
+          <LoadingState count={3} type="card" />
         ) : filteredProperties.length === 0 ? (
           <Card className="border-slate-200 dark:border-slate-700 shadow-md">
             <CardContent className="flex flex-col items-center justify-center py-16">
@@ -344,7 +333,10 @@ export default function CompraVendaPage() {
                     </div>
 
                     {/* Botão de ação */}
-                    <Link href={`/dashboard/compra-venda/${property.id}`}>
+                    <OptimizedLink 
+                      href={`/dashboard/compra-venda/${property.id}`}
+                      prefetchData={() => prefetchCompraVendaById(property.id)}
+                    >
                       <Button 
                         size="lg"
                         className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md"
@@ -352,7 +344,7 @@ export default function CompraVendaPage() {
                         <Eye className="h-4 w-4 mr-2" />
                         Ver Detalhes
                       </Button>
-                    </Link>
+                    </OptimizedLink>
                   </div>
                 </CardContent>
               </Card>

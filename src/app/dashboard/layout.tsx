@@ -3,29 +3,48 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { 
-  Scale, 
+  LayoutDashboard, 
   FileText, 
   Briefcase, 
-  AlertCircle, 
-  Home, 
-  Globe, 
+  Shield, 
+  Home,
+  Globe,
   LogOut,
   Menu,
   Bell,
   X,
   ChevronLeft,
-  ChevronRight
+  User,
+  Settings,
+  Search,
+  Plus,
+  Calendar,
+  TrendingUp,
+  Users,
+  Scale
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { NotificationBell } from "@/components/notification-bell";
+import { OptimizedLink } from "@/components/optimized-link";
+import { 
+  prefetchAcoesTrabalhistas, 
+  prefetchAcoesCiveis, 
+  prefetchAcoesCriminais,
+  prefetchCompraVenda,
+  prefetchPerdaNacionalidade,
+  prefetchVistos,
+  prefetchDashboard
+} from "@/utils/prefetch-functions";
 
 interface User {
   id: number;
@@ -33,6 +52,17 @@ interface User {
   name: string;
   role: string;
 }
+
+// Mapeamento de prefetch functions por rota
+const PREFETCH_FUNCTIONS = {
+  "/dashboard": prefetchDashboard,
+  "/dashboard/acoes-trabalhistas": prefetchAcoesTrabalhistas,
+  "/dashboard/acoes-civeis": prefetchAcoesCiveis,
+  "/dashboard/acoes-criminais": prefetchAcoesCriminais,
+  "/dashboard/compra-venda": prefetchCompraVenda,
+  "/dashboard/perda-nacionalidade": prefetchPerdaNacionalidade,
+  "/dashboard/vistos": prefetchVistos,
+};
 
 export default function DashboardLayout({
   children,
@@ -43,13 +73,9 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  // Check if we're on the main dashboard page
-  const isMainDashboard = pathname === "/dashboard";
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    // Ensure we're on the client side before accessing localStorage
     if (typeof window !== 'undefined') {
       const storedUser = localStorage.getItem("user");
       if (!storedUser) {
@@ -57,22 +83,8 @@ export default function DashboardLayout({
         return;
       }
       setUser(JSON.parse(storedUser));
-
-      // Load sidebar state from localStorage
-      const savedState = localStorage.getItem("sidebarCollapsed");
-      if (savedState) {
-        setSidebarCollapsed(JSON.parse(savedState));
-      }
     }
   }, [router]);
-
-  const toggleSidebar = () => {
-    const newState = !sidebarCollapsed;
-    setSidebarCollapsed(newState);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem("sidebarCollapsed", JSON.stringify(newState));
-    }
-  };
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
@@ -83,92 +95,121 @@ export default function DashboardLayout({
 
   const menuItems = [
     {
-      title: "Dashboard",
+      title: "Visão Geral",
       href: "/dashboard",
-      icon: Home,
+      icon: LayoutDashboard,
+      description: "Dashboard principal",
     },
     {
       title: "Ações Cíveis",
       href: "/dashboard/acoes-civeis",
       icon: FileText,
+      description: "Processos cíveis",
     },
     {
       title: "Ações Trabalhistas",
       href: "/dashboard/acoes-trabalhistas",
       icon: Briefcase,
+      description: "Processos trabalhistas",
     },
     {
       title: "Ações Criminais",
       href: "/dashboard/acoes-criminais",
-      icon: AlertCircle,
+      icon: Shield,
+      description: "Processos criminais",
     },
     {
       title: "Compra e Venda",
       href: "/dashboard/compra-venda",
       icon: Home,
+      description: "Transações imobiliárias",
     },
     {
       title: "Perda de Nacionalidade",
       href: "/dashboard/perda-nacionalidade",
       icon: Globe,
+      description: "Processos de nacionalidade",
     },
     {
       title: "Vistos",
       href: "/dashboard/vistos",
       icon: Globe,
+      description: "Processos de vistos",
     },
   ];
 
   const Sidebar = () => (
-    <div className="flex flex-col h-full bg-card">
-      <div className="p-6 border-b border-border bg-card">
-        <div className="flex items-center justify-center mb-3">
-          <Image 
-            src="https://i.imgur.com/9R0VFkm.png"
-            alt="Sistema Jurídico Logo" 
-            width={200}
-            height={60}
-            className="object-contain"
-            priority
-            unoptimized
+    <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Header do Sidebar */}
+      <div className="p-6 border-b border-slate-200">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center">
+            <Scale className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">Sistema Jurídico</h2>
+            <p className="text-xs text-slate-500">Silva & Ferrari</p>
+          </div>
+        </div>
+        
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <Input
+            placeholder="Buscar..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 bg-white/50 border-slate-200 focus:border-blue-400 focus:ring-blue-400"
           />
         </div>
-        <p className="text-xs text-muted-foreground text-center">{user?.name}</p>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto bg-card">
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {menuItems.map((item) => (
-          <Link
+          <OptimizedLink
             key={item.href}
             href={item.href}
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors bg-card"
+            prefetchData={PREFETCH_FUNCTIONS[item.href as keyof typeof PREFETCH_FUNCTIONS]}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+              pathname === item.href
+                ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
+                : "text-slate-600 hover:bg-white/70 hover:text-slate-900 hover:shadow-sm"
+            }`}
           >
             <item.icon className="h-5 w-5" />
-            <span className="text-sm font-medium">{item.title}</span>
-          </Link>
+            <div className="flex-1">
+              <div className="text-sm font-medium">{item.title}</div>
+              <div className="text-xs opacity-75">{item.description}</div>
+            </div>
+          </OptimizedLink>
         ))}
       </nav>
 
-      <div className="p-4 border-t border-border space-y-2 bg-card">
-        <Button
-          variant="ghost"
-          className="w-full justify-start bg-card"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-5 w-5 mr-3" />
-          Sair
-        </Button>
-        
-        {/* Collapse Button - Bottom of Sidebar (Desktop only) */}
-        <button
-          onClick={toggleSidebar}
-          className="hidden lg:flex w-full items-center justify-center py-1 px-2 text-xs text-muted-foreground hover:text-muted-foreground hover:bg-muted rounded transition-colors bg-card"
-          title="Ocultar menu"
-        >
-          <ChevronLeft className="h-3 w-3 mr-1" />
-          <span>Ocultar</span>
-        </button>
+      {/* User Profile */}
+      <div className="p-4 border-t border-slate-200">
+        <Card className="p-3 bg-white/70 backdrop-blur-sm border-slate-200">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-blue-800 text-white">
+                {user?.name?.charAt(0)?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-900 truncate">Administrador</p>
+              <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              className="h-8 w-8 text-slate-400 hover:text-slate-600"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        </Card>
       </div>
     </div>
   );
@@ -178,68 +219,83 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Desktop Sidebar */}
-      <aside 
-        className={`hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col border-r border-border bg-card transition-all duration-300 ${
-          sidebarCollapsed ? 'lg:w-0 lg:overflow-hidden' : 'lg:w-64'
-        }`}
-      >
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col border-r border-slate-200/50 w-80">
         <Sidebar />
       </aside>
 
-      {/* Desktop Toggle Button (when collapsed) */}
-      {sidebarCollapsed && (
-        <button
-          onClick={toggleSidebar}
-          className="hidden lg:flex fixed left-2 bottom-4 items-center justify-center p-1.5 bg-card text-muted-foreground hover:text-muted-foreground hover:bg-muted rounded border border-border shadow-sm transition-all z-50"
-          title="Expandir menu"
-        >
-          <ChevronRight className="h-3 w-3" />
-        </button>
-      )}
-
-      {/* Desktop Header with Notification Bell */}
-      <div className="hidden lg:block fixed top-0 right-0 z-50 bg-card">
-        <div className="flex items-center justify-end px-6 py-3 gap-3">
-          {isMainDashboard && <NotificationBell />}
-        </div>
-      </div>
-
-      {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-2">
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="bg-card">
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-64 p-0 bg-card border-border">
-                <Sidebar />
-              </SheetContent>
-            </Sheet>
-            <Image 
-              src="https://i.imgur.com/9R0VFkm.png"
-              alt="Sistema Jurídico Logo" 
-              width={140}
-              height={42}
-              className="object-contain"
-              priority
-              unoptimized
-            />
+      {/* Main Content Area */}
+      <div className="lg:pl-80">
+        {/* Desktop Header */}
+        <header className="hidden lg:block sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
+          <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex items-center gap-4">
+              {pathname === "/dashboard" && (
+                <h1 className="text-2xl font-bold gradient-text">
+                  {menuItems.find(item => item.href === pathname)?.title || "Dashboard"}
+                </h1>
+              )}
+              <Badge variant="outline" className="border-blue-200 text-blue-700">
+                <Calendar className="w-3 h-3 mr-1" />
+                {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </Badge>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              {pathname === "/dashboard" && (
+                <>
+                  <Button variant="outline" size="sm" className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700">
+                    <Plus className="w-4 h-4 mr-2 text-red-600" />
+                    Novo Processo
+                  </Button>
+                  <NotificationBell />
+                  <Button variant="ghost" size="icon" className="text-red-600 hover:bg-red-50 hover:text-red-700">
+                    <Settings className="w-5 h-5 text-red-600" />
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
-          {isMainDashboard && <NotificationBell />}
-        </div>
-      </div>
+        </header>
 
-      {/* Main Content */}
-      <main className={`pt-16 lg:pt-16 transition-all duration-300 ${
-        sidebarCollapsed ? 'lg:pl-0' : 'lg:pl-64'
-      }`}>
-        <div className="p-4 lg:p-8">{children}</div>
-      </main>
+        {/* Mobile Header */}
+        <header className="lg:hidden sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-80 p-0">
+                  <Sidebar />
+                </SheetContent>
+              </Sheet>
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
+                <Scale className="w-4 h-4 text-white" />
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {pathname === "/dashboard" && <NotificationBell />}
+              {pathname === "/dashboard" && (
+                <Button variant="ghost" size="icon" className="text-red-600 hover:bg-red-50 hover:text-red-700">
+                  <User className="w-5 h-5 text-red-600" />
+                </Button>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="p-4 lg:p-6">
+          <div className="w-full">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

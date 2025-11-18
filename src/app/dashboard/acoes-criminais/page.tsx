@@ -19,6 +19,11 @@ import {
   Trash2
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingState } from "@/components/loading-state";
+import { useDataCache } from "@/hooks/useDataCache";
+import { usePrefetch } from "@/hooks/usePrefetch";
+import { OptimizedLink } from "@/components/optimized-link";
+import { prefetchAcaoCriminalById } from "@/utils/prefetch-functions";
 import {
   Select,
   SelectContent,
@@ -48,27 +53,22 @@ const CASE_TYPES = [
 ];
 
 export default function AcoesCriminaisPage() {
-  const [cases, setCases] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: casesData, isLoading, error, refetch } = useDataCache(
+    "acoes-criminais",
+    async () => {
+      const response = await fetch("/api/acoes-criminais?limit=100");
+      return response.json();
+    }
+  );
+  const cases = Array.isArray(casesData) ? casesData : [];
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
 
   useEffect(() => {
-    fetchCases();
+    // Prefetch pode ser usado em interação futura
+    // Mantido para consistência futura
   }, []);
-
-  const fetchCases = async () => {
-    try {
-      const response = await fetch("/api/acoes-criminais?limit=100");
-      const data = await response.json();
-      setCases(data);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filteredCases = cases.filter((c) => {
     const matchesSearch = c.clientName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -117,8 +117,8 @@ export default function AcoesCriminaisPage() {
       });
       
       if (response.ok) {
-        // Remove the case from the local state
-        setCases(cases.filter(c => c.id !== id));
+        // Atualiza via refetch
+        refetch();
       } else {
         console.error('Failed to delete case');
       }
@@ -128,100 +128,104 @@ export default function AcoesCriminaisPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 p-6">
       {/* Header com gradiente */}
-      <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-red-600 to-red-800 p-8 text-white">
-        <div className="relative z-10">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold">Ações Criminais</h1>
-              <p className="mt-2 text-red-100">
-                Gerencie e acompanhe suas ações criminais
-              </p>
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-xl p-8 shadow-lg border border-slate-700">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-amber-500 rounded-lg">
+                <Shield className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-white">Ações Criminais</h1>
+                <p className="text-slate-300 mt-1">
+                  Gerencie e acompanhe suas ações criminais
+                </p>
+              </div>
             </div>
-            <Link href="/dashboard/acoes-criminais/nova">
-              <Button className="bg-white text-red-600 hover:bg-red-50">
-                <Plus className="mr-2 h-4 w-4" />
-                Nova Ação
-              </Button>
-            </Link>
+          </div>
+          <Link href="/dashboard/acoes-criminais/nova">
+            <Button size="lg" className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold shadow-lg">
+              <Plus className="h-5 w-5 mr-2" />
+              Nova Ação
+            </Button>
+          </Link>
+        </div>
+
+        {/* Cards de estatísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+          <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-400 text-sm font-medium">Total de Ações</p>
+                <p className="text-3xl font-bold text-white mt-1">{stats.total}</p>
+              </div>
+              <div className="p-3 bg-slate-700 rounded-lg">
+                <Gavel className="h-6 w-6 text-slate-300" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-blue-900 rounded-lg p-4 border border-blue-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-blue-300 text-sm font-medium">Em Andamento</p>
+                <p className="text-3xl font-bold text-blue-400 mt-1">{stats.emAndamento}</p>
+              </div>
+              <div className="p-3 bg-blue-800 rounded-lg">
+                <Clock className="h-6 w-6 text-blue-400" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-amber-900 rounded-lg p-4 border border-amber-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-amber-300 text-sm font-medium">Aguardando</p>
+                <p className="text-3xl font-bold text-amber-400 mt-1">{stats.aguardando}</p>
+              </div>
+              <div className="p-3 bg-amber-800 rounded-lg">
+                <AlertCircle className="h-6 w-6 text-amber-400" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-emerald-300 text-sm font-medium">Finalizadas</p>
+                <p className="text-3xl font-bold text-emerald-400 mt-1">{stats.finalizado}</p>
+              </div>
+              <div className="p-3 bg-emerald-800 rounded-lg">
+                <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+              </div>
+            </div>
           </div>
         </div>
-        <div className="absolute right-0 top-0 h-full w-1/3 opacity-10">
-          <Shield className="h-full w-full" />
-        </div>
-      </div>
-
-      {/* Cards de estatísticas */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-red-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="text-sm font-medium">Total de Ações</div>
-            <Gavel className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">
-              Todas as ações criminais
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="text-sm font-medium">Em Andamento</div>
-            <Clock className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.emAndamento}</div>
-            <p className="text-xs text-muted-foreground">
-              Ações em tramitação
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-yellow-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="text-sm font-medium">Aguardando</div>
-            <AlertCircle className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.aguardando}</div>
-            <p className="text-xs text-muted-foreground">
-              Aguardando providências
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="text-sm font-medium">Finalizadas</div>
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.finalizado}</div>
-            <p className="text-xs text-muted-foreground">
-              Ações concluídas
-            </p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Filtros */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col space-y-4 md:flex-row md:space-x-4 md:space-y-0">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <Card className="border-slate-200 dark:border-slate-700 shadow-md">
+        <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-b border-slate-200 dark:border-slate-700">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Search className="h-5 w-5 text-amber-500" />
+            Filtros de Busca
+          </h2>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
               <Input
                 placeholder="Buscar por cliente..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-9 border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:ring-amber-500"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
+              <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:ring-amber-500">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -232,8 +236,8 @@ export default function AcoesCriminaisPage() {
               </SelectContent>
             </Select>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Tipo" />
+              <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:ring-amber-500">
+                <SelectValue placeholder="Tipo de ação" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os tipos</SelectItem>
@@ -250,29 +254,25 @@ export default function AcoesCriminaisPage() {
 
       {/* Lista de ações */}
       <div className="grid gap-6">
-        {loading ? (
-          Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="space-y-3">
-                  <Skeleton className="h-4 w-[250px]" />
-                  <Skeleton className="h-4 w-[200px]" />
-                  <Skeleton className="h-4 w-[150px]" />
-                </div>
-              </CardContent>
-            </Card>
-          ))
+        {isLoading ? (
+          <LoadingState count={3} type="card" />
         ) : filteredCases.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Shield className="mx-auto h-16 w-16 text-muted-foreground" />
-              <h3 className="mt-4 text-xl font-semibold">Nenhuma ação encontrada</h3>
-              <p className="mt-2 text-muted-foreground">
-                Não há ações criminais que correspondam aos filtros aplicados.
+          <Card className="border-slate-200 dark:border-slate-700 shadow-md">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-full mb-4">
+                <Shield className="h-12 w-12 text-slate-400" />
+              </div>
+              <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                Nenhuma ação encontrada
+              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 mt-2">
+                {searchTerm || typeFilter !== "all" || statusFilter !== "all"
+                  ? "Tente ajustar os filtros de busca"
+                  : "Comece criando uma nova ação criminal"}
               </p>
               <Link href="/dashboard/acoes-criminais/nova">
-                <Button className="mt-4">
-                  <Plus className="mr-2 h-4 w-4" />
+                <Button className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold">
+                  <Plus className="h-4 w-4 mr-2" />
                   Criar Nova Ação
                 </Button>
               </Link>
@@ -282,84 +282,112 @@ export default function AcoesCriminaisPage() {
           filteredCases.map((caseItem) => {
             const StatusIcon = getStatusIcon(caseItem.status);
             return (
-              <Card key={caseItem.id} className="hover:shadow-lg transition-all duration-200 relative">
-                {/* Discrete Delete Button */}
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
+              <Card 
+                key={caseItem.id} 
+                className="border-slate-200 dark:border-slate-700 hover:shadow-xl hover:border-amber-500/50 transition-all duration-200 bg-gradient-to-r from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 relative"
+              >
+                {/* Button Container - Alinhado horizontalmente */}
+                <div className="absolute top-2 right-2 flex items-center gap-2">
+                  {/* Ver Detalhes Button */}
+                  <OptimizedLink 
+                    href={`/dashboard/acoes-criminais/${caseItem.id}`}
+                    prefetchData={() => prefetchAcaoCriminalById(caseItem.id)}
+                  >
+                    <Button 
                       size="sm"
-                      className="absolute top-2 right-2 z-10 h-8 w-8 p-0 bg-red-50 hover:bg-red-100 dark:bg-red-900 dark:hover:bg-red-900 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 opacity-70 hover:opacity-100 transition-all duration-200"
+                      className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md h-8 px-3"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Eye className="h-4 w-4" />
                     </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Tem certeza que deseja excluir a ação criminal de <strong>{caseItem.clientName}</strong>? 
-                        Esta ação não pode ser desfeita.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={() => handleDelete(caseItem.id)}
-                        className="bg-red-600 hover:bg-red-700 text-white"
+                  </OptimizedLink>
+                  
+                  {/* Delete Button */}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-red-600 hover:text-white hover:bg-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all duration-200"
                       >
-                        Excluir
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 space-y-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-                          <Shield className="h-5 w-5 text-red-600" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold">{caseItem.clientName}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {caseItem.type || "Defesa Criminal"}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-4">
-                        <Badge className={`${getStatusColor(caseItem.status)} flex items-center space-x-1`}>
-                          <StatusIcon className="h-3 w-3" />
-                          <span>{caseItem.status}</span>
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          Criado em: {new Date(caseItem.createdAt).toLocaleDateString('pt-BR')}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                        <div className="flex items-center space-x-2 text-sm">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <span>Processo: {caseItem.processNumber || "Não informado"}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-sm">
-                          <Gavel className="h-4 w-4 text-muted-foreground" />
-                          <span>Vara: {caseItem.court || "Não informado"}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-sm">
-                          <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                          <span>Prioridade: {caseItem.priority || "Normal"}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Eye className="mr-2 h-4 w-4" />
-                        Ver Detalhes
+                        <Trash2 className="h-4 w-4" />
                       </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza que deseja excluir a ação criminal de {caseItem.clientName}? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(caseItem.id)}
+                          className="bg-white text-red-600 border border-red-500 hover:bg-red-50 hover:text-red-700"
+                        >
+                          Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+                
+                <CardContent className="pt-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-4 flex-1">
+                      {/* Ícone do processo */}
+                      <div className="p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg shadow-md flex-shrink-0">
+                        <Shield className="h-6 w-6 text-white" />
+                      </div>
+
+                      {/* Informações do processo */}
+                      <div className="space-y-3 flex-1">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                            {caseItem.clientName}
+                          </h3>
+                          <Badge className={`${getStatusColor(caseItem.status)} flex items-center gap-1.5 px-3 py-1 shadow-md`}>
+                            <StatusIcon className="h-4 w-4" />
+                            {caseItem.status}
+                          </Badge>
+                        </div>
+
+                        <div className="flex items-center gap-6 text-sm flex-wrap">
+                          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                            <div className="p-1.5 bg-purple-100 dark:bg-purple-900 rounded">
+                              <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <span className="font-medium">Processo: {caseItem.processNumber || "Não informado"}</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                            <div className="p-1.5 bg-blue-100 dark:bg-blue-900 rounded">
+                              <Gavel className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <span className="font-medium">Vara: {caseItem.court || "Não informado"}</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                            <div className="p-1.5 bg-slate-100 dark:bg-slate-700 rounded">
+                              <AlertCircle className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                            </div>
+                            <span className="font-medium">Prioridade: {caseItem.priority || "Normal"}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                          <div className="p-1.5 bg-slate-100 dark:bg-slate-700 rounded">
+                            <Clock className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          </div>
+                          <span>
+                            Criado em: {new Date(caseItem.createdAt).toLocaleDateString('pt-BR', {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric"
+                            })}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </CardContent>

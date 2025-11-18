@@ -313,7 +313,7 @@ export default function NovaAcaoCivelPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 w-full">
       <div className="flex items-center gap-4">
         <Link href="/dashboard/acoes-civeis">
           <Button variant="ghost" size="icon">

@@ -8,6 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, Globe, Eye, FileText, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingState } from "@/components/loading-state";
+import { useDataCache } from "@/hooks/useDataCache";
+import { usePrefetch } from "@/hooks/usePrefetch";
+import { OptimizedLink } from "@/components/optimized-link";
+import { prefetchPerdaNacionalidadeById } from "@/utils/prefetch-functions";
 import {
   Select,
   SelectContent,
@@ -26,27 +31,19 @@ interface PerdaNacionalidadeCase {
 }
 
 export default function PerdaNacionalidadePage() {
-  const [cases, setCases] = useState<PerdaNacionalidadeCase[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: casesData, isLoading, error, refetch } = useDataCache(
+    "perda-nacionalidade",
+    async () => {
+      const response = await fetch("/api/perda-nacionalidade?limit=100");
+      return response.json();
+    }
+  );
+  const cases = Array.isArray(casesData) ? casesData : [];
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-
   useEffect(() => {
-    fetchCases();
+    // Prefetch disponível para navegação futura
   }, []);
-
-  const fetchCases = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/perda-nacionalidade?limit=100");
-      const data = await response.json();
-      setCases(data);
-    } catch (error) {
-      console.error("Error fetching cases:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filteredCases = cases.filter((c) => {
     const matchesSearch = c.clientName.toLowerCase().includes(search.toLowerCase());
@@ -201,16 +198,8 @@ export default function PerdaNacionalidadePage() {
 
       {/* Lista de processos */}
       <div className="grid gap-4">
-        {loading ? (
-          <>
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="border-slate-200 dark:border-slate-700">
-                <CardContent className="pt-6">
-                  <Skeleton className="h-32 w-full" />
-                </CardContent>
-              </Card>
-            ))}
-          </>
+        {isLoading ? (
+          <LoadingState count={3} type="card" />
         ) : filteredCases.length === 0 ? (
           <Card className="border-slate-200 dark:border-slate-700 shadow-md">
             <CardContent className="flex flex-col items-center justify-center py-16">
@@ -300,7 +289,10 @@ export default function PerdaNacionalidadePage() {
                   </div>
 
                   {/* Botão de ação */}
-                  <Link href={`/dashboard/perda-nacionalidade/${caseItem.id}`}>
+                  <OptimizedLink 
+                    href={`/dashboard/perda-nacionalidade/${caseItem.id}`}
+                    prefetchData={() => prefetchPerdaNacionalidadeById(caseItem.id)}
+                  >
                     <Button 
                       size="lg"
                       className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md"
@@ -308,7 +300,7 @@ export default function PerdaNacionalidadePage() {
                       <Eye className="h-4 w-4 mr-2" />
                       Ver Detalhes
                     </Button>
-                  </Link>
+                  </OptimizedLink>
                 </div>
               </CardContent>
             </Card>

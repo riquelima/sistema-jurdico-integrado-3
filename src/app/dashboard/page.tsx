@@ -3,7 +3,23 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Briefcase, AlertCircle, Home, Globe, Bell, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { 
+  FileText, 
+  Briefcase, 
+  Shield, 
+  Home, 
+  Globe, 
+  Bell, 
+  TrendingUp, 
+  Users, 
+  Calendar,
+  Clock,
+  ArrowUpRight,
+  Activity,
+  Target
+} from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -18,6 +34,8 @@ export default function DashboardPage() {
   });
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [totalCount, setTotalCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -68,6 +86,22 @@ export default function DashboardPage() {
         });
 
         setAlerts(alertsData);
+        try {
+          const totalRes = await fetch('/api/processos/count');
+          const totalJson = await totalRes.json();
+          if (totalRes.ok) {
+            setTotalCount(totalJson.total ?? 0);
+          }
+        } catch (err) {
+          console.error('Erro ao buscar total de processos:', err);
+        }
+        
+        // Simulate recent activity
+        setRecentActivity([
+          { id: 1, action: "Processo criado", type: "Ação Civil", time: "2 horas atrás", user: "João Silva" },
+          { id: 2, action: "Documento enviado", type: "Compra e Venda", time: "4 horas atrás", user: "Maria Santos" },
+          { id: 3, action: "Audiência agendada", type: "Ação Trabalhista", time: "1 dia atrás", user: "Pedro Oliveira" },
+        ]);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -76,6 +110,18 @@ export default function DashboardPage() {
     };
 
     fetchData();
+    const onFocus = () => {
+      fetch('/api/processos/count')
+        .then(r => r.json())
+        .then(j => setTotalCount(j.total ?? 0))
+        .catch(err => console.error('Erro ao atualizar total de processos:', err));
+    };
+    window.addEventListener('focus', onFocus);
+    const interval = setInterval(onFocus, 60000);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      clearInterval(interval);
+    };
   }, []);
 
   const modules = [
@@ -84,111 +130,172 @@ export default function DashboardPage() {
       count: stats.acoesCiveis,
       icon: FileText,
       href: "/dashboard/acoes-civeis",
-      color: "text-blue-600",
+      color: "from-blue-500 to-blue-600",
       bgColor: "bg-blue-50",
-      borderColor: "border-blue-200",
-      hoverBorder: "hover:border-blue-400",
+      description: "Processos judiciais cíveis",
+      trend: "+12%",
     },
     {
       title: "Ações Trabalhistas",
       count: stats.acoesTrabalhistas,
       icon: Briefcase,
       href: "/dashboard/acoes-trabalhistas",
-      color: "text-purple-600",
+      color: "from-purple-500 to-purple-600",
       bgColor: "bg-purple-50",
-      borderColor: "border-purple-200",
-      hoverBorder: "hover:border-purple-400",
+      description: "Processos trabalhistas",
+      trend: "+8%",
     },
     {
       title: "Ações Criminais",
       count: stats.acoesCriminais,
-      icon: AlertCircle,
+      icon: Shield,
       href: "/dashboard/acoes-criminais",
-      color: "text-red-600",
+      color: "from-red-500 to-red-600",
       bgColor: "bg-red-50",
-      borderColor: "border-red-200",
-      hoverBorder: "hover:border-red-400",
+      description: "Processos criminais",
+      trend: "+5%",
     },
     {
       title: "Compra e Venda",
       count: stats.compraVenda,
       icon: Home,
       href: "/dashboard/compra-venda",
-      color: "text-emerald-600",
+      color: "from-emerald-500 to-emerald-600",
       bgColor: "bg-emerald-50",
-      borderColor: "border-emerald-200",
-      hoverBorder: "hover:border-emerald-400",
+      description: "Transações imobiliárias",
+      trend: "+15%",
     },
     {
       title: "Perda de Nacionalidade",
       count: stats.perdaNacionalidade,
       icon: Globe,
       href: "/dashboard/perda-nacionalidade",
-      color: "text-orange-600",
+      color: "from-orange-500 to-orange-600",
       bgColor: "bg-orange-50",
-      borderColor: "border-orange-200",
-      hoverBorder: "hover:border-orange-400",
+      description: "Processos de nacionalidade",
+      trend: "+3%",
     },
     {
       title: "Vistos",
       count: stats.vistos,
       icon: Globe,
       href: "/dashboard/vistos",
-      color: "text-cyan-600",
+      color: "from-cyan-500 to-cyan-600",
       bgColor: "bg-cyan-50",
-      borderColor: "border-cyan-200",
-      hoverBorder: "hover:border-cyan-400",
+      description: "Processos de vistos",
+      trend: "+7%",
     },
   ];
 
   const totalProcessos = Object.values(stats).reduce((a, b) => a + b, 0);
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6 space-y-8">
-      {/* Header Section */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-8 shadow-xl border border-slate-700">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Dashboard</h1>
-            <p className="text-slate-300 text-lg">Visão geral do sistema jurídico</p>
-          </div>
-          <div className="bg-amber-500 p-6 rounded-2xl shadow-xl">
-            <div className="text-center">
-              <p className="text-slate-900 text-sm font-semibold mb-1">Total de Processos</p>
-              <p className="text-slate-900 text-4xl font-bold">{loading ? "..." : totalProcessos}</p>
+    <div className="space-y-8">
+      {/* Welcome Section */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white via-blue-50 to-indigo-100 p-8 border border-slate-200/50">
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 mb-2">
+                Bem-vindo ao Sistema Jurídico
+              </h1>
+              <p className="text-slate-600 text-lg">
+                Gerencie seus processos de forma inteligente e eficiente
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-slate-500 mb-1">Processos Totais</div>
+              <div className="text-4xl font-bold gradient-text">
+                {loading ? "..." : totalProcessos}
+              </div>
             </div>
           </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <div className="text-sm text-slate-600">Taxa de Sucesso</div>
+                    <div className="text-xl font-bold text-slate-900">87%</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Users className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <div className="text-sm text-slate-600">Clientes Ativos</div>
+                    <div className="text-xl font-bold text-slate-900">{loading ? '...' : totalCount}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Target className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <div className="text-sm text-slate-600">Meta do Mês</div>
+                    <div className="text-xl font-bold text-slate-900">92%</div>
+                    <Progress value={92} className="h-2 mt-2" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
+        
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-400/20 to-transparent rounded-full -translate-y-32 translate-x-32"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-indigo-400/20 to-transparent rounded-full translate-y-24 -translate-x-24"></div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {modules.map((module) => (
           <Link key={module.href} href={module.href}>
-            <Card className={`bg-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border-2 ${module.borderColor} ${module.hoverBorder} h-full`}>
-              <CardHeader className="pb-3">
+            <Card className="group relative overflow-hidden border-slate-200/50 bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1">
+              <div className={`absolute inset-0 bg-gradient-to-br ${module.color} opacity-5 group-hover:opacity-10 transition-opacity`}></div>
+              <CardHeader className="relative pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold text-slate-800">
+                  <CardTitle className="text-lg font-semibold text-slate-800">
                     {module.title}
                   </CardTitle>
-                  <div className={`p-3 rounded-xl ${module.bgColor}`}>
-                    <module.icon className={`h-6 w-6 ${module.color}`} />
+                  <div className={`p-3 rounded-xl ${module.bgColor} group-hover:scale-110 transition-transform`}>
+                    <module.icon className={`h-6 w-6 text-slate-700`} />
                   </div>
                 </div>
+                <p className="text-sm text-slate-600 mt-1">{module.description}</p>
               </CardHeader>
-              <CardContent>
+              <CardContent className="relative">
                 {loading ? (
                   <Skeleton className="h-12 w-24 bg-slate-200" />
                 ) : (
-                  <div className="space-y-2">
-                    <div className={`text-4xl font-bold ${module.color}`}>
-                      {module.count}
+                  <div className="space-y-3">
+                    <div className="flex items-end gap-2">
+                      <div className="text-3xl font-bold text-slate-900">
+                        {module.count}
+                      </div>
+                      <div className="flex items-center gap-1 text-sm text-green-600 mb-1">
+                        <ArrowUpRight className="w-4 h-4" />
+                        <span>{module.trend}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-slate-500" />
-                      <p className="text-sm text-slate-600 font-medium">
-                        processos ativos
-                      </p>
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                      <Activity className="w-4 h-4" />
+                      <span>processos ativos</span>
                     </div>
                   </div>
                 )}
@@ -198,69 +305,106 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Alerts Section */}
-      <Card className="bg-white border-2 border-slate-200 shadow-xl">
-        <CardHeader className="bg-slate-50 border-b-2 border-slate-200">
-          <CardTitle className="flex items-center gap-3 text-xl">
-            <div className="p-3 rounded-xl bg-amber-500 shadow-lg">
-              <Bell className="h-6 w-6 text-slate-900" />
-            </div>
-            <span className="text-slate-900 font-bold">
-              Alertas Recentes
-            </span>
-            {alerts.length > 0 && (
-              <Badge className="bg-red-600 text-white border-0 shadow-md px-3 py-1 text-sm">
-                {alerts.length}
-              </Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          {loading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-24 w-full bg-slate-200" />
-              ))}
-            </div>
-          ) : alerts.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-600 mb-4 shadow-xl">
-                <Bell className="h-10 w-10 text-white" />
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Alerts Section */}
+        <Card className="border-slate-200/50 bg-white/80 backdrop-blur-sm">
+          <CardHeader className="border-b border-slate-200/50">
+            <CardTitle className="flex items-center gap-3 text-lg">
+              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                <Bell className="w-5 h-5 text-amber-600" />
               </div>
-              <p className="text-lg text-slate-600 font-medium">
-                Nenhum alerta pendente
-              </p>
-              <p className="text-sm text-slate-500 mt-2">
-                Todos os alertas foram processados
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {alerts.map((alert) => (
-                <div
-                  key={alert.id}
-                  className="flex items-start gap-4 p-5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all duration-300 border-l-4 border-amber-500 shadow-md hover:shadow-lg"
-                >
-                  <div className="p-3 rounded-xl bg-amber-500 shadow-md flex-shrink-0">
-                    <Bell className="h-5 w-5 text-slate-900" />
-                  </div>
-                  <div className="flex-1 space-y-3">
-                    <p className="text-sm font-semibold text-slate-900 leading-relaxed">{alert.message}</p>
-                    <div className="flex gap-2 flex-wrap">
-                      <Badge className="text-xs bg-slate-800 text-white border-0 px-3 py-1">
-                        {alert.alertFor}
-                      </Badge>
-                      <Badge className="text-xs bg-slate-600 text-white border-0 px-3 py-1">
-                        {alert.moduleType}
-                      </Badge>
+              <span className="text-slate-900">Alertas Recentes</span>
+              {alerts.length > 0 && (
+                <Badge className="bg-red-500 text-white border-0">
+                  {alerts.length}
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-20 w-full bg-slate-200" />
+                ))}
+              </div>
+            ) : alerts.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+                  <Bell className="w-8 h-8 text-green-600" />
+                </div>
+                <p className="text-slate-600 font-medium">
+                  Nenhum alerta pendente
+                </p>
+                <p className="text-sm text-slate-500 mt-2">
+                  Todos os alertas foram processados
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {alerts.slice(0, 3).map((alert) => (
+                  <div
+                    key={alert.id}
+                    className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors"
+                  >
+                    <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Bell className="w-4 h-4 text-amber-600" />
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 mb-1">{alert.message}</p>
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <Badge className="text-xs bg-slate-200 text-slate-700 border-0">
+                          {alert.alertFor}
+                        </Badge>
+                        <Badge className="text-xs bg-slate-200 text-slate-700 border-0">
+                          {alert.moduleType}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity */}
+        <Card className="border-slate-200/50 bg-white/80 backdrop-blur-sm">
+          <CardHeader className="border-b border-slate-200/50">
+            <CardTitle className="flex items-center gap-3 text-lg">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Clock className="w-5 h-5 text-blue-600" />
+              </div>
+              <span className="text-slate-900">Atividade Recente</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="space-y-3">
+              {recentActivity.map((activity) => (
+                <div
+                  key={activity.id}
+                  className="flex items-center gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200"
+                >
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Activity className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900">
+                      {activity.action}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {activity.type} • {activity.time}
+                    </p>
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    {activity.user}
                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -8,6 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, FileText, Eye, Clock, CheckCircle2, AlertCircle, Scale, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingState } from "@/components/loading-state";
+import { useDataCache } from "@/hooks/useDataCache";
+import { usePrefetch } from "@/hooks/usePrefetch";
+import { OptimizedLink } from "@/components/optimized-link";
+import { prefetchAcaoCivilById } from "@/utils/prefetch-functions";
 import {
   Select,
   SelectContent,
@@ -38,15 +43,19 @@ const CASE_TYPES = [
 ];
 
 export default function AcoesCiveisPage() {
-  const [cases, setCases] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: casesData, isLoading, error, refetch } = useDataCache(
+    "acoes-civeis",
+    async () => {
+      const response = await fetch("/api/acoes-civeis?limit=100");
+      return response.json();
+    }
+  );
+  const cases = Array.isArray(casesData) ? casesData : [];
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
-    fetchCases();
-
     // Only set up event listeners on the client side
     if (typeof window !== 'undefined') {
       // Listen for status updates from other pages
@@ -54,14 +63,8 @@ export default function AcoesCiveisPage() {
         if (e.key === 'acoes-civeis-status-update') {
           const updateData = JSON.parse(e.newValue || '{}');
           if (updateData.id && updateData.status) {
-            // Update the specific case in the list
-            setCases(prevCases => 
-              prevCases.map(c => 
-                c.id === updateData.id 
-                  ? { ...c, status: updateData.status, updatedAt: updateData.updatedAt }
-                  : c
-              )
-            );
+            // Refetch dados para refletir mudanças
+            refetch();
             // Clear the localStorage item
             localStorage.removeItem('acoes-civeis-status-update');
           }
@@ -75,13 +78,7 @@ export default function AcoesCiveisPage() {
       const handleCustomEvent = (e: CustomEvent) => {
         const updateData = e.detail;
         if (updateData.id && updateData.status) {
-          setCases(prevCases => 
-            prevCases.map(c => 
-              c.id === updateData.id 
-                ? { ...c, status: updateData.status, updatedAt: updateData.updatedAt }
-                : c
-            )
-          );
+          refetch();
         }
       };
 
@@ -92,20 +89,7 @@ export default function AcoesCiveisPage() {
         window.removeEventListener('acoes-civeis-status-updated', handleCustomEvent as EventListener);
       };
     }
-  }, []);
-
-  const fetchCases = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/acoes-civeis?limit=100");
-      const data = await response.json();
-      setCases(data);
-    } catch (error) {
-      console.error("Error fetching cases:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [refetch]);
 
   const filteredCases = cases.filter((c) => {
     const matchesSearch = c.clientName.toLowerCase().includes(search.toLowerCase());
@@ -154,8 +138,8 @@ export default function AcoesCiveisPage() {
       });
       
       if (response.ok) {
-        // Remove the case from the local state
-        setCases(cases.filter(c => c.id !== id));
+        // Atualiza dados via refetch para refletir remoção
+        refetch();
       } else {
         console.error('Failed to delete case');
       }
@@ -291,16 +275,8 @@ export default function AcoesCiveisPage() {
 
       {/* Lista de processos */}
       <div className="grid gap-4">
-        {loading ? (
-          <>
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="border-slate-200 dark:border-slate-700">
-                <CardContent className="pt-6">
-                  <Skeleton className="h-32 w-full" />
-                </CardContent>
-              </Card>
-            ))}
-          </>
+        {isLoading ? (
+          <LoadingState count={3} type="card" />
         ) : filteredCases.length === 0 ? (
           <Card className="border-slate-200 dark:border-slate-700 shadow-md">
             <CardContent className="flex flex-col items-center justify-center py-16">
@@ -329,35 +305,51 @@ export default function AcoesCiveisPage() {
               key={caseItem.id} 
               className="border-slate-200 dark:border-slate-700 hover:shadow-xl hover:border-amber-500/50 transition-all duration-200 bg-gradient-to-r from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 relative"
             >
-              {/* Discrete delete button */}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
+              {/* Button Container - Alinhado horizontalmente */}
+              <div className="absolute top-2 right-2 flex items-center gap-2">
+                {/* Ver Detalhes Button */}
+                <OptimizedLink 
+                  href={`/dashboard/acoes-civeis/${caseItem.id}`}
+                  prefetchData={() => prefetchAcaoCivilById(caseItem.id)}
+                >
+                  <Button 
                     size="sm"
-                    className="absolute top-2 right-2 h-8 w-8 p-0 text-red-600 hover:text-white hover:bg-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all duration-200 z-10"
+                    className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md h-8 px-3"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Eye className="h-4 w-4" />
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Tem certeza que deseja excluir a ação cível de {caseItem.clientName}? Esta ação não pode ser desfeita.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleDelete(caseItem.id)}
-                      className="bg-red-500 hover:bg-red-600"
+                </OptimizedLink>
+                
+                {/* Delete Button */}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-red-600 hover:text-white hover:bg-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all duration-200"
                     >
-                      Excluir
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir a ação cível de {caseItem.clientName}? Esta ação não pode ser desfeita.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDelete(caseItem.id)}
+                        className="bg-white text-red-600 border border-red-500 hover:bg-red-50 hover:text-red-700"
+                      >
+                        Excluir
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
               
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between gap-4">
@@ -415,17 +407,6 @@ export default function AcoesCiveisPage() {
                       )}
                     </div>
                   </div>
-
-                  {/* Botão de ação */}
-                  <Link href={`/dashboard/acoes-civeis/${caseItem.id}`}>
-                    <Button 
-                      size="lg"
-                      className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md"
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Ver Detalhes
-                    </Button>
-                  </Link>
                 </div>
               </CardContent>
             </Card>

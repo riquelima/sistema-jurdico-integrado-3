@@ -8,6 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, Globe, Eye, Plane, Briefcase, Building2, Clock, CheckCircle2, AlertCircle, FileText, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingState } from "@/components/loading-state";
+import { useDataCache } from "@/hooks/useDataCache";
+import { usePrefetch } from "@/hooks/usePrefetch";
+import { OptimizedLink } from "@/components/optimized-link";
+import { prefetchVistoById } from "@/utils/prefetch-functions";
 import {
   Select,
   SelectContent,
@@ -29,28 +34,20 @@ interface Visto {
 }
 
 export default function VistosPage() {
-  const [vistos, setVistos] = useState<Visto[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: vistosData, isLoading, error, refetch } = useDataCache(
+    "vistos",
+    async () => {
+      const response = await fetch("/api/vistos?limit=100");
+      return response.json();
+    }
+  );
+  const vistos = Array.isArray(vistosData) ? vistosData : [];
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-
   useEffect(() => {
-    fetchVistos();
+    // Prefetch disponível para navegação futura
   }, []);
-
-  const fetchVistos = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/vistos?limit=100");
-      const data = await response.json();
-      setVistos(data);
-    } catch (error) {
-      console.error("Error fetching vistos:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filteredVistos = vistos.filter((v) => {
     const matchesSearch = v.clientName?.toLowerCase().includes(search.toLowerCase()) ?? false;
@@ -230,16 +227,8 @@ export default function VistosPage() {
 
       {/* Lista de processos */}
       <div className="grid gap-4">
-        {loading ? (
-          <>
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="border-slate-200 dark:border-slate-700">
-                <CardContent className="pt-6">
-                  <Skeleton className="h-32 w-full" />
-                </CardContent>
-              </Card>
-            ))}
-          </>
+        {isLoading ? (
+          <LoadingState count={3} type="card" />
         ) : filteredVistos.length === 0 ? (
           <Card className="border-slate-200 dark:border-slate-700 shadow-md">
             <CardContent className="flex flex-col items-center justify-center py-16">
@@ -348,7 +337,10 @@ export default function VistosPage() {
                   </div>
 
                   {/* Botão de ação */}
-                  <Link href={`/dashboard/vistos/${visto.id}`}>
+                  <OptimizedLink 
+                    href={`/dashboard/vistos/${visto.id}`}
+                    prefetchData={() => prefetchVistoById(visto.id)}
+                  >
                     <Button 
                       size="lg"
                       className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md"
@@ -356,7 +348,7 @@ export default function VistosPage() {
                       <Eye className="h-4 w-4 mr-2" />
                       Ver Detalhes
                     </Button>
-                  </Link>
+                  </OptimizedLink>
                 </div>
               </CardContent>
             </Card>

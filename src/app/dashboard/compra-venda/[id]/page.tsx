@@ -43,6 +43,11 @@ import {
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { DetailLayout } from "@/components/detail/DetailLayout";
+import { StepItem } from "@/components/detail/StepItem";
+import { StatusPanel } from "@/components/detail/StatusPanel";
+import { DocumentPanel } from "@/components/detail/DocumentPanel";
+import { NotesPanel } from "@/components/detail/NotesPanel";
 
 const WORKFLOW_STEPS = [
   {
@@ -89,7 +94,6 @@ export default function CompraVendaDetailsPage() {
   const [uploading, setUploading] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [status, setStatus] = useState("Em Andamento");
-  const [isDetailsCollapsed, setIsDetailsCollapsed] = useState(true);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [stepDialogOpen, setStepDialogOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState("");
@@ -334,60 +338,204 @@ export default function CompraVendaDetailsPage() {
     sellers = [];
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard/compra-venda">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold">
-              {property.enderecoImovel || "Transação Imobiliária"}
-            </h1>
-            <p className="text-muted-foreground">
-              Matrícula: {property.numeroMatricula || "N/A"}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge
-            className={
-              property.status === "Finalizado"
-                ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300"
-                : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
-            }
-          >
-            {status}
-          </Badge>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Excluir
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>
-                  Excluir
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </div>
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h4 className="font-semibold text-lg">Matrícula do Imóvel</h4>
+              <div className="grid md:grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
+                <div>
+                  <p className="text-xs text-muted-foreground">Nº Matrícula</p>
+                  <p className="text-sm font-medium">{property.numeroMatricula || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Cadastro Contribuinte</p>
+                  <p className="text-sm font-medium">{property.cadastroContribuinte || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Endereço do Imóvel</p>
+                  <p className="text-sm font-medium">{property.enderecoImovel || "-"}</p>
+                </div>
+              </div>
+            </div>
 
+            <div className="space-y-4">
+              <h4 className="font-semibold text-lg">Informações dos Vendedores</h4>
+              {sellers.length > 0 ? (
+                <div className="space-y-3">
+                  {sellers.map((seller: any, index: number) => (
+                    <div key={index} className="p-4 bg-muted rounded-lg">
+                      <p className="text-sm font-semibold mb-3">Vendedor {index + 1}</p>
+                      <div className="grid md:grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground">RG ou CNH</p>
+                          <p className="text-sm font-medium">{seller.rg || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">CPF</p>
+                          <p className="text-sm font-medium">{seller.cpf || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Data de Nascimento</p>
+                          <p className="text-sm font-medium">
+                            {seller.dataNascimento 
+                              ? new Date(seller.dataNascimento).toLocaleDateString("pt-BR")
+                              : "-"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Nenhum vendedor cadastrado</p>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="font-semibold text-lg">Informações do Comprador</h4>
+              <div className="grid md:grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
+                <div>
+                  <p className="text-xs text-muted-foreground">RNM Comprador</p>
+                  <p className="text-sm font-medium">{property.rnmComprador || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">CPF Comprador</p>
+                  <p className="text-sm font-medium">{property.cpfComprador || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Endereço Comprador</p>
+                  <p className="text-sm font-medium">{property.enderecoComprador || "-"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      
+      case 2:
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="certidoes-upload">Upload de Certidões</Label>
+              <Input
+                id="certidoes-upload"
+                type="file"
+                onChange={(e) => handleFileUpload(e, "certidoes")}
+                disabled={uploading}
+                className="mt-2"
+              />
+            </div>
+          </div>
+        );
+      
+      case 3:
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="contrato-upload">Upload do Contrato</Label>
+              <Input
+                id="contrato-upload"
+                type="file"
+                onChange={(e) => handleFileUpload(e, "contrato")}
+                disabled={uploading}
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="contract-notes">Observações do Contrato</Label>
+              <Textarea
+                id="contract-notes"
+                placeholder="Adicione observações importantes sobre o contrato..."
+                value={property.contractNotes || ""}
+                className="mt-2"
+                disabled
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Edite no formulário principal
+              </p>
+            </div>
+          </div>
+        );
+      
+      case 4:
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="contrato-assinado-upload">
+                Upload do Contrato Assinado
+              </Label>
+              <Input
+                id="contrato-assinado-upload"
+                type="file"
+                onChange={(e) => handleFileUpload(e, "contrato-assinado")}
+                disabled={uploading}
+                className="mt-2"
+              />
+            </div>
+          </div>
+        );
+      
+      case 5:
+        return (
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
+              <div>
+                <p className="text-xs text-muted-foreground">Prazo para Sinal</p>
+                <p className="text-sm font-medium">
+                  {property.prazoSinal
+                    ? new Date(property.prazoSinal).toLocaleDateString("pt-BR")
+                    : "-"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Prazo para Escritura</p>
+                <p className="text-sm font-medium">
+                  {property.prazoEscritura
+                    ? new Date(property.prazoEscritura).toLocaleDateString("pt-BR")
+                    : "-"}
+                </p>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="escritura-upload">Upload da Escritura</Label>
+              <Input
+                id="escritura-upload"
+                type="file"
+                onChange={(e) => handleFileUpload(e, "escritura")}
+                disabled={uploading}
+                className="mt-2"
+              />
+            </div>
+          </div>
+        );
+      
+      case 6:
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="matricula-cartorio-upload">
+                Upload da Matrícula do Cartório
+              </Label>
+              <Input
+                id="matricula-cartorio-upload"
+                type="file"
+                onChange={(e) => handleFileUpload(e, "matricula-cartorio")}
+                disabled={uploading}
+                className="mt-2"
+              />
+            </div>
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="space-y-6 w-full">
       {/* Status Change Confirmation Dialog */}
       <AlertDialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
         <AlertDialogContent>
@@ -424,446 +572,172 @@ export default function CompraVendaDetailsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Collapsible Details Section */}
-          <Card>
-            <CardHeader 
-              className="cursor-pointer hover:bg-muted transition-colors"
-              onClick={() => setIsDetailsCollapsed(!isDetailsCollapsed)}
-            >
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-medium">Detalhes da Transação</CardTitle>
-                {isDetailsCollapsed ? (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                )}
-              </div>
-            </CardHeader>
-            {!isDetailsCollapsed && (
-              <CardContent className="space-y-6 pt-0">
-                {/* Property Info */}
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-sm">Informações da Transação</h4>
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Endereço</p>
-                      <p className="font-medium">{property.enderecoImovel || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Matrícula</p>
-                      <p className="font-medium">{property.numeroMatricula || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Cadastro Contribuinte</p>
-                      <p className="font-medium">{property.cadastroContribuinte || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">RNM Comprador</p>
-                      <p className="font-medium">{property.rnmComprador || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">CPF Comprador</p>
-                      <p className="font-medium">{property.cpfComprador || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Endereço Comprador</p>
-                      <p className="font-medium">{property.enderecoComprador || "-"}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Deadlines */}
-                {(property.prazoSinal || property.prazoEscritura) && (
-                  <div className="space-y-3 pt-4 border-t">
-                    <h4 className="font-semibold text-sm flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Prazos Importantes
-                    </h4>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {property.prazoSinal && (
-                        <div className="flex items-start gap-3">
-                          {daysUntilSinal !== null && daysUntilSinal <= 7 && (
-                            <AlertTriangle className="h-5 w-5 text-orange-600 mt-1" />
-                          )}
-                          <div>
-                            <p className="text-sm text-muted-foreground">Prazo para Sinal</p>
-                            <p
-                              className={`text-lg font-semibold ${getDeadlineColor(
-                                daysUntilSinal
-                              )}`}
-                            >
-                              {new Date(property.prazoSinal).toLocaleDateString("pt-BR")}
-                              {daysUntilSinal !== null && (
-                                <span className="text-sm ml-2">
-                                  ({daysUntilSinal > 0 ? `${daysUntilSinal} dias` : "Vencido"})
-                                </span>
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      {property.prazoEscritura && (
-                        <div className="flex items-start gap-3">
-                          {daysUntilEscritura !== null && daysUntilEscritura <= 7 && (
-                            <AlertTriangle className="h-5 w-5 text-orange-600 mt-1" />
-                          )}
-                          <div>
-                            <p className="text-sm text-muted-foreground">Prazo para Escritura</p>
-                            <p
-                              className={`text-lg font-semibold ${getDeadlineColor(
-                                daysUntilEscritura
-                              )}`}
-                            >
-                              {new Date(property.prazoEscritura).toLocaleDateString("pt-BR")}
-                              {daysUntilEscritura !== null && (
-                                <span className="text-sm ml-2">
-                                  ({daysUntilEscritura > 0 ? `${daysUntilEscritura} dias` : "Vencido"})
-                                </span>
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Contract Notes */}
-                {property.contractNotes && (
-                  <div className="space-y-3 pt-4 border-t">
-                    <h4 className="font-semibold text-sm flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Observações do Contrato
-                    </h4>
-                    <p className="text-sm whitespace-pre-wrap">{property.contractNotes}</p>
-                  </div>
-                )}
-              </CardContent>
-            )}
-          </Card>
-
-          {/* Workflow Steps */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Fluxo de Trabalho</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Steps Progress */}
-              <div className="flex flex-wrap gap-2">
+      <DetailLayout
+        backHref="/dashboard/compra-venda"
+        title={property?.enderecoImovel || "Transação Imobiliária"}
+        subtitle={`Matrícula: ${property?.numeroMatricula || "N/A"}`}
+        onDelete={handleDelete}
+        left={
+          <div className="space-y-6">
+            {/* Workflow Steps */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Fluxo de Trabalho</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 {WORKFLOW_STEPS.map((step) => (
-                  <Button
+                  <StepItem
                     key={step.id}
-                    variant={currentStep === step.id ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleStepChange(step.id)}
-                    className="flex items-center gap-2"
+                    index={step.id}
+                    title={step.title}
+                    description={step.description}
+                    isCurrent={currentStep === step.id}
+                    isCompleted={completedSteps.includes(step.id)}
+                    isPending={currentStep < step.id}
+                    onMarkComplete={() => toggleStepCompletion(step.id)}
                   >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleStepCompletion(step.id);
-                      }}
-                      className="flex items-center"
-                    >
-                      {completedSteps.includes(step.id) ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                      ) : (
-                        <Circle className="h-4 w-4" />
-                      )}
-                    </button>
-                    <span>Etapa {step.id}</span>
-                  </Button>
+                    {currentStep === step.id && renderStepContent()}
+                  </StepItem>
                 ))}
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* Current Step Details */}
-              <div className="border-t pt-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-xl font-semibold">
-                      Etapa {currentStep}: {WORKFLOW_STEPS[currentStep - 1].title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {WORKFLOW_STEPS[currentStep - 1].description}
-                    </p>
-                  </div>
-
-                  {/* Step Content */}
-                  <div className="space-y-4 mt-6">
-                    {/* Step 1: Cadastro */}
-                    {currentStep === 1 && (
-                      <div className="space-y-6">
-                        <div className="space-y-4">
-                          <h4 className="font-semibold text-lg">Matrícula do Imóvel</h4>
-                          <div className="grid md:grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
-                            <div>
-                              <p className="text-xs text-muted-foreground">Nº Matrícula</p>
-                              <p className="text-sm font-medium">{property.numeroMatricula || "-"}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">Cadastro Contribuinte</p>
-                              <p className="text-sm font-medium">{property.cadastroContribuinte || "-"}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">Endereço do Imóvel</p>
-                              <p className="text-sm font-medium">{property.enderecoImovel || "-"}</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          <h4 className="font-semibold text-lg">Informações dos Vendedores</h4>
-                          {sellers.length > 0 ? (
-                            <div className="space-y-3">
-                              {sellers.map((seller: any, index: number) => (
-                                <div key={index} className="p-4 bg-muted rounded-lg">
-                                  <p className="text-sm font-semibold mb-3">Vendedor {index + 1}</p>
-                                  <div className="grid md:grid-cols-3 gap-4">
-                                    <div>
-                                      <p className="text-xs text-muted-foreground">RG ou CNH</p>
-                                      <p className="text-sm font-medium">{seller.rg || "-"}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-muted-foreground">CPF</p>
-                                      <p className="text-sm font-medium">{seller.cpf || "-"}</p>
-                                    </div>
-                                    <div>
-                                      <p className="text-xs text-muted-foreground">Data de Nascimento</p>
-                                      <p className="text-sm font-medium">
-                                        {seller.dataNascimento 
-                                          ? new Date(seller.dataNascimento).toLocaleDateString("pt-BR")
-                                          : "-"}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-muted-foreground">Nenhum vendedor cadastrado</p>
-                          )}
-                        </div>
-
-                        <div className="space-y-4">
-                          <h4 className="font-semibold text-lg">Informações do Comprador</h4>
-                          <div className="grid md:grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
-                            <div>
-                              <p className="text-xs text-muted-foreground">RNM Comprador</p>
-                              <p className="text-sm font-medium">{property.rnmComprador || "-"}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">CPF Comprador</p>
-                              <p className="text-sm font-medium">{property.cpfComprador || "-"}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-muted-foreground">Endereço Comprador</p>
-                              <p className="text-sm font-medium">{property.enderecoComprador || "-"}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Step 2: Emitir Certidões */}
-                    {currentStep === 2 && (
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="certidoes-upload">Upload de Certidões</Label>
-                          <Input
-                            id="certidoes-upload"
-                            type="file"
-                            onChange={(e) => handleFileUpload(e, "certidoes")}
-                            disabled={uploading}
-                            className="mt-2"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Step 3: Fazer/Analisar Contrato */}
-                    {currentStep === 3 && (
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="contrato-upload">Upload do Contrato</Label>
-                          <Input
-                            id="contrato-upload"
-                            type="file"
-                            onChange={(e) => handleFileUpload(e, "contrato")}
-                            disabled={uploading}
-                            className="mt-2"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="contract-notes">Observações do Contrato</Label>
-                          <Textarea
-                            id="contract-notes"
-                            placeholder="Adicione observações importantes sobre o contrato..."
-                            value={property.contractNotes || ""}
-                            className="mt-2"
-                            rows={4}
-                            disabled
-                          />
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Edite no formulário principal
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Step 4: Assinatura de Contrato */}
-                    {currentStep === 4 && (
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="contrato-assinado-upload">
-                            Upload do Contrato Assinado
-                          </Label>
-                          <Input
-                            id="contrato-assinado-upload"
-                            type="file"
-                            onChange={(e) => handleFileUpload(e, "contrato-assinado")}
-                            disabled={uploading}
-                            className="mt-2"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Step 5: Escritura */}
-                    {currentStep === 5 && (
-                      <div className="space-y-4">
-                        <div className="grid md:grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
-                          <div>
-                            <p className="text-xs text-muted-foreground">Prazo para Sinal</p>
-                            <p className="text-sm font-medium">
-                              {property.prazoSinal
-                                ? new Date(property.prazoSinal).toLocaleDateString("pt-BR")
-                                : "-"}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Prazo para Escritura</p>
-                            <p className="text-sm font-medium">
-                              {property.prazoEscritura
-                                ? new Date(property.prazoEscritura).toLocaleDateString("pt-BR")
-                                : "-"}
-                            </p>
-                          </div>
-                        </div>
-                        <div>
-                          <Label htmlFor="escritura-upload">Upload da Escritura</Label>
-                          <Input
-                            id="escritura-upload"
-                            type="file"
-                            onChange={(e) => handleFileUpload(e, "escritura")}
-                            disabled={uploading}
-                            className="mt-2"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Step 6: Cobrar Matrícula */}
-                    {currentStep === 6 && (
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="matricula-cartorio-upload">
-                            Upload da Matrícula do Cartório
-                          </Label>
-                          <Input
-                            id="matricula-cartorio-upload"
-                            type="file"
-                            onChange={(e) => handleFileUpload(e, "matricula-cartorio")}
-                            disabled={uploading}
-                            className="mt-2"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Notes for current step */}
-                    <div className="mt-6">
-                      <Label htmlFor="step-notes">Notas da Etapa {currentStep}</Label>
-                      <Textarea
-                        id="step-notes"
-                        placeholder="Adicione notas sobre esta etapa..."
-                        value={stepNotes[currentStep] || ""}
-                        onChange={(e) => handleNotesChange(currentStep, e.target.value)}
-                        className="mt-2"
-                        rows={4}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Navigation */}
-          <div className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={() => handleStepChange(Math.max(1, currentStep - 1))}
-              disabled={currentStep === 1}
-            >
-              Etapa Anterior
-            </Button>
-            <Button
-              onClick={() =>
-                handleStepChange(Math.min(WORKFLOW_STEPS.length, currentStep + 1))
-              }
-              disabled={currentStep === WORKFLOW_STEPS.length}
-            >
-              Próxima Etapa
-            </Button>
+            {/* Navigation */}
+            <div className="flex justify-between">
+              <Button
+                variant="outline"
+                onClick={() => handleStepChange(Math.max(1, currentStep - 1))}
+                disabled={currentStep === 1}
+              >
+                Etapa Anterior
+              </Button>
+              <Button
+                onClick={() =>
+                  handleStepChange(Math.min(WORKFLOW_STEPS.length, currentStep + 1))
+                }
+                disabled={currentStep === WORKFLOW_STEPS.length}
+              >
+                Próxima Etapa
+              </Button>
+            </div>
           </div>
-        </div>
+        }
+        right={
+          <div className="space-y-6">
+            <StatusPanel
+              status={status}
+              onStatusChange={handleStatusChange}
+              currentStep={currentStep}
+              totalSteps={WORKFLOW_STEPS.length}
+              createdAt={property?.createdAt}
+              updatedAt={property?.updatedAt}
+            />
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Status da Transação</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={status} onValueChange={handleStatusChange}>
-                  <SelectTrigger id="status">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                    <SelectItem value="Aguardando">Aguardando</SelectItem>
-                    <SelectItem value="Finalizado">Finalizado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Etapa Atual</Label>
-                <div className="text-2xl font-bold">{currentStep}</div>
-                <p className="text-xs text-muted-foreground">
-                  de {WORKFLOW_STEPS.length} etapas
-                </p>
-              </div>
-              <div className="pt-2 border-t">
-                <p className="text-xs text-muted-foreground">Criado em</p>
-                <p className="text-sm font-medium">
-                  {new Date(property.createdAt).toLocaleDateString("pt-BR")}
-                </p>
-              </div>
-              <div className="pt-2 border-t">
-                <p className="text-xs text-muted-foreground">Última atualização</p>
-                <p className="text-sm font-medium">
-                  {new Date(property.updatedAt).toLocaleDateString("pt-BR")}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            {/* Deadlines Card */}
+            {(property?.prazoSinal || property?.prazoEscritura) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Prazos Importantes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {property.prazoSinal && (
+                    <div className="flex items-start gap-3">
+                      {daysUntilSinal !== null && daysUntilSinal <= 7 && (
+                        <AlertTriangle className="h-5 w-5 text-orange-600 mt-1" />
+                      )}
+                      <div>
+                        <p className="text-sm text-muted-foreground">Prazo para Sinal</p>
+                        <p
+                          className={`text-lg font-semibold ${getDeadlineColor(
+                            daysUntilSinal
+                          )}`}
+                        >
+                          {new Date(property.prazoSinal).toLocaleDateString("pt-BR")}
+                          {daysUntilSinal !== null && (
+                            <span className="text-sm ml-2">
+                              ({daysUntilSinal > 0 ? `${daysUntilSinal} dias` : "Vencido"})
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {property.prazoEscritura && (
+                    <div className="flex items-start gap-3">
+                      {daysUntilEscritura !== null && daysUntilEscritura <= 7 && (
+                        <AlertTriangle className="h-5 w-5 text-orange-600 mt-1" />
+                      )}
+                      <div>
+                        <p className="text-sm text-muted-foreground">Prazo para Escritura</p>
+                        <p
+                          className={`text-lg font-semibold ${getDeadlineColor(
+                            daysUntilEscritura
+                          )}`}
+                        >
+                          {new Date(property.prazoEscritura).toLocaleDateString("pt-BR")}
+                          {daysUntilEscritura !== null && (
+                            <span className="text-sm ml-2">
+                              ({daysUntilEscritura > 0 ? `${daysUntilEscritura} dias` : "Vencido"})
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Contract Notes */}
+            {property?.contractNotes && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Observações do Contrato
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm whitespace-pre-wrap">{property.contractNotes}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Document Panel */}
+            <DocumentPanel
+              onDropFiles={(files) => {
+                // Handle file drop functionality
+                files.forEach(file => {
+                  const formData = new FormData();
+                  formData.append("file", file);
+                  formData.append("entityType", "compra-venda");
+                  formData.append("entityId", id);
+                  formData.append("fieldName", "documents");
+                  
+                  fetch("/api/documents/upload", {
+                    method: "POST",
+                    body: formData,
+                  }).then(() => {
+                    toast.success("Documento enviado com sucesso");
+                    fetchProperty();
+                  });
+                });
+              }}
+              uploading={uploading}
+            />
+
+            {/* Notes Panel */}
+            <NotesPanel
+              notes={stepNotes[currentStep] || ""}
+              onChange={(notes) => handleNotesChange(currentStep, notes)}
+              onSave={() => toast.success("Notas salvas com sucesso")}
+            />
+          </div>
+        }
+      />
     </div>
   );
 }

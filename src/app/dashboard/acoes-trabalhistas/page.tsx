@@ -19,6 +19,9 @@ import {
   Trash2
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingState } from "@/components/loading-state";
+import { OptimizedLink } from "@/components/optimized-link";
+import { prefetchAcaoTrabalhistaById } from "@/utils/prefetch-functions";
 import {
   Select,
   SelectContent,
@@ -37,6 +40,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useDataCache } from "@/hooks/useDataCache";
+import { usePrefetch } from "@/hooks/usePrefetch";
 
 const CASE_TYPES = [
   "Rescisão Indireta",
@@ -53,29 +58,24 @@ const CASE_TYPES = [
 ];
 
 export default function AcoesTrabalhistasPage() {
-  const [cases, setCases] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
 
-  useEffect(() => {
-    fetchCases();
-  }, []);
-
-  const fetchCases = async () => {
-    try {
+  // Usar cache para dados
+  const { data: cases, isLoading, error, refetch } = useDataCache(
+    'acoes-trabalhistas',
+    async () => {
       const response = await fetch("/api/acoes-trabalhistas?limit=100");
-      const data = await response.json();
-      setCases(data);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setLoading(false);
+      return response.json();
     }
-  };
+  );
 
-  const filteredCases = cases.filter((c) => {
+  // Prefetch de dados quando usuário interage com navegação
+  const { prefetchData } = usePrefetch();
+
+  const casesList = Array.isArray(cases) ? cases : [];
+  const filteredCases = casesList.filter((c) => {
     const matchesSearch = c.clientName.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "all" || c.status === statusFilter;
     const matchesType = typeFilter === "all" || c.type === typeFilter;
@@ -83,10 +83,10 @@ export default function AcoesTrabalhistasPage() {
   });
 
   const stats = {
-    total: cases.length,
-    emAndamento: cases.filter(c => c.status === "Em Andamento").length,
-    aguardando: cases.filter(c => c.status === "Aguardando").length,
-    finalizado: cases.filter(c => c.status === "Finalizado").length,
+    total: casesList.length,
+    emAndamento: casesList.filter(c => c.status === "Em Andamento").length,
+    aguardando: casesList.filter(c => c.status === "Aguardando").length,
+    finalizado: casesList.filter(c => c.status === "Finalizado").length,
   };
 
   const getStatusColor = (status: string) => {
@@ -122,8 +122,8 @@ export default function AcoesTrabalhistasPage() {
       });
       
       if (response.ok) {
-        // Remove the case from the local state
-        setCases(cases.filter(c => c.id !== id));
+        // Atualiza os dados via refetch para refletir a exclusão
+        refetch();
       } else {
         console.error('Failed to delete case');
       }
@@ -133,28 +133,30 @@ export default function AcoesTrabalhistasPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header com gradiente */}
-      <div className="bg-gradient-to-br from-purple-900 via-purple-800 to-purple-700 rounded-xl shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between p-8">
-          <div className="flex items-center gap-6">
-            <div className="p-4 bg-white rounded-xl border border-white">
-              <Briefcase className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-white">Ações Trabalhistas</h1>
-              <p className="text-purple-300 mt-1">
-                Gerencie ações trabalhistas e direitos do trabalhador
-              </p>
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-xl p-8 shadow-lg border border-slate-700">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-amber-500 rounded-lg">
+                <Briefcase className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-white">Ações Trabalhistas</h1>
+                <p className="text-slate-300 mt-1">
+                  Gerencie ações trabalhistas e direitos do trabalhador
+                </p>
+              </div>
             </div>
           </div>
+          <Link href="/dashboard/acoes-trabalhistas/novo">
+            <Button size="lg" className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold shadow-lg">
+              <Plus className="h-5 w-5 mr-2" />
+              Nova Ação
+            </Button>
+          </Link>
         </div>
-        <Link href="/dashboard/acoes-trabalhistas/novo">
-          <Button size="lg" className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold shadow-lg">
-            <Plus className="h-5 w-5 mr-2" />
-            Nova Ação
-          </Button>
-        </Link>
 
         {/* Cards de estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
@@ -257,16 +259,8 @@ export default function AcoesTrabalhistasPage() {
 
       {/* Lista de processos */}
       <div className="grid gap-4">
-        {loading ? (
-          <>
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="border-slate-200 dark:border-slate-700">
-                <CardContent className="pt-6">
-                  <Skeleton className="h-32 w-full" />
-                </CardContent>
-              </Card>
-            ))}
-          </>
+        {isLoading ? (
+          <LoadingState count={3} type="card" />
         ) : filteredCases.length === 0 ? (
           <Card className="border-slate-200 dark:border-slate-700 shadow-md">
             <CardContent className="flex flex-col items-center justify-center py-16">
@@ -295,42 +289,57 @@ export default function AcoesTrabalhistasPage() {
               key={caseItem.id} 
               className="border-slate-200 dark:border-slate-700 hover:shadow-xl hover:border-amber-500/50 transition-all duration-200 bg-gradient-to-r from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 relative"
             >
-              {/* Discrete Delete Button */}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
+              {/* Button Container - Alinhado horizontalmente */}
+              <div className="absolute top-2 right-2 flex items-center gap-2">
+                {/* Ver Detalhes Button */}
+                <OptimizedLink 
+                  href={`/dashboard/acoes-trabalhistas/${caseItem.id}`}
+                  prefetchData={() => prefetchAcaoTrabalhistaById(caseItem.id)}
+                >
+                  <Button 
                     size="sm"
-                    className="absolute top-2 right-2 z-10 h-8 w-8 p-0 bg-red-50 hover:bg-red-100 dark:bg-red-900 dark:hover:bg-red-900 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 opacity-70 hover:opacity-100 transition-all duration-200"
+                    className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md h-8 px-3"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Eye className="h-4 w-4" />
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Tem certeza que deseja excluir a ação trabalhista de <strong>{caseItem.clientName}</strong>? 
-                      Esta ação não pode ser desfeita.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={() => handleDelete(caseItem.id)}
-                      className="bg-red-600 hover:bg-red-700 text-white"
+                </OptimizedLink>
+                
+                {/* Delete Button */}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-red-600 hover:text-white hover:bg-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all duration-200"
                     >
-                      Excluir
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir a ação trabalhista de {caseItem.clientName}? Esta ação não pode ser desfeita.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDelete(caseItem.id)}
+                        className="bg-white text-red-600 border border-red-500 hover:bg-red-50 hover:text-red-700"
+                      >
+                        Excluir
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+              
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4 flex-1">
                     {/* Ícone do processo */}
-                    <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-md flex-shrink-0">
+                    <div className="p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg shadow-md flex-shrink-0">
                       <Briefcase className="h-6 w-6 text-white" />
                     </div>
 
@@ -382,17 +391,6 @@ export default function AcoesTrabalhistasPage() {
                       )}
                     </div>
                   </div>
-
-                  {/* Botão de ação */}
-                  <Link href={`/dashboard/acoes-trabalhistas/${caseItem.id}`}>
-                    <Button 
-                      size="lg"
-                      className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md"
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Ver Detalhes
-                    </Button>
-                  </Link>
                 </div>
               </CardContent>
             </Card>

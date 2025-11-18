@@ -84,7 +84,7 @@ export default function NovaCompraVendaPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 w-full">
       <div className="flex items-center gap-4">
         <Link href="/dashboard/compra-venda">
           <Button variant="ghost" size="icon">

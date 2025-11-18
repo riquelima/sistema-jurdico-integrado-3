@@ -12,6 +12,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { ArrowLeft, CheckCircle2, Save, Upload, FileText, Trash2, Edit2, Check, X, ChevronDown, ChevronRight } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { DetailLayout } from '@/components/detail/DetailLayout'
+import { StepItem } from '@/components/detail/StepItem'
+import { StatusPanel } from '@/components/detail/StatusPanel'
+import { DocumentPanel } from '@/components/detail/DocumentPanel'
+import { NotesPanel } from '@/components/detail/NotesPanel'
 
 const WORKFLOWS = {
   'Ação Criminal': [
@@ -45,6 +51,8 @@ export default function AcoesCriminaisPage({ params }: { params: { id: string } 
   const [showNotesDialog, setShowNotesDialog] = useState(false)
   const [pendingNotes, setPendingNotes] = useState('')
   const [loading, setLoading] = useState(true)
+  const [documentToDelete, setDocumentToDelete] = useState<any>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   // Estados para dados específicos de cada etapa
   const [stepData, setStepData] = useState<{ [key: number]: any }>({})
@@ -762,95 +770,90 @@ export default function AcoesCriminaisPage({ params }: { params: { id: string } 
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-          </div>
-        </div>
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-64" />
+        <Skeleton className="h-96 w-full" />
       </div>
     )
   }
 
   if (!caseData) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Caso não encontrado</h1>
-          <Button onClick={() => router.push('/dashboard/acoes-criminais')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar para Ações Criminais
-          </Button>
-        </div>
-      </div>
-    )
+    return <div>Ação não encontrada</div>
   }
 
   const workflow = WORKFLOWS[caseData.type as keyof typeof WORKFLOWS] || []
 
   return (
-    <div 
-      className={`container mx-auto p-6 ${isDragOver ? 'bg-blue-50' : ''}`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+    <DetailLayout
+      backHref="/dashboard/acoes-criminais"
+      title={caseData.title}
+      subtitle={caseData.type}
+      onDelete={handleDelete}
+      left={
+        <div className="space-y-6">
+          {/* Workflow Steps */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Fluxo do Processo</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {workflow.map((step, index) => (
+                <StepItem
+                  key={index}
+                  index={index}
+                  title={step}
+                  isCurrent={index === caseData.currentStep}
+                  isCompleted={index < caseData.currentStep}
+                  isPending={index > caseData.currentStep}
+                  expanded={expandedSteps[index]}
+                  onToggle={() => handleStepClick(index)}
+                  onMarkComplete={() => handleCompleteStep()}
+                >
+                  {renderStepContent(index)}
+                </StepItem>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      }
+      right={
+        <div className="space-y-6">
+          <StatusPanel
+            status={status}
+            onStatusChange={handleStatusChange}
+            currentStep={caseData.currentStep + 1}
+            totalSteps={workflow.length}
+            createdAt={caseData.createdAt}
+            updatedAt={caseData.updatedAt}
+          />
+          
+          <DocumentPanel
+            onDropFiles={handleDrop}
+            uploading={Object.values(uploadingFiles).some(Boolean)}
+            documents={documents}
+            loadingDocuments={false}
+            isDragOver={isDragOver}
+            onDocumentDownload={(doc) => console.log('Download', doc)}
+            onDocumentDelete={(doc) => {
+              setDocumentToDelete(doc)
+              setDeleteDialogOpen(true)
+            }}
+            editingDocumentId={editingDocument}
+            editingDocumentName={editingName}
+            onDocumentNameChange={setEditingName}
+            onDocumentNameSave={handleDocumentNameSave}
+            onDocumentNameKeyPress={handleDocumentNameKeyPress}
+            onDocumentDoubleClick={handleDocumentDoubleClick}
+          />
+          
+          <NotesPanel
+            notes={notes}
+            onChange={setNotes}
+            onSave={handleSaveNotes}
+          />
+        </div>
+      }
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="outline" 
-            onClick={() => router.push('/dashboard/acoes-criminais')}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{caseData.title}</h1>
-            <p className="text-gray-600">{caseData.type}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Select value={status} onValueChange={handleStatusChange}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Em andamento">Em andamento</SelectItem>
-              <SelectItem value="Concluído">Concluído</SelectItem>
-              <SelectItem value="Pausado">Pausado</SelectItem>
-              <SelectItem value="Cancelado">Cancelado</SelectItem>
-            </SelectContent>
-          </Select>
-          <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" onClick={handleDelete}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Excluir
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Tem certeza que deseja excluir este caso? Esta ação não pode ser desfeita.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => router.push('/dashboard/acoes-criminais')}>
-                  Excluir
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </div>
-
-      {/* Workflow Steps */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle>Fluxo do Processo</CardTitle>
@@ -1017,6 +1020,27 @@ export default function AcoesCriminaisPage({ params }: { params: { id: string } 
         </CardContent>
       </Card>
 
+      {/* Document Delete Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o documento "{documentToDelete?.name}"? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => documentToDelete && handleDeleteDocument(documentToDelete.id)}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Dialogs */}
       <AlertDialog open={showStepDialog} onOpenChange={setShowStepDialog}>
         <AlertDialogContent>
@@ -1060,6 +1084,6 @@ export default function AcoesCriminaisPage({ params }: { params: { id: string } 
           </div>
         </div>
       )}
-    </div>
+    </DetailLayout>
   )
 }

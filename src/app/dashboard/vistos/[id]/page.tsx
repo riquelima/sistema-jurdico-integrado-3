@@ -50,6 +50,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { DetailLayout } from "@/components/detail/DetailLayout";
+import { StepItem } from "@/components/detail/StepItem";
+import { StatusPanel } from "@/components/detail/StatusPanel";
+import { DocumentPanel } from "@/components/detail/DocumentPanel";
+import { NotesPanel } from "@/components/detail/NotesPanel";
 
 // Definindo os workflows para Vistos
 const WORKFLOWS = {
@@ -1102,7 +1107,7 @@ export default function VistoDetailsPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="w-full p-6 space-y-6">
         <div className="flex items-center gap-4">
           <Skeleton className="h-10 w-10" />
           <Skeleton className="h-8 w-64" />
@@ -1123,7 +1128,7 @@ export default function VistoDetailsPage() {
 
   if (!caseData) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="w-full p-6">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Caso não encontrado</h1>
           <p className="text-gray-600 mb-6">O caso solicitado não foi encontrado.</p>
@@ -1138,253 +1143,135 @@ export default function VistoDetailsPage() {
     );
   }
 
+  const handleDeleteCase = async () => {
+    try {
+      // Simulate API call to delete case
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      router.push('/dashboard/vistos');
+    } catch (error) {
+      console.error('Erro ao deletar caso:', error);
+    }
+  };
+
+  const getCurrentStepIndex = () => {
+    if (!caseData) return 0;
+    const completedSteps = caseData.steps.filter(step => step.completed).length;
+    return Math.min(completedSteps, caseData.steps.length - 1);
+  };
+
+  const currentStepIndex = getCurrentStepIndex();
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard/vistos">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{caseData.title}</h1>
-            <p className="text-gray-600">{caseData.clientName}</p>
-          </div>
-        </div>
-        <Button variant="destructive" size="sm">
-          <Trash2 className="w-4 h-4 mr-2" />
-          Excluir
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Case Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="w-5 h-5" />
-                Informações do Caso
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="case-type">Tipo de Visto</Label>
-                  <Select value={caseData.type} onValueChange={(value) => setCaseData(prev => prev ? { ...prev, type: value } : prev)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.keys(WORKFLOWS).map((type) => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="case-status">Status</Label>
-                  <Select value={status} onValueChange={handleStatusChange}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                      <SelectItem value="Concluído">Concluído</SelectItem>
-                      <SelectItem value="Pausado">Pausado</SelectItem>
-                      <SelectItem value="Cancelado">Cancelado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="case-description">Descrição</Label>
-                <Textarea
-                  id="case-description"
-                  value={caseData.description}
-                  onChange={(e) => setCaseData(prev => prev ? { ...prev, description: e.target.value } : prev)}
-                  rows={3}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Workflow Steps */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Fluxo de Trabalho - {caseData.type}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {caseData.steps.map((step, index) => (
-                <div key={step.id} className="border rounded-lg">
-                  <div 
-                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
-                    onClick={() => toggleStepExpansion(step.id)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStepCompletion(step.id);
-                        }}
-                      >
-                        {step.completed ? (
-                          <CheckCircle className="w-5 h-5 text-green-600" />
-                        ) : (
-                          <Circle className="w-5 h-5 text-gray-400" />
-                        )}
-                      </Button>
-                      <div>
-                        <h3 className="font-medium">{step.title}</h3>
-                        <p className="text-sm text-gray-600">{step.description}</p>
-                        {step.completed && step.completedAt && (
-                          <p className="text-xs text-green-600">
-                            Concluído em {new Date(step.completedAt).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={step.completed ? "default" : "secondary"}>
-                        {step.completed ? "Concluído" : "Pendente"}
-                      </Badge>
-                      {expandedSteps[step.id] ? (
-                        <ChevronDown className="w-4 h-4" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4" />
-                      )}
-                    </div>
-                  </div>
-                  
-                  {expandedSteps[step.id] && (
-                    <div className="border-t p-4 bg-gray-50">
-                      {renderStepContent(step)}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Documents */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Documentos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {documents.length === 0 ? (
-                  <p className="text-gray-500 text-sm">Nenhum documento enviado</p>
-                ) : (
-                  documents.map((doc) => (
-                    <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-gray-500" />
-                        <div>
-                          <p className="font-medium text-sm">{doc.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {(doc.size / 1024 / 1024).toFixed(2)} MB
-                          </p>
-                          {doc.stepId !== undefined && (
-                            <p className="text-xs text-blue-600">
-                              Etapa {doc.stepId + 1}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => window.open(doc.url, '_blank')}>
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleRenameDocument(doc)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteDocument(doc)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                )}
-                
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                  <input
-                    type="file"
-                    id="general-file-upload"
-                    className="hidden"
-                    multiple
-                    onChange={(e) => handleFileUpload(e.target.files)}
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => document.getElementById('general-file-upload')?.click()}
-                    disabled={uploadingFiles['general']}
-                  >
-                    {uploadingFiles['general'] ? (
-                      <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2" />
-                    ) : (
-                      <Upload className="w-4 h-4 mr-2" />
-                    )}
-                    Upload
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Case Timeline */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="w-5 h-5" />
-                Timeline
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+    <div className="w-full p-6 space-y-6">
+      <DetailLayout
+        backHref="/dashboard/vistos"
+        title={caseData.title}
+        subtitle={caseData.clientName}
+        onDelete={handleDeleteCase}
+        left={
+          <div className="space-y-6">
+            {/* Case Info Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="w-5 h-5" />
+                  Informações do Caso
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="font-medium text-sm">Caso criado</p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(caseData.createdAt).toLocaleDateString()}
-                    </p>
+                    <Label htmlFor="case-type">Tipo de Visto</Label>
+                    <Select value={caseData.type} onValueChange={(value) => setCaseData(prev => prev ? { ...prev, type: value } : prev)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.keys(WORKFLOWS).map((type) => (
+                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="case-status">Status</Label>
+                    <Select value={status} onValueChange={handleStatusChange}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+                        <SelectItem value="Concluído">Concluído</SelectItem>
+                        <SelectItem value="Pausado">Pausado</SelectItem>
+                        <SelectItem value="Cancelado">Cancelado</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-                {caseData.steps
-                  .filter(step => step.completed)
-                  .map((step) => (
-                    <div key={step.id} className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                      <div>
-                        <p className="font-medium text-sm">{step.title}</p>
-                        <p className="text-xs text-gray-500">
-                          {step.completedAt && new Date(step.completedAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+                <div>
+                  <Label htmlFor="case-description">Descrição</Label>
+                  <Textarea
+                    id="case-description"
+                    value={caseData.description}
+                    onChange={(e) => setCaseData(prev => prev ? { ...prev, description: e.target.value } : prev)}
+                    rows={3}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Workflow Steps */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Fluxo de Trabalho - {caseData.type}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {caseData.steps.map((step, index) => (
+                  <StepItem
+                    key={step.id}
+                    index={index}
+                    title={step.title}
+                    isCurrent={index === currentStepIndex}
+                    isCompleted={step.completed}
+                    isPending={index > currentStepIndex}
+                    expanded={expandedSteps[step.id] || false}
+                    onToggle={() => toggleStepExpansion(step.id)}
+                    onMarkComplete={() => handleStepCompletion(step.id)}
+                  >
+                    {renderStepContent(step)}
+                  </StepItem>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        }
+        right={
+          <div className="space-y-6">
+            <StatusPanel
+              status={status}
+              onStatusChange={handleStatusChange}
+              currentStep={currentStepIndex + 1}
+              totalSteps={caseData.steps.length}
+              createdAt={caseData.createdAt}
+              updatedAt={caseData.updatedAt}
+            />
+
+            <DocumentPanel
+              onDropFiles={(files) => handleFileUpload(files)}
+              uploading={uploadingFiles['general'] || false}
+            />
+
+            <NotesPanel
+              notes={notes[currentStepIndex] || ""}
+              onChange={(value) => setNotes(prev => ({ ...prev, [currentStepIndex]: value }))}
+              onSave={() => saveStepNotes(currentStepIndex)}
+            />
+          </div>
+        }
+      />
 
       {/* Delete Document Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -1398,7 +1285,7 @@ export default function VistoDetailsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteDocument}>
+            <AlertDialogAction onClick={confirmDeleteDocument} className="bg-white text-red-600 border border-red-500 hover:bg-red-50 hover:text-red-700">
               Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
