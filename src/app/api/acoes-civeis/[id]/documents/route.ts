@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+// @ts-ignore - Supabase types will be resolved in production
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(

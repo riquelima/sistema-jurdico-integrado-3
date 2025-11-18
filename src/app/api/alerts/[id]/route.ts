@@ -51,8 +51,9 @@ export async function PATCH(
     }, { status: 200 });
   } catch (error) {
     console.error('PATCH error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ 
-      error: 'Internal server error: ' + error.message 
+      error: 'Internal server error: ' + errorMessage 
     }, { status: 500 });
   }
 }
