@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface StatusPanelProps {
@@ -15,6 +15,9 @@ interface StatusPanelProps {
 export function StatusPanel({ status, onStatusChange, currentStep, totalSteps, createdAt, updatedAt }: StatusPanelProps) {
   return (
     <Card>
+      <CardHeader>
+        <CardTitle>Status</CardTitle>
+      </CardHeader>
       <CardContent className="space-y-4">
         <Select value={status} onValueChange={onStatusChange}>
           <SelectTrigger>
