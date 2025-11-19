@@ -965,7 +965,7 @@ export default function AcoesCriminaisPage() {
                             </h5>
                           )}
                           <p className="text-xs text-gray-500 mt-1">
-                            {(document.size / 1024 / 1024).toFixed(2)} MB
+                            {Number.isFinite(document.size) ? (document.size / 1024 / 1024).toFixed(2) : '—'} MB
                           </p>
                           <p className="text-xs text-gray-500">
                             {new Date(document.uploadedAt).toLocaleDateString('pt-BR')}

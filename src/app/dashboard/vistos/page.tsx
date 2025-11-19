@@ -169,8 +169,8 @@ export default function VistosPage() {
           <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-emerald-300 text-sm font-medium">Aprovados</p>
-                <p className="text-3xl font-bold text-emerald-400 mt-1">{stats.aprovado}</p>
+                <p className="text-emerald-300 text-sm font-medium">Finalizados</p>
+                <p className="text-3xl font-bold text-emerald-400 mt-1">{stats.finalizado}</p>
               </div>
               <div className="p-3 bg-emerald-800 rounded-lg">
                 <CheckCircle2 className="h-6 w-6 text-emerald-400" />
