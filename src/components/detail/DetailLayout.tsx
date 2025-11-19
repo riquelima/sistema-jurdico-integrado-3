@@ -13,9 +13,10 @@ interface DetailLayoutProps {
   onDelete?: () => void;
   left: ReactNode;
   right: ReactNode;
+  children?: ReactNode;
 }
 
-export function DetailLayout({ backHref, title, subtitle, onDelete, left, right }: DetailLayoutProps) {
+export function DetailLayout({ backHref, title, subtitle, onDelete, left, right, children }: DetailLayoutProps) {
   return (
     <div className="space-y-6 w-full">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -66,6 +67,8 @@ export function DetailLayout({ backHref, title, subtitle, onDelete, left, right 
           {right}
         </div>
       </div>
+
+      {children}
     </div>
   );
 }
