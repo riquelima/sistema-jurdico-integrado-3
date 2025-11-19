@@ -71,6 +71,35 @@ export default function AcoesTrabalhistasPage() {
     }
   );
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'acoes-trabalhistas-status-update') {
+          const updateData = JSON.parse(e.newValue || '{}');
+          if (updateData.id && updateData.status) {
+            refetch();
+            localStorage.removeItem('acoes-trabalhistas-status-update');
+          }
+        }
+      };
+
+      const handleCustomEvent = (e: CustomEvent) => {
+        const updateData = e.detail;
+        if (updateData.id && updateData.status) {
+          refetch();
+        }
+      };
+
+      window.addEventListener('storage', handleStorageChange);
+      window.addEventListener('acoes-trabalhistas-status-updated', handleCustomEvent as EventListener);
+
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('acoes-trabalhistas-status-updated', handleCustomEvent as EventListener);
+      };
+    }
+  }, [refetch]);
+
   // Prefetch de dados quando usuário interage com navegação
   const { prefetchData } = usePrefetch();
 
@@ -84,19 +113,16 @@ export default function AcoesTrabalhistasPage() {
 
   const stats = {
     total: casesList.length,
-    emAndamento: casesList.filter(c => c.status === "Em Andamento").length,
-    aguardando: casesList.filter(c => c.status === "Aguardando").length,
+    emAndamento: casesList.filter(c => c.status === "Em andamento").length,
     finalizado: casesList.filter(c => c.status === "Finalizado").length,
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Em Andamento":
+      case "Em andamento":
         return "bg-blue-500 text-white hover:bg-blue-600";
       case "Finalizado":
         return "bg-emerald-500 text-white hover:bg-emerald-600";
-      case "Aguardando":
-        return "bg-amber-500 text-white hover:bg-amber-600";
       default:
         return "bg-slate-500 text-white hover:bg-slate-600";
     }
@@ -104,12 +130,10 @@ export default function AcoesTrabalhistasPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "Em Andamento":
+      case "Em andamento":
         return <Clock className="h-3 w-3" />;
       case "Finalizado":
         return <CheckCircle2 className="h-3 w-3" />;
-      case "Aguardando":
-        return <AlertCircle className="h-3 w-3" />;
       default:
         return <Clock className="h-3 w-3" />;
     }
@@ -159,7 +183,7 @@ export default function AcoesTrabalhistasPage() {
         </div>
 
         {/* Cards de estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
             <div className="flex items-center justify-between">
               <div>
@@ -184,17 +208,7 @@ export default function AcoesTrabalhistasPage() {
             </div>
           </div>
 
-          <div className="bg-amber-900 rounded-lg p-4 border border-amber-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-amber-300 text-sm font-medium">Aguardando</p>
-                <p className="text-3xl font-bold text-amber-400 mt-1">{stats.aguardando}</p>
-              </div>
-              <div className="p-3 bg-amber-800 rounded-lg">
-                <AlertCircle className="h-6 w-6 text-amber-400" />
-              </div>
-            </div>
-          </div>
+          
 
           <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700">
             <div className="flex items-center justify-between">
@@ -248,9 +262,8 @@ export default function AcoesTrabalhistasPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+                <SelectItem value="Em andamento">Em andamento</SelectItem>
                 <SelectItem value="Finalizado">Finalizado</SelectItem>
-                <SelectItem value="Aguardando">Aguardando</SelectItem>
               </SelectContent>
             </Select>
           </div>

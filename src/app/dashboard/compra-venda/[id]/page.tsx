@@ -93,7 +93,7 @@ export default function CompraVendaDetailsPage() {
   const [stepNotes, setStepNotes] = useState<{ [key: number]: string }>({});
   const [uploading, setUploading] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  const [status, setStatus] = useState("Em Andamento");
+  const [status, setStatus] = useState("Em andamento");
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [stepDialogOpen, setStepDialogOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState("");
@@ -119,7 +119,7 @@ export default function CompraVendaDetailsPage() {
       const data = await response.json();
       setProperty(data);
       setCurrentStep(data.currentStep || 1);
-      setStatus(data.status || "Em Andamento");
+      setStatus(data.status || "Em andamento");
       if (data.stepNotes) {
         try {
           setStepNotes(JSON.parse(data.stepNotes));
@@ -160,6 +160,12 @@ export default function CompraVendaDetailsPage() {
         toast.success("Status atualizado com sucesso");
         setStatusDialogOpen(false);
         setPendingStatus("");
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('compra-venda-status-update', JSON.stringify({ id, status: pendingStatus, t: Date.now() }));
+            window.dispatchEvent(new CustomEvent('compra-venda-status-updated', { detail: { id, status: pendingStatus } }));
+          } catch {}
+        }
       }
     } catch (error) {
       console.error("Error updating status:", error);

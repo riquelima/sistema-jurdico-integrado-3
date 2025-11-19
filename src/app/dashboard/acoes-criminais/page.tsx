@@ -66,30 +66,52 @@ export default function AcoesCriminaisPage() {
   const [typeFilter, setTypeFilter] = useState("all");
 
   useEffect(() => {
-    // Prefetch pode ser usado em interação futura
-    // Mantido para consistência futura
+    if (typeof window !== 'undefined') {
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'acoes-criminais-status-update') {
+          const updateData = JSON.parse(e.newValue || '{}');
+          if (updateData.id && updateData.status) {
+            refetch();
+            localStorage.removeItem('acoes-criminais-status-update');
+          }
+        }
+      };
+
+      const handleCustomEvent = (e: CustomEvent) => {
+        const updateData = e.detail;
+        if (updateData.id && updateData.status) {
+          refetch();
+        }
+      };
+
+      window.addEventListener('storage', handleStorageChange);
+      window.addEventListener('acoes-criminais-status-updated', handleCustomEvent as EventListener);
+
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('acoes-criminais-status-updated', handleCustomEvent as EventListener);
+      };
+    }
   }, []);
 
   const filteredCases = cases.filter((c) => {
     const matchesSearch = c.clientName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || c.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || c.status === statusFilter || (statusFilter === "Em andamento" && c.status === "Em Andamento");
     const matchesType = typeFilter === "all" || c.type === typeFilter;
     return matchesSearch && matchesStatus && matchesType;
   });
 
   const stats = {
     total: cases.length,
-    emAndamento: cases.filter(c => c.status === "Em Andamento").length,
-    aguardando: cases.filter(c => c.status === "Aguardando").length,
+    emAndamento: cases.filter(c => c.status === "Em andamento" || c.status === "Em Andamento").length,
     finalizado: cases.filter(c => c.status === "Finalizado").length,
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "Em andamento":
       case "Em Andamento":
         return "bg-blue-500 text-white";
-      case "Aguardando":
-        return "bg-yellow-500 text-white";
       case "Finalizado":
         return "bg-green-500 text-white";
       default:
@@ -99,10 +121,9 @@ export default function AcoesCriminaisPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
+      case "Em andamento":
       case "Em Andamento":
         return Clock;
-      case "Aguardando":
-        return AlertCircle;
       case "Finalizado":
         return CheckCircle2;
       default:
@@ -154,7 +175,7 @@ export default function AcoesCriminaisPage() {
         </div>
 
         {/* Cards de estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
             <div className="flex items-center justify-between">
               <div>
@@ -170,23 +191,11 @@ export default function AcoesCriminaisPage() {
           <div className="bg-blue-900 rounded-lg p-4 border border-blue-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-300 text-sm font-medium">Em Andamento</p>
+                <p className="text-blue-300 text-sm font-medium">Em andamento</p>
                 <p className="text-3xl font-bold text-blue-400 mt-1">{stats.emAndamento}</p>
               </div>
               <div className="p-3 bg-blue-800 rounded-lg">
                 <Clock className="h-6 w-6 text-blue-400" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-amber-900 rounded-lg p-4 border border-amber-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-amber-300 text-sm font-medium">Aguardando</p>
-                <p className="text-3xl font-bold text-amber-400 mt-1">{stats.aguardando}</p>
-              </div>
-              <div className="p-3 bg-amber-800 rounded-lg">
-                <AlertCircle className="h-6 w-6 text-amber-400" />
               </div>
             </div>
           </div>
@@ -228,12 +237,11 @@ export default function AcoesCriminaisPage() {
               <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:ring-amber-500">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                <SelectItem value="Aguardando">Aguardando</SelectItem>
-                <SelectItem value="Finalizado">Finalizado</SelectItem>
-              </SelectContent>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              <SelectItem value="Em andamento">Em andamento</SelectItem>
+              <SelectItem value="Finalizado">Finalizado</SelectItem>
+            </SelectContent>
             </Select>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:ring-amber-500">

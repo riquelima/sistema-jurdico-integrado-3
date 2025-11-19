@@ -76,7 +76,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (status) {
-      query = query.eq('status', status);
+      const normalized = status === 'Em andamento' ? ['Em andamento', 'Em Andamento'] : [status];
+      query = query.in('status', normalized);
     }
 
     // Apply pagination
@@ -176,7 +177,7 @@ export async function POST(request: NextRequest) {
       client_name: clientName.trim(),
       type: type.trim(),
       current_step: currentStep !== undefined ? currentStep : 0,
-      status: status || 'Em Andamento',
+      status: status || 'Em andamento',
     };
 
     // Add optional fields if provided

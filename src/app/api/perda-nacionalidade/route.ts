@@ -70,7 +70,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (statusFilter) {
-      query = query.eq('status', statusFilter);
+      const normalized = statusFilter === 'Em andamento' ? ['Em andamento', 'Em Andamento'] : [statusFilter];
+      query = query.in('status', normalized);
     }
 
     const { data: results, error } = await query
@@ -134,7 +135,7 @@ export async function POST(request: NextRequest) {
       manifesto_doc: body.manifestoDoc?.trim() || null,
       portaria_doc: body.portariaDoc?.trim() || null,
       current_step: body.currentStep ?? 0,
-      status: body.status?.trim() || 'Em Andamento',
+      status: body.status?.trim() || 'Em andamento',
       notes: body.notes?.trim() || null,
     };
 

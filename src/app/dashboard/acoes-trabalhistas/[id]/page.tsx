@@ -107,7 +107,7 @@ export default function AcaoTrabalhistaDetailPage() {
 
   const [caseData, setCaseData] = useState<CaseData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState("Em Andamento");
+  const [status, setStatus] = useState("Em andamento");
   const [notes, setNotes] = useState("");
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -128,7 +128,7 @@ export default function AcaoTrabalhistaDetailPage() {
         if (response.ok) {
           const data = await response.json();
           setCaseData(data);
-          setStatus(data.status || "Em Andamento");
+          setStatus(data.status || "Em andamento");
           setNotes(data.notes || "");
         }
       } catch (error) {
@@ -174,7 +174,12 @@ export default function AcaoTrabalhistaDetailPage() {
         body: JSON.stringify({ status: newStatus }),
       });
       if (response.ok) {
-        console.log("Status atualizado com sucesso");
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('acoes-trabalhistas-status-update', JSON.stringify({ id, status: newStatus, t: Date.now() }));
+            window.dispatchEvent(new CustomEvent('acoes-trabalhistas-status-updated', { detail: { id, status: newStatus } }));
+          } catch {}
+        }
       }
     } catch (error) {
       console.error("Erro ao atualizar status:", error);

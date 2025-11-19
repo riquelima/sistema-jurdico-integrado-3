@@ -93,7 +93,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (status) {
-      query = query.eq('status', status);
+      const normalized = status === 'Em andamento' ? ['Em andamento', 'Em Andamento'] : [status];
+      query = query.in('status', normalized);
     }
 
     const { data: results, error } = await query
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
       cpf_comprador: body.cpfComprador ?? null,
       endereco_comprador: body.enderecoComprador ?? null,
       current_step: body.currentStep ?? 0,
-      status: body.status ?? 'Em Andamento',
+      status: body.status ?? 'Em andamento',
       prazo_sinal: body.prazoSinal ?? null,
       prazo_escritura: body.prazoEscritura ?? null,
       contract_notes: body.contractNotes ?? null,

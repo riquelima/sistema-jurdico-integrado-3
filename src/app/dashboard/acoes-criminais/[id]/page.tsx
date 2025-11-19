@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { use } from 'react'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -35,8 +34,8 @@ const WORKFLOWS = {
   ]
 }
 
-export default function AcoesCriminaisPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function AcoesCriminaisPage() {
+  const { id } = useParams() as { id: string };
   const router = useRouter()
   const [caseData, setCaseData] = useState<any>(null)
   const [notes, setNotes] = useState('')
@@ -66,15 +65,15 @@ export default function AcoesCriminaisPage({ params }: { params: Promise<{ id: s
   useEffect(() => {
     fetchCase()
     fetchDocuments()
-  }, [params.id])
+  }, [id])
 
   const fetchCase = async () => {
     try {
       setLoading(true)
       // Simular busca de dados do caso
       const mockCase = {
-        id: params.id,
-        title: `Ação Criminal #${params.id}`,
+        id: id,
+        title: `Ação Criminal #${id}`,
         type: 'Ação Criminal',
         status: 'Em andamento',
         currentStep: 0,
@@ -248,8 +247,23 @@ export default function AcoesCriminaisPage({ params }: { params: Promise<{ id: s
     setShowNotesDialog(false)
   }
 
-  const handleStatusChange = (newStatus: string) => {
+  const handleStatusChange = async (newStatus: string) => {
     setStatus(newStatus)
+    try {
+      const response = await fetch(`/api/acoes-criminais?id=${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+      if (response.ok && typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('acoes-criminais-status-update', JSON.stringify({ id, status: newStatus, t: Date.now() }))
+          window.dispatchEvent(new CustomEvent('acoes-criminais-status-updated', { detail: { id, status: newStatus } }))
+        } catch {}
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error)
+    }
   }
 
   const handleDelete = () => {

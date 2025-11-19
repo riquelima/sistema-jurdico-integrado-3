@@ -58,14 +58,14 @@ export default function VistosPage() {
 
   const stats = {
     total: vistos.length,
-    emAndamento: vistos.filter(v => v.status === "Em Andamento").length,
+    emAndamento: vistos.filter(v => v.status === "Em andamento").length,
     finalizado: vistos.filter(v => v.status === "Finalizado").length,
     aguardando: vistos.filter(v => v.status === "Aguardando").length,
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Em Andamento":
+      case "Em andamento":
         return "bg-blue-500 text-white hover:bg-blue-600";
       case "Finalizado":
         return "bg-emerald-500 text-white hover:bg-emerald-600";
@@ -91,7 +91,7 @@ export default function VistosPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "Em Andamento":
+      case "Em andamento":
         return <Clock className="h-4 w-4" />;
       case "Finalizado":
         return <CheckCircle2 className="h-4 w-4" />;
@@ -145,7 +145,7 @@ export default function VistosPage() {
           <div className="bg-blue-900 rounded-lg p-4 border border-blue-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-300 text-sm font-medium">Em Andamento</p>
+                <p className="text-blue-300 text-sm font-medium">Em andamento</p>
                 <p className="text-3xl font-bold text-blue-400 mt-1">{stats.emAndamento}</p>
               </div>
               <div className="p-3 bg-blue-800 rounded-lg">
@@ -216,9 +216,8 @@ export default function VistosPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+                <SelectItem value="Em andamento">Em andamento</SelectItem>
                 <SelectItem value="Finalizado">Finalizado</SelectItem>
-                <SelectItem value="Aguardando">Aguardando</SelectItem>
               </SelectContent>
             </Select>
           </div>

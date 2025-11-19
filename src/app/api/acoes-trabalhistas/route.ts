@@ -67,7 +67,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (status) {
-      query = query.eq('status', status);
+      const normalized = status === 'Em andamento' ? ['Em andamento', 'Em Andamento'] : [status];
+      query = query.in('status', normalized);
     }
 
     // Apply ordering, limit and offset
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
     // Prepare insert data
     const insertData: any = {
       client_name: clientName.trim(),
-      status: status || 'Em Andamento',
+      status: status || 'Em andamento',
     };
 
     if (notes !== undefined) {

@@ -28,7 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Sheet,
   SheetContent,
@@ -74,6 +74,72 @@ export default function DashboardLayout({
   const [user, setUser] = useState<User | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q) {
+      setSearchResults([]);
+      return;
+    }
+    let active = true;
+    setSearching(true);
+    const fetchAll = async () => {
+      try {
+        const enc = encodeURIComponent(q);
+        const [civeis, trab, crim, comp, perda, vistos] = await Promise.all([
+          fetch(`/api/acoes-civeis?search=${enc}&limit=5`).then(r => r.ok ? r.json() : [] ).catch(() => []),
+          fetch(`/api/acoes-trabalhistas?search=${enc}&limit=5`).then(r => r.ok ? r.json() : [] ).catch(() => []),
+          fetch(`/api/acoes-criminais?search=${enc}&limit=5`).then(r => r.ok ? r.json() : [] ).catch(() => []),
+          fetch(`/api/compra-venda-imoveis?search=${enc}&limit=5`).then(r => r.ok ? r.json() : [] ).catch(() => []),
+          fetch(`/api/perda-nacionalidade?search=${enc}&limit=5`).then(r => r.ok ? r.json() : [] ).catch(() => []),
+          fetch(`/api/vistos?search=${enc}&limit=5`).then(r => r.ok ? r.json() : [] ).catch(() => []),
+        ]);
+        if (!active) return;
+        const toItem = (it: any, mod: string) => {
+          const title = it?.clientName || it?.client_name || it?.enderecoImovel || it?.endereco_imovel || "";
+          const subtitle = it?.type || "";
+          let href = "";
+          switch (mod) {
+            case "Ações Cíveis":
+              href = `/dashboard/acoes-civeis/${it.id}`;
+              break;
+            case "Ações Trabalhistas":
+              href = `/dashboard/acoes-trabalhistas/${it.id}`;
+              break;
+            case "Ações Criminais":
+              href = `/dashboard/acoes-criminais/${it.id}`;
+              break;
+            case "Compra e Venda":
+              href = `/dashboard/compra-venda/${it.id}`;
+              break;
+            case "Perda de Nacionalidade":
+              href = `/dashboard/perda-nacionalidade/${it.id}`;
+              break;
+            case "Vistos":
+              href = `/dashboard/vistos/${it.id}`;
+              break;
+            default:
+              href = `/dashboard`;
+          }
+          return { module: mod, id: it.id, title, subtitle, status: it?.status || "Em andamento", href };
+        };
+        const all = []
+          .concat((Array.isArray(civeis) ? civeis : []).map((it: any) => toItem(it, "Ações Cíveis")))
+          .concat((Array.isArray(trab) ? trab : []).map((it: any) => toItem(it, "Ações Trabalhistas")))
+          .concat((Array.isArray(crim) ? crim : []).map((it: any) => toItem(it, "Ações Criminais")))
+          .concat((Array.isArray(comp) ? comp : []).map((it: any) => toItem(it, "Compra e Venda")))
+          .concat((Array.isArray(perda) ? perda : []).map((it: any) => toItem(it, "Perda de Nacionalidade")))
+          .concat((Array.isArray(vistos) ? vistos : []).map((it: any) => toItem(it, "Vistos")));
+        setSearchResults(all);
+      } finally {
+        if (active) setSearching(false);
+      }
+    };
+    fetchAll();
+    return () => { active = false; };
+  }, [searchQuery]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -291,9 +357,45 @@ export default function DashboardLayout({
 
         {/* Page Content */}
         <main className="p-4 lg:p-6">
-          <div className="w-full">
-            {children}
-          </div>
+          {searchQuery.trim() ? (
+            <div className="grid gap-6 lg:grid-cols-3">
+              <div className="space-y-3">
+                <Card className="border-slate-200 shadow-sm">
+                  <CardHeader>
+                    <CardTitle>Resultados da Busca</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {searching ? (
+                      <div className="text-sm text-slate-500">Buscando...</div>
+                    ) : searchResults.length === 0 ? (
+                      <div className="text-sm text-slate-500">Nenhum resultado</div>
+                    ) : (
+                      searchResults.map((item, i) => (
+                        <Link key={`${item.module}-${item.id}-${i}`} href={item.href}>
+                          <Card className="border-slate-200 hover:shadow-md transition-all cursor-pointer">
+                            <CardContent className="p-3">
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                  <div className="text-sm font-semibold truncate">{item.title}</div>
+                                  <div className="text-xs text-slate-500 truncate">{item.subtitle || item.module}</div>
+                                </div>
+                                <Badge className={`text-xs ${item.status === 'Finalizado' ? 'bg-emerald-500 text-white' : 'bg-blue-500 text-white'}`}>{item.status || 'Em andamento'}</Badge>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="lg:col-span-2">
+                <div className="w-full">{children}</div>
+              </div>
+            </div>
+          ) : (
+            <div className="w-full">{children}</div>
+          )}
         </main>
       </div>
     </div>

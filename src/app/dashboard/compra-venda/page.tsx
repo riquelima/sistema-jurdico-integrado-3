@@ -33,8 +33,33 @@ export default function CompraVendaPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   useEffect(() => {
-    // Prefetch hook disponível para navegação futura
-  }, []);
+    if (typeof window !== 'undefined') {
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'compra-venda-status-update') {
+          const updateData = JSON.parse(e.newValue || '{}');
+          if (updateData.id && updateData.status) {
+            refetch();
+            localStorage.removeItem('compra-venda-status-update');
+          }
+        }
+      };
+
+      const handleCustomEvent = (e: CustomEvent) => {
+        const updateData = e.detail;
+        if (updateData.id && updateData.status) {
+          refetch();
+        }
+      };
+
+      window.addEventListener('storage', handleStorageChange);
+      window.addEventListener('compra-venda-status-updated', handleCustomEvent as EventListener);
+
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('compra-venda-status-updated', handleCustomEvent as EventListener);
+      };
+    }
+  }, [refetch]);
 
   const filteredProperties = properties.filter((p) => {
     const matchesSearch = !search || p.enderecoImovel?.toLowerCase().includes(search.toLowerCase());
@@ -44,9 +69,8 @@ export default function CompraVendaPage() {
 
   const stats = {
     total: properties.length,
-    emAndamento: properties.filter(p => p.status === "Em Andamento").length,
+    emAndamento: properties.filter(p => p.status === "Em andamento").length,
     finalizado: properties.filter(p => p.status === "Finalizado").length,
-    aguardando: properties.filter(p => p.status === "Aguardando").length,
   };
 
   const getDaysUntil = (dateString: string) => {
@@ -67,12 +91,10 @@ export default function CompraVendaPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Em Andamento":
+      case "Em andamento":
         return "bg-blue-500 text-white hover:bg-blue-600";
       case "Finalizado":
         return "bg-emerald-500 text-white hover:bg-emerald-600";
-      case "Aguardando":
-        return "bg-amber-500 text-white hover:bg-amber-600";
       default:
         return "bg-slate-500 text-white hover:bg-slate-600";
     }
@@ -80,12 +102,10 @@ export default function CompraVendaPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "Em Andamento":
+      case "Em andamento":
         return <Clock className="h-4 w-4" />;
       case "Finalizado":
         return <CheckCircle2 className="h-4 w-4" />;
-      case "Aguardando":
-        return <AlertCircle className="h-4 w-4" />;
       default:
         return <FileText className="h-4 w-4" />;
     }
@@ -143,17 +163,7 @@ export default function CompraVendaPage() {
             </div>
           </div>
 
-          <div className="bg-amber-900 rounded-lg p-4 border border-amber-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-amber-300 text-sm font-medium">Aguardando</p>
-                <p className="text-3xl font-bold text-amber-400 mt-1">{stats.aguardando}</p>
-              </div>
-              <div className="p-3 bg-amber-800 rounded-lg">
-                <AlertCircle className="h-6 w-6 text-amber-400" />
-              </div>
-            </div>
-          </div>
+          
 
           <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700">
             <div className="flex items-center justify-between">
@@ -192,12 +202,11 @@ export default function CompraVendaPage() {
               <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:ring-amber-500">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                <SelectItem value="Finalizado">Finalizado</SelectItem>
-                <SelectItem value="Aguardando">Aguardando</SelectItem>
-              </SelectContent>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              <SelectItem value="Em andamento">Em andamento</SelectItem>
+              <SelectItem value="Finalizado">Finalizado</SelectItem>
+            </SelectContent>
             </Select>
           </div>
         </CardContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface StatusPanelProps {
@@ -15,23 +15,16 @@ interface StatusPanelProps {
 export function StatusPanel({ status, onStatusChange, currentStep, totalSteps, createdAt, updatedAt }: StatusPanelProps) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Status do Processo</CardTitle>
-      </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Status</label>
-          <Select value={status} onValueChange={onStatusChange}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-              <SelectItem value="Aguardando">Aguardando</SelectItem>
-              <SelectItem value="Finalizado">Finalizado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={status} onValueChange={onStatusChange}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Em andamento">Em andamento</SelectItem>
+            <SelectItem value="Finalizado">Finalizado</SelectItem>
+          </SelectContent>
+        </Select>
         {createdAt && (
           <div className="pt-2 border-t">
             <p className="text-xs text-muted-foreground">Criado em</p>

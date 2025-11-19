@@ -103,7 +103,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (status) {
-      query = query.eq('status', status);
+      const normalized = status === 'Em andamento' ? ['Em andamento', 'Em Andamento'] : [status];
+      query = query.in('status', normalized);
     }
 
     const { data: results, error } = await query
@@ -177,7 +178,7 @@ export async function POST(request: NextRequest) {
       roteiro_viagem_doc: body.roteiroViagemDoc?.trim() || null,
       taxa: body.taxa?.trim() || null,
       taxa_doc: body.taxaDoc?.trim() || null,
-      status: body.status?.trim() || 'Em Andamento',
+      status: body.status?.trim() || 'Em andamento',
       notes: body.notes?.trim() || null,
     };
 
