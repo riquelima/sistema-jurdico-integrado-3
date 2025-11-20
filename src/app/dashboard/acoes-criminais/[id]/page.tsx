@@ -166,6 +166,11 @@ export default function AcoesCriminaisPage() {
     files.forEach(file => uploadDroppedFile(file))
   }
 
+  const handleDropFiles = (files: File[]) => {
+    setIsDragOver(false)
+    files.forEach(file => uploadDroppedFile(file))
+  }
+
   const uploadDroppedFile = async (file: File) => {
     try {
       setUploadingFiles((prev: { [key: string]: boolean }) => ({ ...prev, [file.name]: true }))
@@ -836,11 +841,13 @@ export default function AcoesCriminaisPage() {
           />
           
           <DocumentPanel
-            onDropFiles={handleDrop}
+            onDropFiles={handleDropFiles}
             uploading={Object.values(uploadingFiles).some(Boolean)}
             documents={documents}
             loadingDocuments={false}
             isDragOver={isDragOver}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
             onDocumentDownload={(doc) => console.log('Download', doc)}
             onDocumentDelete={(doc) => {
               setDocumentToDelete(doc)
