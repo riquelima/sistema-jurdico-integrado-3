@@ -168,7 +168,7 @@ export default function AcoesCriminaisPage() {
 
   const uploadDroppedFile = async (file: File) => {
     try {
-      setUploadingFiles(prev => ({ ...prev, [file.name]: true }))
+      setUploadingFiles((prev: { [key: string]: boolean }) => ({ ...prev, [file.name]: true }))
       
       // Simular upload
       await new Promise(resolve => setTimeout(resolve, 2000))
@@ -182,32 +182,32 @@ export default function AcoesCriminaisPage() {
         step: caseData?.currentStep || 0
       }
       
-      setDocuments(prev => [...prev, newDocument])
+      setDocuments((prev: any[]) => [...prev, newDocument])
     } catch (error) {
       console.error('Erro ao fazer upload:', error)
     } finally {
-      setUploadingFiles(prev => ({ ...prev, [file.name]: false }))
+      setUploadingFiles((prev: { [key: string]: boolean }) => ({ ...prev, [file.name]: false }))
     }
   }
 
   const handleFileUpload = async (file: File, fieldName: string) => {
     try {
-      setUploadStatus(prev => ({ ...prev, [fieldName]: 'uploading' }))
+      setUploadStatus((prev: { [key: string]: 'idle' | 'uploading' | 'success' | 'error' }) => ({ ...prev, [fieldName]: 'uploading' }))
       
       // Simular upload
       await new Promise(resolve => setTimeout(resolve, 2000))
       
-      setFileUploads(prev => ({ ...prev, [fieldName]: file }))
-      setUploadStatus(prev => ({ ...prev, [fieldName]: 'success' }))
+      setFileUploads((prev: { [key: string]: File | null }) => ({ ...prev, [fieldName]: file }))
+      setUploadStatus((prev: { [key: string]: 'idle' | 'uploading' | 'success' | 'error' }) => ({ ...prev, [fieldName]: 'success' }))
     } catch (error) {
       console.error('Erro ao fazer upload:', error)
-      setUploadStatus(prev => ({ ...prev, [fieldName]: 'error' }))
+      setUploadStatus((prev: { [key: string]: 'idle' | 'uploading' | 'success' | 'error' }) => ({ ...prev, [fieldName]: 'error' }))
     }
   }
 
   const handleStepClick = (stepIndex: number) => {
     if (stepIndex <= (caseData?.currentStep || 0)) {
-      setExpandedSteps(prev => ({
+      setExpandedSteps((prev: { [key: number]: boolean }) => ({
         ...prev,
         [stepIndex]: !prev[stepIndex]
       }))
@@ -231,7 +231,7 @@ export default function AcoesCriminaisPage() {
   }
 
   const handleSaveStepData = (stepIndex: number, data: any) => {
-    setStepData(prev => ({
+    setStepData((prev: { [key: number]: any }) => ({
       ...prev,
       [stepIndex]: { ...prev[stepIndex], ...data }
     }))
