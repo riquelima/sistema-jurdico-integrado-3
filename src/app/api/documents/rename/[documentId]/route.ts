@@ -8,10 +8,10 @@ const supabaseAdmin = createClient(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ documentId: string }> }
+  { params }: { params: { documentId: string } }
 ) {
   try {
-    const { documentId } = await params;
+    const { documentId } = params;
     const { document_name } = await request.json();
 
     if (!document_name || !document_name.trim()) {

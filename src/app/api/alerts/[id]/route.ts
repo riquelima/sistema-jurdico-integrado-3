@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const supabase = createClient(
@@ -11,7 +11,7 @@ export async function PATCH(
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const { id } = await params;
+    const { id } = params;
 
     if (!id || isNaN(parseInt(id))) {
       return NextResponse.json({ 

@@ -6,11 +6,11 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const { id } = await params;
+    const { id } = params;
 
     // Validate ID
     if (!id || isNaN(parseInt(id))) {
@@ -49,11 +49,11 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const { id } = await params;
+    const { id } = params;
     const body = await request.json();
 
     // Validate ID
@@ -108,11 +108,11 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const { id } = await params;
+    const { id } = params;
 
     // Validate ID
     if (!id || isNaN(parseInt(id))) {

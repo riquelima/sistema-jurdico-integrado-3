@@ -9,9 +9,9 @@ const supabase = createClient(
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params: { id: string } }
 ) {
-  const { id } = await context.params;
+  const { id } = context.params;
   try {
 
     // Buscar documentos relacionados a esta ação cível

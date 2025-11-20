@@ -8,10 +8,10 @@ const supabaseAdmin = createClient(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ caseId: string }> }
+  { params }: { params: { caseId: string } }
 ) {
   try {
-    const { caseId } = await params;
+    const { caseId } = params;
     const { searchParams } = new URL(request.url);
     const moduleType = searchParams.get('moduleType') || 'acoes_civeis';
 
