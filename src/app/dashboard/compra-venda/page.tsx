@@ -63,14 +63,14 @@ export default function CompraVendaPage() {
 
   const filteredProperties = properties.filter((p) => {
     const matchesSearch = !search || p.enderecoImovel?.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || p.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || (p.status || "").toLowerCase() === statusFilter.toLowerCase();
     return matchesSearch && matchesStatus;
   });
 
   const stats = {
     total: properties.length,
-    emAndamento: properties.filter(p => p.status === "Em andamento").length,
-    finalizado: properties.filter(p => p.status === "Finalizado").length,
+    emAndamento: properties.filter(p => (p.status || "").toLowerCase() === "em andamento").length,
+    finalizado: properties.filter(p => (p.status || "").toLowerCase() === "finalizado").length,
   };
 
   const getDaysUntil = (dateString: string) => {

@@ -106,15 +106,15 @@ export default function AcoesTrabalhistasPage() {
   const casesList = Array.isArray(cases) ? cases : [];
   const filteredCases = casesList.filter((c) => {
     const matchesSearch = c.clientName.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || c.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || (c.status || "").toLowerCase() === statusFilter.toLowerCase();
     const matchesType = typeFilter === "all" || c.type === typeFilter;
     return matchesSearch && matchesStatus && matchesType;
   });
 
   const stats = {
     total: casesList.length,
-    emAndamento: casesList.filter(c => c.status === "Em andamento").length,
-    finalizado: casesList.filter(c => c.status === "Finalizado").length,
+    emAndamento: casesList.filter(c => (c.status || "").toLowerCase() === "em andamento").length,
+    finalizado: casesList.filter(c => (c.status || "").toLowerCase() === "finalizado").length,
   };
 
   const getStatusColor = (status: string) => {

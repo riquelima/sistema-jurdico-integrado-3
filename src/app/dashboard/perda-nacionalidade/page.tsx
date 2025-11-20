@@ -47,7 +47,7 @@ export default function PerdaNacionalidadePage() {
 
   const filteredCases = cases.filter((c) => {
     const matchesSearch = c.clientName.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || c.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || (c.status || "").toLowerCase() === statusFilter.toLowerCase();
     return matchesSearch && matchesStatus;
   });
 
@@ -79,9 +79,9 @@ export default function PerdaNacionalidadePage() {
 
   const stats = {
     total: cases.length,
-    emAndamento: cases.filter(c => c.status === "Em Andamento").length,
-    deferido: cases.filter(c => c.status === "Deferido").length,
-    ratificado: cases.filter(c => c.status === "Ratificado").length,
+    emAndamento: cases.filter(c => (c.status || "").toLowerCase() === "em andamento").length,
+    deferido: cases.filter(c => (c.status || "").toLowerCase() === "deferido").length,
+    ratificado: cases.filter(c => (c.status || "").toLowerCase() === "ratificado").length,
   };
 
   return (
@@ -136,17 +136,7 @@ export default function PerdaNacionalidadePage() {
             </div>
           </div>
 
-          <div className="bg-amber-900 rounded-lg p-4 border border-amber-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-amber-300 text-sm font-medium">Aguardando</p>
-                <p className="text-3xl font-bold text-amber-400 mt-1">{stats.aguardando}</p>
-              </div>
-              <div className="p-3 bg-amber-800 rounded-lg">
-                <AlertCircle className="h-6 w-6 text-amber-400" />
-              </div>
-            </div>
-          </div>
+          
 
           <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700">
             <div className="flex items-center justify-between">

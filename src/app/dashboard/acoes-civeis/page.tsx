@@ -94,14 +94,14 @@ export default function AcoesCiveisPage() {
   const filteredCases = cases.filter((c) => {
     const matchesSearch = c.clientName.toLowerCase().includes(search.toLowerCase());
     const matchesType = typeFilter === "all" || c.type === typeFilter;
-    const matchesStatus = statusFilter === "all" || c.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || (c.status || "").toLowerCase() === statusFilter.toLowerCase();
     return matchesSearch && matchesType && matchesStatus;
   });
 
   const stats = {
     total: cases.length,
-    emAndamento: cases.filter(c => c.status === "Em andamento").length,
-    finalizado: cases.filter(c => c.status === "Finalizado").length,
+    emAndamento: cases.filter(c => (c.status || "").toLowerCase() === "em andamento").length,
+    finalizado: cases.filter(c => (c.status || "").toLowerCase() === "finalizado").length,
   };
 
   const getStatusColor = (status: string) => {
