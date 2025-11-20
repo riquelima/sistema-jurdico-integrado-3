@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseAdmin = createClient(
@@ -7,11 +7,11 @@ const supabaseAdmin = createClient(
 );
 
 export async function PUT(
-  request: NextRequest,
-  { params }: { params: { documentId: string } }
+  request: Request,
+  context: any
 ) {
   try {
-    const { documentId } = params;
+    const { documentId } = context.params;
     const { document_name } = await request.json();
 
     if (!document_name || !document_name.trim()) {
