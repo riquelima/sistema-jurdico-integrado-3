@@ -5,3 +5,8 @@ dist
 .trae
 .log
 .figma
+drizzle/
+SUPABASE_*.md
+README*.md
+*.pdf
+*.txt
