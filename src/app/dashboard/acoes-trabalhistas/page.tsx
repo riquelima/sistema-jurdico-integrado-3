@@ -118,10 +118,11 @@ export default function AcoesTrabalhistasPage() {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Em andamento":
+    const s = (status || "").toLowerCase();
+    switch (s) {
+      case "em andamento":
         return "bg-blue-500 text-white hover:bg-blue-600";
-      case "Finalizado":
+      case "finalizado":
         return "bg-emerald-500 text-white hover:bg-emerald-600";
       default:
         return "bg-slate-500 text-white hover:bg-slate-600";
@@ -129,14 +130,22 @@ export default function AcoesTrabalhistasPage() {
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "Em andamento":
+    const s = (status || "").toLowerCase();
+    switch (s) {
+      case "em andamento":
         return <Clock className="h-3 w-3" />;
-      case "Finalizado":
+      case "finalizado":
         return <CheckCircle2 className="h-3 w-3" />;
       default:
         return <Clock className="h-3 w-3" />;
     }
+  };
+
+  const normalizeStatusLabel = (status: string) => {
+    const s = (status || "").toLowerCase();
+    if (s === "em andamento") return "Em andamento";
+    if (s === "finalizado") return "Finalizado";
+    return status;
   };
 
   const handleDelete = async (id: number) => {
@@ -364,7 +373,7 @@ export default function AcoesTrabalhistasPage() {
                         </h3>
                         <Badge className={`${getStatusColor(caseItem.status)} flex items-center gap-1.5 px-3 py-1 shadow-md`}>
                           {getStatusIcon(caseItem.status)}
-                          {caseItem.status}
+                          {normalizeStatusLabel(caseItem.status)}
                         </Badge>
                       </div>
 

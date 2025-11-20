@@ -692,6 +692,17 @@ export default function PerdaNacionalidadeDetailPage() {
                 isPending={false}
                 expanded={expandedSteps.includes(index)}
                 onToggle={() => toggleStep(index)}
+                onMarkComplete={() => {
+                  toggleStepCompletion(index);
+                  const newSteps = completedSteps.includes(index)
+                    ? completedSteps.filter(i => i !== index)
+                    : [...completedSteps, index];
+                  fetch(`/api/perda-nacionalidade/${params.id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ completedSteps: newSteps }),
+                  }).catch(() => {});
+                }}
               >
                 {expandedSteps.includes(index) && renderStepContent(index)}
               </StepItem>

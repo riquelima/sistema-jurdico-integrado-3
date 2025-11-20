@@ -25,19 +25,17 @@ export function StepItem({ index, title, isCurrent, isCompleted, isPending, expa
       >
         <button
           className="shrink-0 mt-0.5 hover:scale-110 transition-transform cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 z-10 bg-transparent border-none p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
-          title={isCurrent ? "Clique para marcar como concluído" : isCompleted ? "Concluído" : "Aguardando passo anterior"}
+          title={isCompleted ? "Concluído" : "Clique para marcar como concluído"}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Botão clicado, isCurrent:', isCurrent, 'onMarkComplete:', !!onMarkComplete);
-            if (isCurrent && onMarkComplete) {
-              console.log('Marcando passo como completo:', index);
+            if (!isCompleted && onMarkComplete) {
               onMarkComplete();
             }
           }}
-          disabled={!isCurrent}
+          disabled={isCompleted || !onMarkComplete}
           type="button"
-          aria-label={isCurrent ? "Marcar passo como concluído" : isCompleted ? "Passo concluído" : "Aguardando passo anterior"}
+          aria-label={isCompleted ? "Passo concluído" : "Marcar passo como concluído"}
         >
           {isCompleted ? (
             <CircleCheck className="h-6 w-6 text-green-600" />

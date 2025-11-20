@@ -101,14 +101,22 @@ export default function CompraVendaPage() {
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "Em andamento":
+    const s = (status || "").toLowerCase();
+    switch (s) {
+      case "em andamento":
         return <Clock className="h-4 w-4" />;
-      case "Finalizado":
+      case "finalizado":
         return <CheckCircle2 className="h-4 w-4" />;
       default:
         return <FileText className="h-4 w-4" />;
     }
+  };
+
+  const normalizeStatusLabel = (status: string) => {
+    const s = (status || "").toLowerCase();
+    if (s === "em andamento") return "Em andamento";
+    if (s === "finalizado") return "Finalizado";
+    return status;
   };
 
   return (
@@ -264,7 +272,7 @@ export default function CompraVendaPage() {
                           </h3>
                           <Badge className={`${getStatusColor(property.status)} flex items-center gap-1.5 px-3 py-1 shadow-md`}>
                             {getStatusIcon(property.status)}
-                            {property.status}
+                            {normalizeStatusLabel(property.status)}
                           </Badge>
                         </div>
 

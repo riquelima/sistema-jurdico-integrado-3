@@ -52,12 +52,13 @@ export default function PerdaNacionalidadePage() {
   });
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Em Andamento":
+    const s = (status || "").toLowerCase();
+    switch (s) {
+      case "em andamento":
         return "bg-blue-500 text-white hover:bg-blue-600";
-      case "Deferido":
+      case "deferido":
         return "bg-amber-500 text-white hover:bg-amber-600";
-      case "Ratificado":
+      case "ratificado":
         return "bg-emerald-500 text-white hover:bg-emerald-600";
       default:
         return "bg-slate-500 text-white hover:bg-slate-600";
@@ -65,16 +66,25 @@ export default function PerdaNacionalidadePage() {
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "Em Andamento":
+    const s = (status || "").toLowerCase();
+    switch (s) {
+      case "em andamento":
         return <Clock className="h-4 w-4" />;
-      case "Deferido":
+      case "deferido":
         return <AlertCircle className="h-4 w-4" />;
-      case "Ratificado":
+      case "ratificado":
         return <CheckCircle2 className="h-4 w-4" />;
       default:
         return <FileText className="h-4 w-4" />;
     }
+  };
+
+  const normalizeStatusLabel = (status: string) => {
+    const s = (status || "").toLowerCase();
+    if (s === "em andamento") return "Em andamento";
+    if (s === "deferido") return "Deferido";
+    if (s === "ratificado") return "Ratificado";
+    return status;
   };
 
   const stats = {
@@ -234,7 +244,7 @@ export default function PerdaNacionalidadePage() {
                         </h3>
                         <Badge className={`${getStatusColor(caseItem.status)} flex items-center gap-1.5 px-3 py-1 shadow-md`}>
                           {getStatusIcon(caseItem.status)}
-                          {caseItem.status}
+                          {normalizeStatusLabel(caseItem.status)}
                         </Badge>
                       </div>
 
