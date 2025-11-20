@@ -9,7 +9,7 @@ const supabase = createClient(
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: any
 ) {
   const { id } = params;
   try {
