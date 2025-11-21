@@ -138,6 +138,18 @@ interface CaseData {
   createdAt: string;
   updatedAt: string;
   notes?: string;
+  nomeMae?: string;
+  nomePaiRegistral?: string;
+  nomeSupostoPai?: string;
+  rnmMae?: string;
+  rnmPai?: string;
+  rnmSupostoPai?: string;
+  cpfMae?: string;
+  cpfPai?: string;
+  certidaoNascimento?: string;
+  comprovanteEndereco?: string;
+  passaporte?: string;
+  numeroProtocolo?: string;
 }
 
 interface Document {
@@ -201,7 +213,7 @@ export default function CaseDetailPage() {
         const response = await fetch(`/api/documents/${id}`);
         if (response.ok) {
           const data = await response.json();
-          setDocuments(data.documents || []);
+          setDocuments(data || []);
         }
       } catch (error) {
         console.error("Erro ao carregar documentos:", error);
@@ -418,9 +430,100 @@ export default function CaseDetailPage() {
                 <Label>Observações</Label>
                 <Textarea value={notes || ""} readOnly className="bg-white" rows={3} />
               </div>
+              {caseData?.rnmMae !== undefined && (
+                <div className="space-y-1">
+                  <Label>RNM Mãe</Label>
+                  <Input value={String(caseData.rnmMae || "")} readOnly className="bg-white" />
+                </div>
+              )}
+              {caseData?.nomeMae !== undefined && (
+                <div className="space-y-1">
+                  <Label>Nome da Mãe</Label>
+                  <Input value={String((caseData as any).nomeMae || "")} readOnly className="bg-white" />
+                </div>
+              )}
+              {caseData?.rnmPai !== undefined && (
+                <div className="space-y-1">
+                  <Label>RNM Pai</Label>
+                  <Input value={String(caseData.rnmPai || "")} readOnly className="bg-white" />
+                </div>
+              )}
+              {caseData?.nomePaiRegistral !== undefined && (
+                <div className="space-y-1">
+                  <Label>Nome do Pai Registral</Label>
+                  <Input value={String((caseData as any).nomePaiRegistral || "")} readOnly className="bg-white" />
+                </div>
+              )}
+              {caseData?.rnmSupostoPai !== undefined && (
+                <div className="space-y-1">
+                  <Label>RNM Suposto Pai</Label>
+                  <Input value={String(caseData.rnmSupostoPai || "")} readOnly className="bg-white" />
+                </div>
+              )}
+              {caseData?.nomeSupostoPai !== undefined && (
+                <div className="space-y-1">
+                  <Label>Nome do Suposto Pai</Label>
+                  <Input value={String((caseData as any).nomeSupostoPai || "")} readOnly className="bg-white" />
+                </div>
+              )}
+              {caseData?.certidaoNascimento !== undefined && (
+                <div className="space-y-1">
+                  <Label>Certidão de Nascimento</Label>
+                  <Input value={String(caseData.certidaoNascimento || "")} readOnly className="bg-white" />
+                </div>
+              )}
+              {caseData?.comprovanteEndereco !== undefined && (
+                <div className="space-y-1">
+                  <Label>Comprovante de Endereço</Label>
+                  <Input value={String(caseData.comprovanteEndereco || "")} readOnly className="bg-white" />
+                </div>
+              )}
+              {caseData?.passaporte !== undefined && (
+                <div className="space-y-1">
+                  <Label>Passaporte</Label>
+                  <Input value={String(caseData.passaporte || "")} readOnly className="bg-white" />
+                </div>
+              )}
+              {caseData?.cpfMae !== undefined && (
+                <div className="space-y-1">
+                  <Label>CPF da Mãe</Label>
+                  <Input value={String(caseData.cpfMae || "")} readOnly className="bg-white" />
+                </div>
+              )}
+              {caseData?.cpfPai !== undefined && (
+                <div className="space-y-1">
+                  <Label>CPF do Pai</Label>
+                  <Input value={String(caseData.cpfPai || "")} readOnly className="bg-white" />
+                </div>
+              )}
+              {caseData?.numeroProtocolo !== undefined && (
+                <div className="space-y-1">
+                  <Label>Número de Protocolo</Label>
+                  <Input value={String(caseData.numeroProtocolo || "")} readOnly className="bg-white" />
+                </div>
+              )}
             </div>
             <div className="border-t pt-4 space-y-2">
               <h5 className="font-semibold text-slate-900">Anexos</h5>
+              <div className="space-y-2">
+                {documents.length === 0 ? (
+                  <p className="text-sm text-slate-600">Nenhum documento anexado ainda.</p>
+                ) : (
+                  documents.map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between p-2 border rounded-md bg-white">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-slate-600" />
+                        <span className="text-sm font-medium">{doc.document_name || doc.file_name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleDocumentDownload(doc as any)}>
+                          <Download className="h-4 w-4 mr-1" /> Download
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
             <div className="grid gap-3">
               <div className="flex items-center gap-2">

@@ -12,6 +12,9 @@ function mapDbFieldsToFrontend(record: any) {
     currentStep: record.current_step,
     status: record.status,
     notes: record.notes,
+    nomeMae: record.nome_mae,
+    nomePaiRegistral: record.nome_pai_registral,
+    nomeSupostoPai: record.nome_suposto_pai,
     rnmMae: record.rnm_mae,
     rnmMaeDoc: record.rnm_mae_doc,
     rnmPai: record.rnm_pai,
@@ -123,6 +126,9 @@ export async function POST(request: NextRequest) {
       type, 
       currentStep,
       status,
+      nomeMae,
+      nomePaiRegistral,
+      nomeSupostoPai,
       rnmMae,
       rnmPai,
       rnmSupostoPai,
@@ -176,7 +182,7 @@ export async function POST(request: NextRequest) {
     const insertData: any = {
       client_name: clientName.trim(),
       type: type.trim(),
-      current_step: currentStep !== undefined ? currentStep : 0,
+      current_step: currentStep !== undefined ? currentStep : 1,
       status: status || 'Em Andamento',
     };
 
@@ -297,6 +303,9 @@ export async function PUT(request: NextRequest) {
       type,
       currentStep,
       status,
+      nomeMae,
+      nomePaiRegistral,
+      nomeSupostoPai,
       rnmMae,
       rnmPai,
       rnmSupostoPai,
@@ -339,6 +348,9 @@ export async function PUT(request: NextRequest) {
     if (type !== undefined) updateData.type = type.trim();
     if (currentStep !== undefined) updateData.current_step = currentStep;
     if (status !== undefined) updateData.status = status;
+    if (nomeMae !== undefined) updateData.nome_mae = nomeMae;
+    if (nomePaiRegistral !== undefined) updateData.nome_pai_registral = nomePaiRegistral;
+    if (nomeSupostoPai !== undefined) updateData.nome_suposto_pai = nomeSupostoPai;
     if (rnmMae !== undefined) updateData.rnm_mae = rnmMae;
     if (rnmPai !== undefined) updateData.rnm_pai = rnmPai;
     if (rnmSupostoPai !== undefined) updateData.rnm_suposto_pai = rnmSupostoPai;
@@ -470,3 +482,6 @@ export async function DELETE(request: NextRequest) {
     }, { status: 500 });
   }
 }
+    if (nomeMae !== undefined) insertData.nome_mae = nomeMae;
+    if (nomePaiRegistral !== undefined) insertData.nome_pai_registral = nomePaiRegistral;
+    if (nomeSupostoPai !== undefined) insertData.nome_suposto_pai = nomeSupostoPai;
