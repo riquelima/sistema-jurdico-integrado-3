@@ -324,11 +324,11 @@ export default function NovaAcaoCivelPage() {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações da Ação</CardTitle>
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-slate-900 dark:to-slate-800 border-b">
+            <CardTitle className="text-2xl font-semibold">Informações da Ação</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-8 p-8">
             {/* Basic Info */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
@@ -340,6 +340,7 @@ export default function NovaAcaoCivelPage() {
                   value={formData.clientName}
                   onChange={(e) => handleChange("clientName", e.target.value)}
                   required
+                  className="h-12 border-2 focus:border-blue-500"
                 />
               </div>
               <div className="space-y-2">
@@ -351,9 +352,9 @@ export default function NovaAcaoCivelPage() {
                   onValueChange={(value) => handleChange("type", value)}
                   required
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
+                <SelectTrigger className="h-12 border-2 focus:border-blue-500">
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
                   <SelectContent>
                     {CASE_TYPES.map((type) => (
                       <SelectItem key={type} value={type}>
