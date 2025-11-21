@@ -52,25 +52,22 @@ export default function VistosPage() {
   const filteredVistos = vistos.filter((v) => {
     const matchesSearch = v.clientName?.toLowerCase().includes(search.toLowerCase()) ?? false;
     const matchesType = typeFilter === "all" || v.type === typeFilter;
-    const matchesStatus = statusFilter === "all" || v.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || normalizeStatus(v.status) === statusFilter.toLowerCase();
     return matchesSearch && matchesType && matchesStatus;
   });
 
   const stats = {
     total: vistos.length,
-    emAndamento: vistos.filter(v => v.status === "Em andamento").length,
-    finalizado: vistos.filter(v => v.status === "Finalizado").length,
-    aguardando: vistos.filter(v => v.status === "Aguardando").length,
+    emAndamento: vistos.filter(v => normalizeStatus(v.status) === "em andamento").length,
+    finalizado: vistos.filter(v => normalizeStatus(v.status) === "finalizado").length,
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Em andamento":
+    switch (normalizeStatus(status)) {
+      case "em andamento":
         return "bg-blue-500 text-white hover:bg-blue-600";
-      case "Finalizado":
+      case "finalizado":
         return "bg-emerald-500 text-white hover:bg-emerald-600";
-      case "Aguardando":
-        return "bg-amber-500 text-white hover:bg-amber-600";
       default:
         return "bg-slate-500 text-white hover:bg-slate-600";
     }
@@ -90,13 +87,11 @@ export default function VistosPage() {
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "Em andamento":
+    switch (normalizeStatus(status)) {
+      case "em andamento":
         return <Clock className="h-4 w-4" />;
-      case "Finalizado":
+      case "finalizado":
         return <CheckCircle2 className="h-4 w-4" />;
-      case "Aguardando":
-        return <AlertCircle className="h-4 w-4" />;
       default:
         return <Clock className="h-4 w-4" />;
     }
@@ -154,17 +149,7 @@ export default function VistosPage() {
             </div>
           </div>
 
-          <div className="bg-amber-900 rounded-lg p-4 border border-amber-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-amber-300 text-sm font-medium">Aguardando</p>
-                <p className="text-3xl font-bold text-amber-400 mt-1">{stats.aguardando}</p>
-              </div>
-              <div className="p-3 bg-amber-800 rounded-lg">
-                <AlertCircle className="h-6 w-6 text-amber-400" />
-              </div>
-            </div>
-          </div>
+          
 
           <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700">
             <div className="flex items-center justify-between">
@@ -270,10 +255,10 @@ export default function VistosPage() {
                         <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                           {visto.clientName}
                         </h3>
-                        <Badge className={`${getStatusColor(visto.status)} flex items-center gap-1.5 px-3 py-1 shadow-md`}>
+                          <Badge className={`${getStatusColor(visto.status)} flex items-center gap-1.5 px-3 py-1 shadow-md`}>
                           {getStatusIcon(visto.status)}
-                          {visto.status}
-                        </Badge>
+                          {normalizeStatus(visto.status) === "em andamento" ? "Em andamento" : "Finalizado"}
+                          </Badge>
                       </div>
 
                       <div className="flex items-center gap-6 text-sm flex-wrap">
@@ -317,17 +302,15 @@ export default function VistosPage() {
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-slate-600 dark:text-slate-400 font-medium">Progresso do Processo</span>
                           <span className="text-slate-700 dark:text-slate-300 font-semibold">
-                            {visto.status === "Finalizado" ? "100%" : visto.status === "Em Andamento" ? "50%" : "25%"}
+                            {normalizeStatus(visto.status) === "finalizado" ? "100%" : "50%"}
                           </span>
                         </div>
                         <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                           <div 
                             className={`h-full rounded-full transition-all duration-500 ${
-                              visto.status === "Finalizado" 
+                              normalizeStatus(visto.status) === "finalizado" 
                                 ? "bg-gradient-to-r from-emerald-500 to-emerald-600 w-full" 
-                                : visto.status === "Em Andamento"
-                                ? "bg-gradient-to-r from-blue-500 to-blue-600 w-1/2"
-                                : "bg-gradient-to-r from-amber-500 to-amber-600 w-1/4"
+                                : "bg-gradient-to-r from-blue-500 to-blue-600 w-1/2"
                             }`}
                           />
                         </div>
