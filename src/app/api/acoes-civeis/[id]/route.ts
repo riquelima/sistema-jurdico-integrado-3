@@ -47,6 +47,7 @@ export async function GET(
       nomeMae: data.nome_mae,
       nomePaiRegistral: data.nome_pai_registral,
       nomeSupostoPai: data.nome_suposto_pai,
+      nomeCrianca: data.nome_crianca,
       rnmMae: data.rnm_mae,
       rnmMaeDoc: data.rnm_mae_doc,
       rnmPai: data.rnm_pai,
@@ -55,12 +56,16 @@ export async function GET(
       rnmSupostoPaiDoc: data.rnm_suposto_pai_doc,
       cpfMae: data.cpf_mae,
       cpfPai: data.cpf_pai,
+      cpfSupostoPai: data.cpf_suposto_pai,
       certidaoNascimento: data.certidao_nascimento,
       certidaoNascimentoDoc: data.certidao_nascimento_doc,
       comprovanteEndereco: data.comprovante_endereco,
       comprovanteEnderecoDoc: data.comprovante_endereco_doc,
       passaporte: data.passaporte,
       passaporteDoc: data.passaporte_doc,
+      passaporteMaeDoc: data.passaporte_mae_doc,
+      passaportePaiRegistralDoc: data.passaporte_pai_registral_doc,
+      passaporteSupostoPaiDoc: data.passaporte_suposto_pai_doc,
       guiaPaga: data.guia_paga,
       numeroProtocolo: data.numero_protocolo,
       dataExameDna: data.data_exame_dna,
@@ -131,11 +136,13 @@ export async function PATCH(
     if (body.nomeMae !== undefined) updateData.nome_mae = body.nomeMae ?? null;
     if (body.nomePaiRegistral !== undefined) updateData.nome_pai_registral = body.nomePaiRegistral ?? null;
     if (body.nomeSupostoPai !== undefined) updateData.nome_suposto_pai = body.nomeSupostoPai ?? null;
+    if (body.nomeCrianca !== undefined) updateData.nome_crianca = body.nomeCrianca ?? null;
     if (body.rnmMae !== undefined) updateData.rnm_mae = body.rnmMae ?? null;
     if (body.rnmPai !== undefined) updateData.rnm_pai = body.rnmPai ?? null;
     if (body.rnmSupostoPai !== undefined) updateData.rnm_suposto_pai = body.rnmSupostoPai ?? null;
     if (body.cpfMae !== undefined) updateData.cpf_mae = body.cpfMae ?? null;
     if (body.cpfPai !== undefined) updateData.cpf_pai = body.cpfPai ?? null;
+    if (body.cpfSupostoPai !== undefined) updateData.cpf_suposto_pai = body.cpfSupostoPai ?? null;
     if (body.certidaoNascimento !== undefined) updateData.certidao_nascimento = body.certidaoNascimento ?? null;
     if (body.comprovanteEndereco !== undefined) updateData.comprovante_endereco = body.comprovanteEndereco ?? null;
     if (body.passaporte !== undefined) updateData.passaporte = body.passaporte ?? null;

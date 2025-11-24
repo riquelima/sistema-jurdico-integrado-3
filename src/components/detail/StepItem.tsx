@@ -164,7 +164,7 @@ export function StepItem({ index, title, isCurrent, isCompleted, isPending, expa
                               setDue(`${y}-${m}-${d}`);
                             }}
                             weekStartsOn={1}
-                            captionLayout="buttons"
+                            captionLayout="label"
                             className="w-full [--cell-size:--spacing(10)]"
                             classNames={{ root: "w-full", months: "w-full", month: "w-full", table: "w-full" }}
                           />
@@ -174,7 +174,9 @@ export function StepItem({ index, title, isCurrent, isCompleted, isPending, expa
                         <Button variant="outline" size="sm" onClick={() => { setResp(""); setDue(""); setSaveError(""); }}>Limpar</Button>
                         <Button size="sm" onClick={async () => {
                           setSaveError("");
-                          const ok = await onSaveAssignment?.({ responsibleName: resp || undefined, dueDate: due || undefined });
+                          const ok = onSaveAssignment
+                            ? await onSaveAssignment({ responsibleName: resp || undefined, dueDate: due || undefined })
+                            : true;
                           if (!ok) {
                             setSaveError("Falha ao salvar. Verifique sua conexão ou tente novamente.");
                           }

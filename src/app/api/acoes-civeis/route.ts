@@ -29,7 +29,11 @@ function mapDbFieldsToFrontend(record: any) {
     comprovanteEnderecoDoc: record.comprovante_endereco_doc,
     passaporte: record.passaporte,
     passaporteDoc: record.passaporte_doc,
+    passaporteMaeDoc: record.passaporte_mae_doc,
+    passaportePaiRegistralDoc: record.passaporte_pai_registral_doc,
+    passaporteSupostoPaiDoc: record.passaporte_suposto_pai_doc,
     guiaPaga: record.guia_paga,
+    guiaPagaDoc: record.guia_paga_doc,
     dataExameDna: record.data_exame_dna,
     resultadoExameDna: record.resultado_exame_dna,
     resultadoExameDnaDoc: record.resultado_exame_dna_doc,
@@ -44,6 +48,30 @@ function mapDbFieldsToFrontend(record: any) {
     documentosFinaisAnexadosDoc: record.documentos_finais_anexados_doc,
     documentosProcessoFinalizado: record.documentos_processo_finalizado,
     documentosProcessoFinalizadoDoc: record.documentos_processo_finalizado_doc,
+    nomeCrianca: record.nome_crianca,
+    cpfSupostoPai: record.cpf_suposto_pai,
+    peticaoConjunta: record.peticao_conjunta,
+    peticaoConjuntaDoc: record.peticao_conjunta_doc,
+    termoPartilhas: record.termo_partilhas,
+    termoPartilhasDoc: record.termo_partilhas_doc,
+    guarda: record.guarda,
+    guardaDoc: record.guarda_doc,
+    procuracao: record.procuracao,
+    procuracaoDoc: record.procuracao_doc,
+    peticaoCliente: record.peticao_cliente,
+    peticaoClienteDoc: record.peticao_cliente_doc,
+    procuracaoCliente: record.procuracao_cliente,
+    procuracaoClienteDoc: record.procuracao_cliente_doc,
+    custas: record.custas,
+    custasDoc: record.custas_doc,
+    peticaoInicial: record.peticao_inicial,
+    peticaoInicialDoc: record.peticao_inicial_doc,
+    matriculaImovel: record.matricula_imovel,
+    matriculaImovelDoc: record.matricula_imovel_doc,
+    aguaLuzIptu: record.agua_luz_iptu,
+    aguaLuzIptuDoc: record.agua_luz_iptu_doc,
+    camposExigencias: record.campos_exigencias,
+    camposExigenciasDoc: record.campos_exigencias_doc,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
   };
@@ -120,78 +148,94 @@ export async function POST(request: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const body = await request.json();
-    const { 
-      clientName, 
-      type, 
-      currentStep,
-      status,
-      nomeMae,
-      nomePaiRegistral,
-      nomeSupostoPai,
-      rnmMae,
-      rnmPai,
-      rnmSupostoPai,
-      cpfMae,
-      cpfPai,
-      certidaoNascimento,
-      comprovanteEndereco,
-      passaporte,
-      guiaPaga,
-      notes,
-      dataExameDna,
-      procuracaoAnexada,
-      peticaoAnexada,
-      processoAnexado,
-      numeroProtocolo,
-      documentosFinaisAnexados,
-      // Document URL fields
-      rnmMaeFile,
-      rnmPaiFile,
-      rnmSupostoPaiFile,
-      cpfMaeFile,
-      cpfPaiFile,
-      certidaoNascimentoFile,
-      comprovanteEnderecoFile,
-      passaporteFile,
-      guiaPagaFile,
-      resultadoExameDnaFile,
-      procuracaoAnexadaFile,
-      peticaoAnexadaFile,
-      processoAnexadoFile,
-      documentosFinaisAnexadosFile,
-      documentosProcessoFinalizadoFile
-    } = body;
-
-    // Validate required fields
-    if (!clientName || clientName.trim() === '') {
-      return NextResponse.json({ 
-        error: "clientName is required and cannot be empty",
-        code: "MISSING_CLIENT_NAME" 
-      }, { status: 400 });
-    }
-
-    if (!type || type.trim() === '') {
-      return NextResponse.json({ 
-        error: "type is required and cannot be empty",
-        code: "MISSING_TYPE" 
-      }, { status: 400 });
-    }
+  const body = await request.json();
+  const { 
+    clientName, 
+    type, 
+    currentStep,
+    status,
+    nomeMae,
+    nomePaiRegistral,
+    nomeSupostoPai,
+    nomeCrianca,
+    rnmMae,
+    rnmPai,
+    rnmSupostoPai,
+    cpfMae,
+    cpfPai,
+    cpfSupostoPai,
+    certidaoNascimento,
+    comprovanteEndereco,
+    passaporte,
+    guiaPaga,
+    notes,
+    dataExameDna,
+    procuracaoAnexada,
+    peticaoAnexada,
+    processoAnexado,
+    numeroProtocolo,
+    documentosFinaisAnexados,
+    peticaoConjunta,
+    termoPartilhas,
+    guarda,
+    procuracao,
+    peticaoCliente,
+    procuracaoCliente,
+    custas,
+    peticaoInicial,
+    matriculaImovel,
+    aguaLuzIptu,
+    camposExigencias,
+    // Document URL fields
+    rnmMaeFile,
+    rnmPaiFile,
+    rnmSupostoPaiFile,
+    cpfMaeFile,
+    cpfPaiFile,
+    certidaoNascimentoFile,
+    comprovanteEnderecoFile,
+    passaporteFile,
+    guiaPagaFile,
+    passaporteMaeFile,
+    passaportePaiRegistralFile,
+    passaporteSupostoPaiFile,
+    resultadoExameDnaFile,
+    procuracaoAnexadaFile,
+    peticaoAnexadaFile,
+    processoAnexadoFile,
+    documentosFinaisAnexadosFile,
+    documentosProcessoFinalizadoFile,
+    peticaoConjuntaFile,
+    termoPartilhasFile,
+    guardaFile,
+    procuracaoFile,
+    peticaoClienteFile,
+    procuracaoClienteFile,
+    custasFile,
+    peticaoInicialFile,
+    matriculaImovelFile,
+    aguaLuzIptuFile,
+    camposExigenciasFile
+  } = body;
 
     // Prepare insert data with defaults
     const insertData: any = {
-      client_name: clientName.trim(),
-      type: type.trim(),
       current_step: currentStep !== undefined ? currentStep : 1,
       status: status || 'Em Andamento',
+      client_name: (clientName ?? '').trim(),
+      type: (type ?? '').trim(),
     };
 
     // Add optional fields if provided
+    if (nomeMae !== undefined) insertData.nome_mae = nomeMae;
+    if (nomePaiRegistral !== undefined) insertData.nome_pai_registral = nomePaiRegistral;
+    if (nomeCrianca !== undefined) insertData.nome_crianca = nomeCrianca;
     if (rnmMae !== undefined) insertData.rnm_mae = rnmMae;
     if (rnmPai !== undefined) insertData.rnm_pai = rnmPai;
     if (rnmSupostoPai !== undefined) insertData.rnm_suposto_pai = rnmSupostoPai;
     if (cpfMae !== undefined) insertData.cpf_mae = cpfMae;
     if (cpfPai !== undefined) insertData.cpf_pai = cpfPai;
+    if (cpfSupostoPai !== undefined) insertData.cpf_suposto_pai = cpfSupostoPai;
     if (certidaoNascimento !== undefined) insertData.certidao_nascimento = certidaoNascimento;
     if (comprovanteEndereco !== undefined) insertData.comprovante_endereco = comprovanteEndereco;
     if (passaporte !== undefined) insertData.passaporte = passaporte;
@@ -203,6 +247,17 @@ export async function POST(request: NextRequest) {
     if (processoAnexado !== undefined) insertData.processo_anexado = processoAnexado;
     if (numeroProtocolo !== undefined) insertData.numero_protocolo = numeroProtocolo;
     if (documentosFinaisAnexados !== undefined) insertData.documentos_finais_anexados = documentosFinaisAnexados;
+    if (peticaoConjunta !== undefined) insertData.peticao_conjunta = peticaoConjunta;
+    if (termoPartilhas !== undefined) insertData.termo_partilhas = termoPartilhas;
+    if (guarda !== undefined) insertData.guarda = guarda;
+    if (procuracao !== undefined) insertData.procuracao = procuracao;
+    if (peticaoCliente !== undefined) insertData.peticao_cliente = peticaoCliente;
+    if (procuracaoCliente !== undefined) insertData.procuracao_cliente = procuracaoCliente;
+    if (custas !== undefined) insertData.custas = custas;
+    if (peticaoInicial !== undefined) insertData.peticao_inicial = peticaoInicial;
+    if (matriculaImovel !== undefined) insertData.matricula_imovel = matriculaImovel;
+    if (aguaLuzIptu !== undefined) insertData.agua_luz_iptu = aguaLuzIptu;
+    if (camposExigencias !== undefined) insertData.campos_exigencias = camposExigencias;
     
     // Add document URL fields if provided
     if (rnmMaeFile !== undefined) insertData.rnm_mae_doc = rnmMaeFile;
@@ -213,6 +268,9 @@ export async function POST(request: NextRequest) {
     if (certidaoNascimentoFile !== undefined) insertData.certidao_nascimento_doc = certidaoNascimentoFile;
     if (comprovanteEnderecoFile !== undefined) insertData.comprovante_endereco_doc = comprovanteEnderecoFile;
     if (passaporteFile !== undefined) insertData.passaporte_doc = passaporteFile;
+    if (passaporteMaeFile !== undefined) insertData.passaporte_mae_doc = passaporteMaeFile;
+    if (passaportePaiRegistralFile !== undefined) insertData.passaporte_pai_registral_doc = passaportePaiRegistralFile;
+    if (passaporteSupostoPaiFile !== undefined) insertData.passaporte_suposto_pai_doc = passaporteSupostoPaiFile;
     if (guiaPagaFile !== undefined) insertData.guia_paga_doc = guiaPagaFile;
     if (resultadoExameDnaFile !== undefined) insertData.resultado_exame_dna_doc = resultadoExameDnaFile;
     if (procuracaoAnexadaFile !== undefined) insertData.procuracao_anexada_doc = procuracaoAnexadaFile;
@@ -220,6 +278,17 @@ export async function POST(request: NextRequest) {
     if (processoAnexadoFile !== undefined) insertData.processo_anexado_doc = processoAnexadoFile;
     if (documentosFinaisAnexadosFile !== undefined) insertData.documentos_finais_anexados_doc = documentosFinaisAnexadosFile;
     if (documentosProcessoFinalizadoFile !== undefined) insertData.documentos_processo_finalizado_doc = documentosProcessoFinalizadoFile;
+    if (peticaoConjuntaFile !== undefined) insertData.peticao_conjunta_doc = peticaoConjuntaFile;
+    if (termoPartilhasFile !== undefined) insertData.termo_partilhas_doc = termoPartilhasFile;
+    if (guardaFile !== undefined) insertData.guarda_doc = guardaFile;
+    if (procuracaoFile !== undefined) insertData.procuracao_doc = procuracaoFile;
+    if (peticaoClienteFile !== undefined) insertData.peticao_cliente_doc = peticaoClienteFile;
+    if (procuracaoClienteFile !== undefined) insertData.procuracao_cliente_doc = procuracaoClienteFile;
+    if (custasFile !== undefined) insertData.custas_doc = custasFile;
+    if (peticaoInicialFile !== undefined) insertData.peticao_inicial_doc = peticaoInicialFile;
+    if (matriculaImovelFile !== undefined) insertData.matricula_imovel_doc = matriculaImovelFile;
+    if (aguaLuzIptuFile !== undefined) insertData.agua_luz_iptu_doc = aguaLuzIptuFile;
+    if (camposExigenciasFile !== undefined) insertData.campos_exigencias_doc = camposExigenciasFile;
 
     const { data: newRecord, error } = await supabase
       .from('acoes_civeis')
@@ -242,7 +311,7 @@ export async function POST(request: NextRequest) {
           module_type: 'acoes_civeis',
           record_id: newRecord.id,
           alert_for: 'admin',
-          message: `Nova ação cível criada: ${clientName.trim()} - ${type.trim()}`,
+          message: `Nova ação cível criada: ${clientName?.trim() || '—'} - ${type?.trim() || '—'}`,
           is_read: false,
           created_at: new Date().toISOString()
         });
@@ -320,9 +389,20 @@ export async function PUT(request: NextRequest) {
       procuracaoAnexada,
       peticaoAnexada,
       processoAnexado,
-      numeroProtocolo,
-      documentosFinaisAnexados,
-      // Document URL fields
+    numeroProtocolo,
+    documentosFinaisAnexados,
+    peticaoConjunta,
+    termoPartilhas,
+    guarda,
+    procuracao,
+    peticaoCliente,
+    procuracaoCliente,
+    custas,
+    peticaoInicial,
+    matriculaImovel,
+    aguaLuzIptu,
+    camposExigencias,
+    // Document URL fields
       rnmMaeFile,
       rnmPaiFile,
       rnmSupostoPaiFile,
@@ -331,14 +411,25 @@ export async function PUT(request: NextRequest) {
       certidaoNascimentoFile,
       comprovanteEnderecoFile,
       passaporteFile,
-      guiaPagaFile,
+    guiaPagaFile,
       resultadoExameDnaFile,
       procuracaoAnexadaFile,
       peticaoAnexadaFile,
       processoAnexadoFile,
       documentosFinaisAnexadosFile,
-      documentosProcessoFinalizadoFile
-    } = body;
+    documentosProcessoFinalizadoFile,
+    peticaoConjuntaFile,
+    termoPartilhasFile,
+    guardaFile,
+    procuracaoFile,
+    peticaoClienteFile,
+    procuracaoClienteFile,
+    custasFile,
+    peticaoInicialFile,
+    matriculaImovelFile,
+    aguaLuzIptuFile,
+    camposExigenciasFile
+  } = body;
 
     // Prepare update data
     const updateData: any = {};
@@ -367,6 +458,17 @@ export async function PUT(request: NextRequest) {
     if (processoAnexado !== undefined) updateData.processo_anexado = processoAnexado;
     if (numeroProtocolo !== undefined) updateData.numero_protocolo = numeroProtocolo;
     if (documentosFinaisAnexados !== undefined) updateData.documentos_finais_anexados = documentosFinaisAnexados;
+    if (peticaoConjunta !== undefined) updateData.peticao_conjunta = peticaoConjunta;
+    if (termoPartilhas !== undefined) updateData.termo_partilhas = termoPartilhas;
+    if (guarda !== undefined) updateData.guarda = guarda;
+    if (procuracao !== undefined) updateData.procuracao = procuracao;
+    if (peticaoCliente !== undefined) updateData.peticao_cliente = peticaoCliente;
+    if (procuracaoCliente !== undefined) updateData.procuracao_cliente = procuracaoCliente;
+    if (custas !== undefined) updateData.custas = custas;
+    if (peticaoInicial !== undefined) updateData.peticao_inicial = peticaoInicial;
+    if (matriculaImovel !== undefined) updateData.matricula_imovel = matriculaImovel;
+    if (aguaLuzIptu !== undefined) updateData.agua_luz_iptu = aguaLuzIptu;
+    if (camposExigencias !== undefined) updateData.campos_exigencias = camposExigencias;
     
     // Add document URL fields to update if provided
     if (rnmMaeFile !== undefined) updateData.rnm_mae_doc = rnmMaeFile;
@@ -384,6 +486,17 @@ export async function PUT(request: NextRequest) {
     if (processoAnexadoFile !== undefined) updateData.processo_anexado_doc = processoAnexadoFile;
     if (documentosFinaisAnexadosFile !== undefined) updateData.documentos_finais_anexados_doc = documentosFinaisAnexadosFile;
     if (documentosProcessoFinalizadoFile !== undefined) updateData.documentos_processo_finalizado_doc = documentosProcessoFinalizadoFile;
+    if (peticaoConjuntaFile !== undefined) updateData.peticao_conjunta_doc = peticaoConjuntaFile;
+    if (termoPartilhasFile !== undefined) updateData.termo_partilhas_doc = termoPartilhasFile;
+    if (guardaFile !== undefined) updateData.guarda_doc = guardaFile;
+    if (procuracaoFile !== undefined) updateData.procuracao_doc = procuracaoFile;
+    if (peticaoClienteFile !== undefined) updateData.peticao_cliente_doc = peticaoClienteFile;
+    if (procuracaoClienteFile !== undefined) updateData.procuracao_cliente_doc = procuracaoClienteFile;
+    if (custasFile !== undefined) updateData.custas_doc = custasFile;
+    if (peticaoInicialFile !== undefined) updateData.peticao_inicial_doc = peticaoInicialFile;
+    if (matriculaImovelFile !== undefined) updateData.matricula_imovel_doc = matriculaImovelFile;
+    if (aguaLuzIptuFile !== undefined) updateData.agua_luz_iptu_doc = aguaLuzIptuFile;
+    if (camposExigenciasFile !== undefined) updateData.campos_exigencias_doc = camposExigenciasFile;
 
     const { data: updated, error } = await supabase
       .from('acoes_civeis')

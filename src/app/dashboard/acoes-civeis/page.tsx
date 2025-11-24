@@ -102,6 +102,44 @@ export default function AcoesCiveisPage() {
     }
   }, [refetch]);
 
+  const openEditAssignment = (cid: number) => {
+    setEditingCaseId(cid);
+    const a = caseAssignments[cid];
+    setEditResponsibleName(a?.responsibleName || "");
+    setEditDueDate(a?.dueDate ? new Date(a.dueDate).toISOString().slice(0, 10) : "");
+    setIsEditOpen(true);
+  };
+
+  const handleUpdateAssignment = async () => {
+    if (!editingCaseId) return;
+    const c = cases.find((x: any) => x.id === editingCaseId);
+    const stepIndex = c?.currentStep ?? 0;
+    try {
+      const res = await fetch('/api/step-assignments', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          moduleType: 'acoes_civeis',
+          recordId: editingCaseId,
+          stepIndex,
+          responsibleName: editResponsibleName,
+          dueDate: editDueDate || null,
+        })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setCaseAssignments((prev) => ({
+          ...prev,
+          [editingCaseId]: {
+            responsibleName: updated.responsibleName,
+            dueDate: updated.dueDate,
+          }
+        }));
+        setIsEditOpen(false);
+      }
+    } catch {}
+  };
+
   const lastAssignmentIdsRef = useRef<string>("");
   useEffect(() => {
     const ids = cases.map((c: any) => c.id).join(",");
@@ -505,40 +543,3 @@ export default function AcoesCiveisPage() {
     </div>
   );
 }
-  const openEditAssignment = (cid: number) => {
-    setEditingCaseId(cid);
-    const a = caseAssignments[cid];
-    setEditResponsibleName(a?.responsibleName || "");
-    setEditDueDate(a?.dueDate ? new Date(a.dueDate).toISOString().slice(0, 10) : "");
-    setIsEditOpen(true);
-  };
-
-  const handleUpdateAssignment = async () => {
-    if (!editingCaseId) return;
-    const c = cases.find((x: any) => x.id === editingCaseId);
-    const stepIndex = c?.currentStep ?? 0;
-    try {
-      const res = await fetch('/api/step-assignments', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          moduleType: 'acoes_civeis',
-          recordId: editingCaseId,
-          stepIndex,
-          responsibleName: editResponsibleName,
-          dueDate: editDueDate || null,
-        })
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        setCaseAssignments(prev => ({
-          ...prev,
-          [editingCaseId]: {
-            responsibleName: updated.responsibleName,
-            dueDate: updated.dueDate,
-          }
-        }));
-        setIsEditOpen(false);
-      }
-    } catch {}
-  };

@@ -12,7 +12,7 @@ interface ProcessFlowProps {
   onStepUncomplete?: (index: number) => void;
   renderStepContent: (index: number) => React.ReactNode;
   assignments?: Record<number, { responsibleName?: string; dueDate?: string }>;
-  onSaveAssignment?: (index: number, responsibleName?: string, dueDate?: string) => void;
+  onSaveAssignment?: (index: number, responsibleName?: string, dueDate?: string) => boolean | Promise<boolean>;
 }
 
 // Standard process flow steps (fallback)
@@ -87,7 +87,7 @@ export function ProcessFlow({
               onMarkComplete={() => onStepComplete(index)}
               onMarkIncomplete={() => onStepUncomplete?.(index)}
               assignment={assignments?.[index]}
-              onSaveAssignment={(a) => onSaveAssignment?.(index, a.responsibleName, a.dueDate)}
+              onSaveAssignment={async (a) => onSaveAssignment ? await onSaveAssignment(index, a.responsibleName, a.dueDate) : true}
               canAssign={!stepTitle.toLowerCase().includes("cadastro")}
             >
               {renderStepContent(index)}

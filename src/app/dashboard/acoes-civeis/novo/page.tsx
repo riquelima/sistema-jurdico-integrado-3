@@ -39,8 +39,10 @@ interface FormData {
   nomeMae: string;
   nomePaiRegistral: string;
   nomeSupostoPai: string;
+  nomeCrianca: string;
   cpfMae: string;
   cpfPai: string;
+  cpfSupostoPai: string;
   certidaoNascimento: string;
   comprovanteEndereco: string;
   passaporte: string;
@@ -65,6 +67,11 @@ interface FormData {
   certidaoNascimentoFile: string;
   comprovanteEnderecoFile: string;
   passaporteFile: string;
+  passaporteMaeFile: string;
+  passaportePaiRegistralFile: string;
+  passaporteSupostoPaiFile: string;
+  passaportePaiFile: string;
+  passaporteCriancaFile: string;
   guiaPagaFile: string;
   peticaoConjuntaFile: string;
   termoPartilhasFile: string;
@@ -91,8 +98,10 @@ export default function NovaAcaoCivelPage() {
     nomeMae: "",
     nomePaiRegistral: "",
     nomeSupostoPai: "",
+    nomeCrianca: "",
     cpfMae: "",
     cpfPai: "",
+    cpfSupostoPai: "",
     certidaoNascimento: "",
     comprovanteEndereco: "",
     passaporte: "",
@@ -118,6 +127,11 @@ export default function NovaAcaoCivelPage() {
     certidaoNascimentoFile: "",
     comprovanteEnderecoFile: "",
     passaporteFile: "",
+    passaporteMaeFile: "",
+    passaportePaiRegistralFile: "",
+    passaporteSupostoPaiFile: "",
+    passaportePaiFile: "",
+    passaporteCriancaFile: "",
     guiaPagaFile: "",
     peticaoConjuntaFile: "",
     termoPartilhasFile: "",
@@ -141,6 +155,11 @@ export default function NovaAcaoCivelPage() {
     certidaoNascimento: false,
     comprovanteEndereco: false,
     passaporte: false,
+    passaporteMae: false,
+    passaportePaiRegistral: false,
+    passaporteSupostoPai: false,
+    passaportePai: false,
+    passaporteCrianca: false,
     guiaPaga: false,
     peticaoConjunta: false,
     termoPartilhas: false,
@@ -210,7 +229,9 @@ export default function NovaAcaoCivelPage() {
       'rnmMaeFile', 'rnmPaiFile', 'rnmSupostoPaiFile', 'certidaoNascimentoFile',
       'comprovanteEnderecoFile', 'passaporteFile', 'guiaPagaFile', 'resultadoExameDnaFile',
       'procuracaoAnexadaFile', 'peticaoAnexadaFile', 'processoAnexadoFile',
-      'documentosFinaisAnexadosFile', 'documentosProcessoFinalizadoFile'
+      'documentosFinaisAnexadosFile', 'documentosProcessoFinalizadoFile',
+      'passaporteMaeFile', 'passaportePaiRegistralFile', 'passaporteSupostoPaiFile',
+      'passaportePaiFile', 'passaporteCriancaFile'
     ];
 
     const documentsToConvert = [];
@@ -249,12 +270,6 @@ export default function NovaAcaoCivelPage() {
   };
 
   const doCreate = async () => {
-
-    if (!formData.clientName || !formData.type) {
-      toast.error("Por favor, preencha todos os campos obrigatórios");
-      return;
-    }
-
     console.log("📤 Enviando dados:", formData);
 
     try {
@@ -303,10 +318,6 @@ export default function NovaAcaoCivelPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.clientName || !formData.type) {
-      toast.error("Por favor, preencha todos os campos obrigatórios");
-      return;
-    }
     setPendingSubmit(e);
     setConfirmOpen(true);
   };
@@ -314,22 +325,63 @@ export default function NovaAcaoCivelPage() {
   // Helper to check if field should be shown
   const showFieldForType = (field: string) => {
     if (formData.type === "Alteração de Nome") {
-      return ["rnmMae", "rnmPai", "cpfMae", "cpfPai", "certidaoNascimento", "comprovanteEndereco", "passaporte", "guiaPaga"].includes(field);
+      return [
+        "nomeMae", "nomePaiRegistral", "nomeCrianca",
+        "rnmMae", "rnmPai",
+        "cpfMae", "cpfPai",
+        "certidaoNascimento",
+        "comprovanteEndereco",
+        "passaporteMae", "passaportePai", "passaporteCrianca"
+      ].includes(field);
     }
     if (formData.type === "Exame DNA") {
-      return ["rnmMae", "rnmPai", "rnmSupostoPai", "certidaoNascimento", "comprovanteEndereco", "passaporte"].includes(field);
+      return [
+        "nomeMae", "nomePaiRegistral", "nomeSupostoPai", "nomeCrianca",
+        "rnmMae", "rnmPai", "rnmSupostoPai",
+        "cpfMae", "cpfPai", "cpfSupostoPai",
+        "certidaoNascimento", "comprovanteEndereco",
+        "passaporteMae", "passaportePaiRegistral", "passaporteSupostoPai"
+      ].includes(field);
     }
     if (formData.type === "Guarda") {
-      return ["rnmMae", "rnmPai", "cpfMae", "cpfPai", "certidaoNascimento", "comprovanteEndereco", "passaporte", "guiaPaga"].includes(field);
+      return [
+        "nomeMae", "nomePaiRegistral", "nomeCrianca",
+        "rnmMae", "rnmPai",
+        "cpfMae", "cpfPai",
+        "certidaoNascimento",
+        "comprovanteEndereco",
+        "passaporteMae", "passaportePai", "passaporteCrianca"
+      ].includes(field);
     }
     if (formData.type === "Acordos de Guarda") {
-      return ["rnmMae", "rnmPai", "cpfMae", "cpfPai", "certidaoNascimento", "comprovanteEndereco", "passaporte", "guiaPaga"].includes(field);
+      return [
+        "nomeMae", "nomePaiRegistral", "nomeCrianca",
+        "rnmMae", "rnmPai",
+        "cpfMae", "cpfPai",
+        "certidaoNascimento",
+        "comprovanteEndereco",
+        "passaporteMae", "passaportePai", "passaporteCrianca"
+      ].includes(field);
     }
     if (formData.type === "Divórcio Consensual") {
-      return ["rnmMae", "rnmPai", "cpfMae", "cpfPai", "certidaoNascimento", "comprovanteEndereco", "peticaoConjunta", "termoPartilhas", "guarda", "procuracao"].includes(field);
+      return [
+        "nomeMae", "nomePaiRegistral",
+        "rnmMae", "rnmPai",
+        "cpfMae", "cpfPai",
+        "certidaoNascimento",
+        "comprovanteEndereco",
+        "peticaoConjunta", "termoPartilhas", "guarda", "procuracao"
+      ].includes(field);
     }
     if (formData.type === "Divórcio Litígio") {
-      return ["rnmMae", "rnmPai", "cpfMae", "cpfPai", "certidaoNascimento", "comprovanteEndereco", "peticaoCliente", "procuracaoCliente", "custas"].includes(field);
+      return [
+        "nomeMae", "nomePaiRegistral",
+        "rnmMae", "rnmPai",
+        "cpfMae", "cpfPai",
+        "certidaoNascimento",
+        "comprovanteEndereco",
+        "peticaoCliente", "procuracaoCliente", "custas"
+      ].includes(field);
     }
     if (formData.type === "Usucapião") {
       return ["peticaoInicial", "matriculaImovel", "aguaLuzIptu", "camposExigencias"].includes(field);
@@ -358,25 +410,19 @@ export default function NovaAcaoCivelPage() {
             {/* Basic Info */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="clientName">
-                  Nome do Cliente <span className="text-red-500">*</span>
-                </Label>
+                <Label htmlFor="clientName">Nome do Cliente</Label>
                 <Input
                   id="clientName"
                   value={formData.clientName}
                   onChange={(e) => handleChange("clientName", e.target.value)}
-                  required
                   className="h-12 border-2 focus:border-blue-500"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="type">
-                  Tipo de Ação <span className="text-red-500">*</span>
-                </Label>
+                <Label htmlFor="type">Tipo de Ação</Label>
                 <Select
                   value={formData.type}
                   onValueChange={(value) => handleChange("type", value)}
-                  required
                 >
                 <SelectTrigger className="h-12 border-2 focus:border-blue-500">
                   <SelectValue placeholder="Selecione o tipo" />
@@ -396,14 +442,1572 @@ export default function NovaAcaoCivelPage() {
             {formData.type && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Cadastro</h3>
-                <div className="grid gap-4 md:grid-cols-2">
+                {formData.type === "Exame DNA" && (
+                  <div className="space-y-8">
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Dados de nomes</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("nomeMae") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="nomeMae">Nome da Mãe</Label>
+                            <Input
+                              id="nomeMae"
+                              value={formData.nomeMae}
+                              onChange={(e) => handleChange("nomeMae", e.target.value)}
+                              placeholder="Nome completo"
+                            />
+                          </div>
+                        )}
+
+                        {showFieldForType("nomePaiRegistral") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="nomePaiRegistral">Nome do Pai Registral</Label>
+                            <Input
+                              id="nomePaiRegistral"
+                              value={formData.nomePaiRegistral}
+                              onChange={(e) => handleChange("nomePaiRegistral", e.target.value)}
+                              placeholder="Nome completo"
+                            />
+                          </div>
+                        )}
+
+                        {showFieldForType("nomeSupostoPai") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="nomeSupostoPai">Nome do Suposto Pai</Label>
+                            <Input
+                              id="nomeSupostoPai"
+                              value={formData.nomeSupostoPai}
+                              onChange={(e) => handleChange("nomeSupostoPai", e.target.value)}
+                              placeholder="Nome completo"
+                            />
+                          </div>
+                        )}
+
+                        {showFieldForType("nomeCrianca") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="nomeCrianca">Nome da Criança</Label>
+                            <Input
+                              id="nomeCrianca"
+                              value={formData.nomeCrianca}
+                              onChange={(e) => handleChange("nomeCrianca", e.target.value)}
+                              placeholder="Nome completo"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Documentos de identificação (RNM / RNE / RG)</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("rnmMae") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="rnmMae">RNM / RNE / RG Mãe</Label>
+                            <Input
+                              id="rnmMae"
+                              value={formData.rnmMae}
+                              onChange={(e) => handleChange("rnmMae", e.target.value)}
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.rnmMaeFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="rnmMaeDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "rnmMae")}
+                                    disabled={uploadingDocs.rnmMae}
+                                  />
+                                  <Label
+                                    htmlFor="rnmMaeDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.rnmMae ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.rnmMaeFile && (
+                              <DocumentPreview
+                                fileUrl={formData.rnmMaeFile}
+                                onRemove={() => removeDocument("rnmMae")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("rnmPai") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="rnmPai">RNM / RNE / RG Pai</Label>
+                            <Input
+                              id="rnmPai"
+                              value={formData.rnmPai}
+                              onChange={(e) => handleChange("rnmPai", e.target.value)}
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.rnmPaiFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="rnmPaiDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "rnmPai")}
+                                    disabled={uploadingDocs.rnmPai}
+                                  />
+                                  <Label
+                                    htmlFor="rnmPaiDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.rnmPai ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.rnmPaiFile && (
+                              <DocumentPreview
+                                fileUrl={formData.rnmPaiFile}
+                                onRemove={() => removeDocument("rnmPai")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("rnmSupostoPai") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="rnmSupostoPai">RNM / RNE / RG Suposto Pai</Label>
+                            <Input
+                              id="rnmSupostoPai"
+                              value={formData.rnmSupostoPai}
+                              onChange={(e) => handleChange("rnmSupostoPai", e.target.value)}
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.rnmSupostoPaiFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="rnmSupostoPaiDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "rnmSupostoPai")}
+                                    disabled={uploadingDocs.rnmSupostoPai}
+                                  />
+                                  <Label
+                                    htmlFor="rnmSupostoPaiDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.rnmSupostoPai ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.rnmSupostoPaiFile && (
+                              <DocumentPreview
+                                fileUrl={formData.rnmSupostoPaiFile}
+                                onRemove={() => removeDocument("rnmSupostoPai")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Documentos da Criança</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("certidaoNascimento") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="certidaoNascimento">Certidão de Nascimento da Criança</Label>
+                            <Input
+                              id="certidaoNascimento"
+                              value={formData.certidaoNascimento}
+                              onChange={(e) => handleChange("certidaoNascimento", e.target.value)}
+                              placeholder="Número ou referência"
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.certidaoNascimentoFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="certidaoNascimentoDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "certidaoNascimento")}
+                                    disabled={uploadingDocs.certidaoNascimento}
+                                  />
+                                  <Label
+                                    htmlFor="certidaoNascimentoDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.certidaoNascimento ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.certidaoNascimentoFile && (
+                              <DocumentPreview
+                                fileUrl={formData.certidaoNascimentoFile}
+                                onRemove={() => removeDocument("certidaoNascimento")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Documentos de Residência</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("comprovanteEndereco") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="comprovanteEndereco">Comprovante de Endereço</Label>
+                            <Input
+                              id="comprovanteEndereco"
+                              value={formData.comprovanteEndereco}
+                              onChange={(e) => handleChange("comprovanteEndereco", e.target.value)}
+                              placeholder="Tipo de comprovante"
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.comprovanteEnderecoFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="comprovanteEnderecoDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "comprovanteEndereco")}
+                                    disabled={uploadingDocs.comprovanteEndereco}
+                                  />
+                                  <Label
+                                    htmlFor="comprovanteEnderecoDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.comprovanteEndereco ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.comprovanteEnderecoFile && (
+                              <DocumentPreview
+                                fileUrl={formData.comprovanteEnderecoFile}
+                                onRemove={() => removeDocument("comprovanteEndereco")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Passaportes</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("passaporteMae") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="passaporteMaeDoc">Passaporte da Mãe</Label>
+                            <div className="flex items-center gap-2">
+                              {!formData.passaporteMaeFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="passaporteMaeDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "passaporteMae")}
+                                    disabled={uploadingDocs.passaporteMae}
+                                  />
+                                  <Label
+                                    htmlFor="passaporteMaeDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.passaporteMae ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.passaporteMaeFile && (
+                              <DocumentPreview
+                                fileUrl={formData.passaporteMaeFile}
+                                onRemove={() => removeDocument("passaporteMae")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("passaportePaiRegistral") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="passaportePaiRegistralDoc">Passaporte do Pai Registral</Label>
+                            <div className="flex items-center gap-2">
+                              {!formData.passaportePaiRegistralFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="passaportePaiRegistralDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "passaportePaiRegistral")}
+                                    disabled={uploadingDocs.passaportePaiRegistral}
+                                  />
+                                  <Label
+                                    htmlFor="passaportePaiRegistralDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.passaportePaiRegistral ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.passaportePaiRegistralFile && (
+                              <DocumentPreview
+                                fileUrl={formData.passaportePaiRegistralFile}
+                                onRemove={() => removeDocument("passaportePaiRegistral")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("passaporteSupostoPai") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="passaporteSupostoPaiDoc">Passaporte do Suposto Pai</Label>
+                            <div className="flex items-center gap-2">
+                              {!formData.passaporteSupostoPaiFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="passaporteSupostoPaiDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "passaporteSupostoPai")}
+                                    disabled={uploadingDocs.passaporteSupostoPai}
+                                  />
+                                  <Label
+                                    htmlFor="passaporteSupostoPaiDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.passaporteSupostoPai ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.passaporteSupostoPaiFile && (
+                              <DocumentPreview
+                                fileUrl={formData.passaporteSupostoPaiFile}
+                                onRemove={() => removeDocument("passaporteSupostoPai")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {(formData.type === "Alteração de Nome" || formData.type === "Guarda" || formData.type === "Acordos de Guarda") && (
+                  <div className="space-y-8">
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Dados da Família</h4>
+                      <div className="grid gap-4 md:grid-cols-3">
+                        {showFieldForType("nomeMae") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="nomeMae">Nome da Mãe</Label>
+                            <Input
+                              id="nomeMae"
+                              value={formData.nomeMae}
+                              onChange={(e) => handleChange("nomeMae", e.target.value)}
+                              placeholder="Nome completo"
+                            />
+                          </div>
+                        )}
+                        {showFieldForType("nomePaiRegistral") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="nomePaiRegistral">Nome do Pai</Label>
+                            <Input
+                              id="nomePaiRegistral"
+                              value={formData.nomePaiRegistral}
+                              onChange={(e) => handleChange("nomePaiRegistral", e.target.value)}
+                              placeholder="Nome completo"
+                            />
+                          </div>
+                        )}
+                        {showFieldForType("nomeCrianca") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="nomeCrianca">Nome da Criança</Label>
+                            <Input
+                              id="nomeCrianca"
+                              value={formData.nomeCrianca}
+                              onChange={(e) => handleChange("nomeCrianca", e.target.value)}
+                              placeholder="Nome completo"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Documentos dos Responsáveis</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("rnmMae") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="rnmMae">RNM / RNE / RG Mãe</Label>
+                            <Input
+                              id="rnmMae"
+                              value={formData.rnmMae}
+                              onChange={(e) => handleChange("rnmMae", e.target.value)}
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.rnmMaeFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="rnmMaeDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "rnmMae")}
+                                    disabled={uploadingDocs.rnmMae}
+                                  />
+                                  <Label
+                                    htmlFor="rnmMaeDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.rnmMae ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.rnmMaeFile && (
+                              <DocumentPreview
+                                fileUrl={formData.rnmMaeFile}
+                                onRemove={() => removeDocument("rnmMae")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("rnmPai") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="rnmPai">RNM / RNE / RG Pai</Label>
+                            <Input
+                              id="rnmPai"
+                              value={formData.rnmPai}
+                              onChange={(e) => handleChange("rnmPai", e.target.value)}
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.rnmPaiFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="rnmPaiDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "rnmPai")}
+                                    disabled={uploadingDocs.rnmPai}
+                                  />
+                                  <Label
+                                    htmlFor="rnmPaiDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.rnmPai ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.rnmPaiFile && (
+                              <DocumentPreview
+                                fileUrl={formData.rnmPaiFile}
+                                onRemove={() => removeDocument("rnmPai")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("cpfMae") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="cpfMae">CPF Mãe</Label>
+                            <Input
+                              id="cpfMae"
+                              value={formData.cpfMae}
+                              onChange={(e) => handleChange("cpfMae", e.target.value)}
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.cpfMaeFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="cpfMaeDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "cpfMae")}
+                                    disabled={uploadingDocs.cpfMae}
+                                  />
+                                  <Label
+                                    htmlFor="cpfMaeDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.cpfMae ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.cpfMaeFile && (
+                              <DocumentPreview
+                                fileUrl={formData.cpfMaeFile}
+                                onRemove={() => removeDocument("cpfMae")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("cpfPai") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="cpfPai">CPF Pai</Label>
+                            <Input
+                              id="cpfPai"
+                              value={formData.cpfPai}
+                              onChange={(e) => handleChange("cpfPai", e.target.value)}
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.cpfPaiFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="cpfPaiDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "cpfPai")}
+                                    disabled={uploadingDocs.cpfPai}
+                                  />
+                                  <Label
+                                    htmlFor="cpfPaiDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.cpfPai ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.cpfPaiFile && (
+                              <DocumentPreview
+                                fileUrl={formData.cpfPaiFile}
+                                onRemove={() => removeDocument("cpfPai")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Documentos da Criança</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("certidaoNascimento") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="certidaoNascimento">Certidão de Nascimento da Criança</Label>
+                            <Input
+                              id="certidaoNascimento"
+                              value={formData.certidaoNascimento}
+                              onChange={(e) => handleChange("certidaoNascimento", e.target.value)}
+                              placeholder="Número ou referência"
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.certidaoNascimentoFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="certidaoNascimentoDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "certidaoNascimento")}
+                                    disabled={uploadingDocs.certidaoNascimento}
+                                  />
+                                  <Label
+                                    htmlFor="certidaoNascimentoDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.certidaoNascimento ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.certidaoNascimentoFile && (
+                              <DocumentPreview
+                                fileUrl={formData.certidaoNascimentoFile}
+                                onRemove={() => removeDocument("certidaoNascimento")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Comprovação de Residência</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("comprovanteEndereco") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="comprovanteEndereco">Comprovante de Endereço</Label>
+                            <Input
+                              id="comprovanteEndereco"
+                              value={formData.comprovanteEndereco}
+                              onChange={(e) => handleChange("comprovanteEndereco", e.target.value)}
+                              placeholder="Tipo de comprovante"
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.comprovanteEnderecoFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="comprovanteEnderecoDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "comprovanteEndereco")}
+                                    disabled={uploadingDocs.comprovanteEndereco}
+                                  />
+                                  <Label
+                                    htmlFor="comprovanteEnderecoDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.comprovanteEndereco ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.comprovanteEnderecoFile && (
+                              <DocumentPreview
+                                fileUrl={formData.comprovanteEnderecoFile}
+                                onRemove={() => removeDocument("comprovanteEndereco")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Passaportes</h4>
+                      <div className="grid gap-4 md:grid-cols-3">
+                        {showFieldForType("passaporteMae") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="passaporteMaeDoc">Passaporte da Mãe</Label>
+                            <div className="flex items-center gap-2">
+                              {!formData.passaporteMaeFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="passaporteMaeDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "passaporteMae")}
+                                    disabled={uploadingDocs.passaporteMae}
+                                  />
+                                  <Label
+                                    htmlFor="passaporteMaeDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.passaporteMae ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.passaporteMaeFile && (
+                              <DocumentPreview
+                                fileUrl={formData.passaporteMaeFile}
+                                onRemove={() => removeDocument("passaporteMae")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("passaportePai") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="passaportePaiDoc">Passaporte do Pai</Label>
+                            <div className="flex items-center gap-2">
+                              {!formData.passaportePaiFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="passaportePaiDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "passaportePai")}
+                                    disabled={uploadingDocs.passaportePai}
+                                  />
+                                  <Label
+                                    htmlFor="passaportePaiDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.passaportePai ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.passaportePaiFile && (
+                              <DocumentPreview
+                                fileUrl={formData.passaportePaiFile}
+                                onRemove={() => removeDocument("passaportePai")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("passaporteCrianca") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="passaporteCriancaDoc">Passaporte da Criança</Label>
+                            <div className="flex items-center gap-2">
+                              {!formData.passaporteCriancaFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="passaporteCriancaDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "passaporteCrianca")}
+                                    disabled={uploadingDocs.passaporteCrianca}
+                                  />
+                                  <Label
+                                    htmlFor="passaporteCriancaDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.passaporteCrianca ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.passaporteCriancaFile && (
+                              <DocumentPreview
+                                fileUrl={formData.passaporteCriancaFile}
+                                onRemove={() => removeDocument("passaporteCrianca")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {formData.type === "Divórcio Consensual" && (
+                  <div className="space-y-8">
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Informações Básicas</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("nomeMae") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="nomeMae">Nome da Parte 1</Label>
+                            <Input
+                              id="nomeMae"
+                              value={formData.nomeMae}
+                              onChange={(e) => handleChange("nomeMae", e.target.value)}
+                              placeholder="Nome completo"
+                            />
+                          </div>
+                        )}
+                        {showFieldForType("nomePaiRegistral") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="nomePaiRegistral">Nome da Parte 2</Label>
+                            <Input
+                              id="nomePaiRegistral"
+                              value={formData.nomePaiRegistral}
+                              onChange={(e) => handleChange("nomePaiRegistral", e.target.value)}
+                              placeholder="Nome completo"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Documentos Pessoais</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("rnmMae") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="rnmMae">RNM da Parte 1</Label>
+                            <Input
+                              id="rnmMae"
+                              value={formData.rnmMae}
+                              onChange={(e) => handleChange("rnmMae", e.target.value)}
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.rnmMaeFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="rnmMaeDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "rnmMae")}
+                                    disabled={uploadingDocs.rnmMae}
+                                  />
+                                  <Label
+                                    htmlFor="rnmMaeDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.rnmMae ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.rnmMaeFile && (
+                              <DocumentPreview
+                                fileUrl={formData.rnmMaeFile}
+                                onRemove={() => removeDocument("rnmMae")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("rnmPai") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="rnmPai">RNM da Parte 2</Label>
+                            <Input
+                              id="rnmPai"
+                              value={formData.rnmPai}
+                              onChange={(e) => handleChange("rnmPai", e.target.value)}
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.rnmPaiFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="rnmPaiDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "rnmPai")}
+                                    disabled={uploadingDocs.rnmPai}
+                                  />
+                                  <Label
+                                    htmlFor="rnmPaiDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.rnmPai ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.rnmPaiFile && (
+                              <DocumentPreview
+                                fileUrl={formData.rnmPaiFile}
+                                onRemove={() => removeDocument("rnmPai")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("cpfMae") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="cpfMae">CPF da Parte 1</Label>
+                            <Input
+                              id="cpfMae"
+                              value={formData.cpfMae}
+                              onChange={(e) => handleChange("cpfMae", e.target.value)}
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.cpfMaeFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="cpfMaeDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "cpfMae")}
+                                    disabled={uploadingDocs.cpfMae}
+                                  />
+                                  <Label
+                                    htmlFor="cpfMaeDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.cpfMae ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.cpfMaeFile && (
+                              <DocumentPreview
+                                fileUrl={formData.cpfMaeFile}
+                                onRemove={() => removeDocument("cpfMae")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("cpfPai") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="cpfPai">CPF da Parte 2</Label>
+                            <Input
+                              id="cpfPai"
+                              value={formData.cpfPai}
+                              onChange={(e) => handleChange("cpfPai", e.target.value)}
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.cpfPaiFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="cpfPaiDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "cpfPai")}
+                                    disabled={uploadingDocs.cpfPai}
+                                  />
+                                  <Label
+                                    htmlFor="cpfPaiDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.cpfPai ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.cpfPaiFile && (
+                              <DocumentPreview
+                                fileUrl={formData.cpfPaiFile}
+                                onRemove={() => removeDocument("cpfPai")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Filhos (se houver)</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("certidaoNascimento") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="certidaoNascimento">Certidão de Nascimento da Criança</Label>
+                            <Input
+                              id="certidaoNascimento"
+                              value={formData.certidaoNascimento}
+                              onChange={(e) => handleChange("certidaoNascimento", e.target.value)}
+                              placeholder="Número ou referência"
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.certidaoNascimentoFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="certidaoNascimentoDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "certidaoNascimento")}
+                                    disabled={uploadingDocs.certidaoNascimento}
+                                  />
+                                  <Label
+                                    htmlFor="certidaoNascimentoDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.certidaoNascimento ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.certidaoNascimentoFile && (
+                              <DocumentPreview
+                                fileUrl={formData.certidaoNascimentoFile}
+                                onRemove={() => removeDocument("certidaoNascimento")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Comprovação de Residência</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("comprovanteEndereco") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="comprovanteEndereco">Comprovante de Endereço</Label>
+                            <Input
+                              id="comprovanteEndereco"
+                              value={formData.comprovanteEndereco}
+                              onChange={(e) => handleChange("comprovanteEndereco", e.target.value)}
+                              placeholder="Tipo de comprovante"
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.comprovanteEnderecoFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="comprovanteEnderecoDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "comprovanteEndereco")}
+                                    disabled={uploadingDocs.comprovanteEndereco}
+                                  />
+                                  <Label
+                                    htmlFor="comprovanteEnderecoDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.comprovanteEndereco ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.comprovanteEnderecoFile && (
+                              <DocumentPreview
+                                fileUrl={formData.comprovanteEnderecoFile}
+                                onRemove={() => removeDocument("comprovanteEndereco")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Documentos Jurídicos</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("peticaoConjunta") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="peticaoConjunta">Petição Conjunta</Label>
+                            <Input
+                              id="peticaoConjunta"
+                              value={formData.peticaoConjunta}
+                              onChange={(e) => handleChange("peticaoConjunta", e.target.value)}
+                              placeholder="Número ou referência"
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.peticaoConjuntaFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="peticaoConjuntaDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "peticaoConjunta")}
+                                    disabled={uploadingDocs.peticaoConjunta}
+                                  />
+                                  <Label
+                                    htmlFor="peticaoConjuntaDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.peticaoConjunta ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.peticaoConjuntaFile && (
+                              <DocumentPreview
+                                fileUrl={formData.peticaoConjuntaFile}
+                                onRemove={() => removeDocument("peticaoConjunta")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("termoPartilhas") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="termoPartilhas">Termo de Partilhas (Caso possuir bens)</Label>
+                            <Input
+                              id="termoPartilhas"
+                              value={formData.termoPartilhas}
+                              onChange={(e) => handleChange("termoPartilhas", e.target.value)}
+                              placeholder="Número ou referência"
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.termoPartilhasFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="termoPartilhasDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "termoPartilhas")}
+                                    disabled={uploadingDocs.termoPartilhas}
+                                  />
+                                  <Label
+                                    htmlFor="termoPartilhasDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.termoPartilhas ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.termoPartilhasFile && (
+                              <DocumentPreview
+                                fileUrl={formData.termoPartilhasFile}
+                                onRemove={() => removeDocument("termoPartilhas")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("guarda") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="guarda">Guarda (caso tiver filhos)</Label>
+                            <Input
+                              id="guarda"
+                              value={formData.guarda}
+                              onChange={(e) => handleChange("guarda", e.target.value)}
+                              placeholder="Número ou referência"
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.guardaFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="guardaDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "guarda")}
+                                    disabled={uploadingDocs.guarda}
+                                  />
+                                  <Label
+                                    htmlFor="guardaDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.guarda ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.guardaFile && (
+                              <DocumentPreview
+                                fileUrl={formData.guardaFile}
+                                onRemove={() => removeDocument("guarda")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("procuracao") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="procuracao">Procuração</Label>
+                            <Input
+                              id="procuracao"
+                              value={formData.procuracao}
+                              onChange={(e) => handleChange("procuracao", e.target.value)}
+                              placeholder="Número ou referência"
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.procuracaoFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="procuracaoDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "procuracao")}
+                                    disabled={uploadingDocs.procuracao}
+                                  />
+                                  <Label
+                                    htmlFor="procuracaoDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.procuracao ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.procuracaoFile && (
+                              <DocumentPreview
+                                fileUrl={formData.procuracaoFile}
+                                onRemove={() => removeDocument("procuracao")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {formData.type === "Divórcio Litígio" && (
+                  <div className="space-y-8">
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Informações Básicas</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("nomeMae") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="nomeMae">Nome da Parte 1</Label>
+                            <Input
+                              id="nomeMae"
+                              value={formData.nomeMae}
+                              onChange={(e) => handleChange("nomeMae", e.target.value)}
+                              placeholder="Nome completo"
+                            />
+                          </div>
+                        )}
+                        {showFieldForType("nomePaiRegistral") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="nomePaiRegistral">Nome da Parte 2</Label>
+                            <Input
+                              id="nomePaiRegistral"
+                              value={formData.nomePaiRegistral}
+                              onChange={(e) => handleChange("nomePaiRegistral", e.target.value)}
+                              placeholder="Nome completo"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Documentos Pessoais</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("rnmMae") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="rnmMae">RNM da Parte 1</Label>
+                            <Input
+                              id="rnmMae"
+                              value={formData.rnmMae}
+                              onChange={(e) => handleChange("rnmMae", e.target.value)}
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.rnmMaeFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="rnmMaeDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "rnmMae")}
+                                    disabled={uploadingDocs.rnmMae}
+                                  />
+                                  <Label
+                                    htmlFor="rnmMaeDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.rnmMae ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.rnmMaeFile && (
+                              <DocumentPreview
+                                fileUrl={formData.rnmMaeFile}
+                                onRemove={() => removeDocument("rnmMae")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("rnmPai") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="rnmPai">RNM da Parte 2</Label>
+                            <Input
+                              id="rnmPai"
+                              value={formData.rnmPai}
+                              onChange={(e) => handleChange("rnmPai", e.target.value)}
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.rnmPaiFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="rnmPaiDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "rnmPai")}
+                                    disabled={uploadingDocs.rnmPai}
+                                  />
+                                  <Label
+                                    htmlFor="rnmPaiDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.rnmPai ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.rnmPaiFile && (
+                              <DocumentPreview
+                                fileUrl={formData.rnmPaiFile}
+                                onRemove={() => removeDocument("rnmPai")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("cpfMae") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="cpfMae">CPF da Parte 1</Label>
+                            <Input
+                              id="cpfMae"
+                              value={formData.cpfMae}
+                              onChange={(e) => handleChange("cpfMae", e.target.value)}
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.cpfMaeFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="cpfMaeDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "cpfMae")}
+                                    disabled={uploadingDocs.cpfMae}
+                                  />
+                                  <Label
+                                    htmlFor="cpfMaeDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.cpfMae ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.cpfMaeFile && (
+                              <DocumentPreview
+                                fileUrl={formData.cpfMaeFile}
+                                onRemove={() => removeDocument("cpfMae")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("cpfPai") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="cpfPai">CPF da Parte 2</Label>
+                            <Input
+                              id="cpfPai"
+                              value={formData.cpfPai}
+                              onChange={(e) => handleChange("cpfPai", e.target.value)}
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.cpfPaiFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="cpfPaiDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "cpfPai")}
+                                    disabled={uploadingDocs.cpfPai}
+                                  />
+                                  <Label
+                                    htmlFor="cpfPaiDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.cpfPai ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.cpfPaiFile && (
+                              <DocumentPreview
+                                fileUrl={formData.cpfPaiFile}
+                                onRemove={() => removeDocument("cpfPai")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Filhos (se houver)</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("certidaoNascimento") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="certidaoNascimento">Certidão de Nascimento da Criança</Label>
+                            <Input
+                              id="certidaoNascimento"
+                              value={formData.certidaoNascimento}
+                              onChange={(e) => handleChange("certidaoNascimento", e.target.value)}
+                              placeholder="Número ou referência"
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.certidaoNascimentoFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="certidaoNascimentoDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "certidaoNascimento")}
+                                    disabled={uploadingDocs.certidaoNascimento}
+                                  />
+                                  <Label
+                                    htmlFor="certidaoNascimentoDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.certidaoNascimento ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.certidaoNascimentoFile && (
+                              <DocumentPreview
+                                fileUrl={formData.certidaoNascimentoFile}
+                                onRemove={() => removeDocument("certidaoNascimento")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Comprovação de Residência</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("comprovanteEndereco") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="comprovanteEndereco">Comprovante de Endereço</Label>
+                            <Input
+                              id="comprovanteEndereco"
+                              value={formData.comprovanteEndereco}
+                              onChange={(e) => handleChange("comprovanteEndereco", e.target.value)}
+                              placeholder="Tipo de comprovante"
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.comprovanteEnderecoFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="comprovanteEnderecoDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "comprovanteEndereco")}
+                                    disabled={uploadingDocs.comprovanteEndereco}
+                                  />
+                                  <Label
+                                    htmlFor="comprovanteEnderecoDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.comprovanteEndereco ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.comprovanteEnderecoFile && (
+                              <DocumentPreview
+                                fileUrl={formData.comprovanteEnderecoFile}
+                                onRemove={() => removeDocument("comprovanteEndereco")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-base font-semibold">Documentos do Processo</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {showFieldForType("peticaoCliente") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="peticaoCliente">Petição do Cliente</Label>
+                            <Input
+                              id="peticaoCliente"
+                              value={formData.peticaoCliente}
+                              onChange={(e) => handleChange("peticaoCliente", e.target.value)}
+                              placeholder="Número ou referência"
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.peticaoClienteFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="peticaoClienteDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "peticaoCliente")}
+                                    disabled={uploadingDocs.peticaoCliente}
+                                  />
+                                  <Label
+                                    htmlFor="peticaoClienteDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.peticaoCliente ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.peticaoClienteFile && (
+                              <DocumentPreview
+                                fileUrl={formData.peticaoClienteFile}
+                                onRemove={() => removeDocument("peticaoCliente")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("procuracaoCliente") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="procuracaoCliente">Procuração do Cliente</Label>
+                            <Input
+                              id="procuracaoCliente"
+                              value={formData.procuracaoCliente}
+                              onChange={(e) => handleChange("procuracaoCliente", e.target.value)}
+                              placeholder="Número ou referência"
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.procuracaoClienteFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="procuracaoClienteDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "procuracaoCliente")}
+                                    disabled={uploadingDocs.procuracaoCliente}
+                                  />
+                                  <Label
+                                    htmlFor="procuracaoClienteDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.procuracaoCliente ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.procuracaoClienteFile && (
+                              <DocumentPreview
+                                fileUrl={formData.procuracaoClienteFile}
+                                onRemove={() => removeDocument("procuracaoCliente")}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {showFieldForType("custas") && (
+                          <div className="space-y-2">
+                            <Label htmlFor="custas">Comprovante de Custas</Label>
+                            <Input
+                              id="custas"
+                              value={formData.custas}
+                              onChange={(e) => handleChange("custas", e.target.value)}
+                              placeholder="Número ou referência"
+                            />
+                            <div className="flex items-center gap-2">
+                              {!formData.custasFile ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="custasDoc"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "custas")}
+                                    disabled={uploadingDocs.custas}
+                                  />
+                                  <Label
+                                    htmlFor="custasDoc"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.custas ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.custasFile && (
+                              <DocumentPreview
+                                fileUrl={formData.custasFile}
+                                onRemove={() => removeDocument("custas")}
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {formData.type !== "Exame DNA" && formData.type !== "Alteração de Nome" && formData.type !== "Guarda" && formData.type !== "Acordos de Guarda" && formData.type !== "Divórcio Consensual" && formData.type !== "Divórcio Litígio" && (
+                  <div className="grid gap-4 md:grid-cols-2">
                   {showFieldForType("rnmMae") && (
                     <div className="space-y-2">
-                      <Label htmlFor="rnmMae">
-                        {formData.type === "Divórcio Consensual" || formData.type === "Divórcio Litígio" 
-                          ? "RNM Mulher" 
-                          : "RNM Mãe"}
-                      </Label>
+                      <Label htmlFor="rnmMae">RNM / RNE / RG Mãe</Label>
                       <Input
                         id="rnmMae"
                         value={formData.rnmMae}
@@ -440,11 +2044,7 @@ export default function NovaAcaoCivelPage() {
 
                   {showFieldForType("rnmMae") && (
                     <div className="space-y-2">
-                      <Label htmlFor="nomeMae">
-                        {formData.type === "Divórcio Consensual" || formData.type === "Divórcio Litígio" 
-                          ? "Nome da Mulher" 
-                          : "Nome da Mãe"}
-                      </Label>
+                      <Label htmlFor="nomeMae">Nome da Mãe</Label>
                       <Input
                         id="nomeMae"
                         value={formData.nomeMae}
@@ -456,11 +2056,7 @@ export default function NovaAcaoCivelPage() {
 
                   {showFieldForType("rnmPai") && (
                     <div className="space-y-2">
-                      <Label htmlFor="rnmPai">
-                        {formData.type === "Divórcio Consensual" || formData.type === "Divórcio Litígio" 
-                          ? "RNM Homem" 
-                          : "RNM Pai"}
-                      </Label>
+                      <Label htmlFor="rnmPai">RNM / RNE / RG Pai</Label>
                       <Input
                         id="rnmPai"
                         value={formData.rnmPai}
@@ -497,11 +2093,7 @@ export default function NovaAcaoCivelPage() {
 
                   {showFieldForType("rnmPai") && (
                     <div className="space-y-2">
-                      <Label htmlFor="nomePaiRegistral">
-                        {formData.type === "Divórcio Consensual" || formData.type === "Divórcio Litígio" 
-                          ? "Nome do Homem" 
-                          : "Nome do Pai Registral"}
-                      </Label>
+                      <Label htmlFor="nomePaiRegistral">Nome do Pai Registral</Label>
                       <Input
                         id="nomePaiRegistral"
                         value={formData.nomePaiRegistral}
@@ -513,11 +2105,7 @@ export default function NovaAcaoCivelPage() {
 
                   {showFieldForType("cpfMae") && (
                     <div className="space-y-2">
-                      <Label htmlFor="cpfMae">
-                        {formData.type === "Divórcio Consensual" || formData.type === "Divórcio Litígio" 
-                          ? "CPF Mulher" 
-                          : "CPF Mãe"}
-                      </Label>
+                      <Label htmlFor="cpfMae">CPF Mãe</Label>
                       <Input
                         id="cpfMae"
                         value={formData.cpfMae}
@@ -535,7 +2123,7 @@ export default function NovaAcaoCivelPage() {
                             />
                             <Label
                               htmlFor="cpfMaeDoc"
-                              className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground"
+                              className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
                             >
                               <Upload className="h-4 w-4" />
                               {uploadingDocs.cpfMae ? "Enviando..." : "Upload Documento"}
@@ -554,11 +2142,7 @@ export default function NovaAcaoCivelPage() {
 
                   {showFieldForType("cpfPai") && (
                     <div className="space-y-2">
-                      <Label htmlFor="cpfPai">
-                        {formData.type === "Divórcio Consensual" || formData.type === "Divórcio Litígio" 
-                          ? "CPF Homem" 
-                          : "CPF Pai"}
-                      </Label>
+                      <Label htmlFor="cpfPai">CPF Pai</Label>
                       <Input
                         id="cpfPai"
                         value={formData.cpfPai}
@@ -576,7 +2160,7 @@ export default function NovaAcaoCivelPage() {
                             />
                             <Label
                               htmlFor="cpfPaiDoc"
-                              className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground"
+                              className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
                             >
                               <Upload className="h-4 w-4" />
                               {uploadingDocs.cpfPai ? "Enviando..." : "Upload Documento"}
@@ -590,6 +2174,17 @@ export default function NovaAcaoCivelPage() {
                           onRemove={() => removeDocument("cpfPai")}
                         />
                       )}
+                    </div>
+                  )}
+
+                  {showFieldForType("cpfSupostoPai") && (
+                    <div className="space-y-2">
+                      <Label htmlFor="cpfSupostoPai">CPF do Suposto Pai</Label>
+                      <Input
+                        id="cpfSupostoPai"
+                        value={formData.cpfSupostoPai}
+                        onChange={(e) => handleChange("cpfSupostoPai", e.target.value)}
+                      />
                     </div>
                   )}
 
@@ -637,6 +2232,18 @@ export default function NovaAcaoCivelPage() {
                         id="nomeSupostoPai"
                         value={formData.nomeSupostoPai}
                         onChange={(e) => handleChange("nomeSupostoPai", e.target.value)}
+                        placeholder="Nome completo"
+                      />
+                    </div>
+                  )}
+
+                  {showFieldForType("nomeCrianca") && (
+                    <div className="space-y-2">
+                      <Label htmlFor="nomeCrianca">Nome da Criança</Label>
+                      <Input
+                        id="nomeCrianca"
+                        value={formData.nomeCrianca}
+                        onChange={(e) => handleChange("nomeCrianca", e.target.value)}
                         placeholder="Nome completo"
                       />
                     </div>
@@ -874,39 +2481,97 @@ export default function NovaAcaoCivelPage() {
                     </div>
                   )}
 
-                  {showFieldForType("passaporte") && (
+                  {showFieldForType("passaporteMae") && (
                     <div className="space-y-2">
-                      <Label htmlFor="passaporte">Passaporte</Label>
-                      <Input
-                        id="passaporte"
-                        value={formData.passaporte}
-                        onChange={(e) => handleChange("passaporte", e.target.value)}
-                        placeholder="Número do passaporte"
-                      />
+                      <Label htmlFor="passaporteMaeDoc">Passaporte da Mãe</Label>
                       <div className="flex items-center gap-2">
-                        {!formData.passaporteFile ? (
+                        {!formData.passaporteMaeFile ? (
                           <>
                             <input
                               type="file"
-                              id="passaporteDoc"
+                              id="passaporteMaeDoc"
                               className="hidden"
-                              onChange={(e) => handleDocumentUpload(e, "passaporte")}
-                              disabled={uploadingDocs.passaporte}
+                              onChange={(e) => handleDocumentUpload(e, "passaporteMae")}
+                              disabled={uploadingDocs.passaporteMae}
                             />
                             <Label
-                              htmlFor="passaporteDoc"
+                              htmlFor="passaporteMaeDoc"
                               className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
                             >
                               <Upload className="h-4 w-4" />
-                              {uploadingDocs.passaporte ? "Enviando..." : "Upload Documento"}
+                              {uploadingDocs.passaporteMae ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
                         ) : null}
                       </div>
-                      {formData.passaporteFile && (
+                      {formData.passaporteMaeFile && (
                         <DocumentPreview
-                          fileUrl={formData.passaporteFile}
-                          onRemove={() => removeDocument("passaporte")}
+                          fileUrl={formData.passaporteMaeFile}
+                          onRemove={() => removeDocument("passaporteMae")}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {showFieldForType("passaportePaiRegistral") && (
+                    <div className="space-y-2">
+                      <Label htmlFor="passaportePaiRegistralDoc">Passaporte do Pai Registral</Label>
+                      <div className="flex items-center gap-2">
+                        {!formData.passaportePaiRegistralFile ? (
+                          <>
+                            <input
+                              type="file"
+                              id="passaportePaiRegistralDoc"
+                              className="hidden"
+                              onChange={(e) => handleDocumentUpload(e, "passaportePaiRegistral")}
+                              disabled={uploadingDocs.passaportePaiRegistral}
+                            />
+                            <Label
+                              htmlFor="passaportePaiRegistralDoc"
+                              className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                            >
+                              <Upload className="h-4 w-4" />
+                              {uploadingDocs.passaportePaiRegistral ? "Enviando..." : "Upload Documento"}
+                            </Label>
+                          </>
+                        ) : null}
+                      </div>
+                      {formData.passaportePaiRegistralFile && (
+                        <DocumentPreview
+                          fileUrl={formData.passaportePaiRegistralFile}
+                          onRemove={() => removeDocument("passaportePaiRegistral")}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {showFieldForType("passaporteSupostoPai") && (
+                    <div className="space-y-2">
+                      <Label htmlFor="passaporteSupostoPaiDoc">Passaporte do Suposto Pai</Label>
+                      <div className="flex items-center gap-2">
+                        {!formData.passaporteSupostoPaiFile ? (
+                          <>
+                            <input
+                              type="file"
+                              id="passaporteSupostoPaiDoc"
+                              className="hidden"
+                              onChange={(e) => handleDocumentUpload(e, "passaporteSupostoPai")}
+                              disabled={uploadingDocs.passaporteSupostoPai}
+                            />
+                            <Label
+                              htmlFor="passaporteSupostoPaiDoc"
+                              className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100 hover:text-slate-700"
+                            >
+                              <Upload className="h-4 w-4" />
+                              {uploadingDocs.passaporteSupostoPai ? "Enviando..." : "Upload Documento"}
+                            </Label>
+                          </>
+                        ) : null}
+                      </div>
+                      {formData.passaporteSupostoPaiFile && (
+                        <DocumentPreview
+                          fileUrl={formData.passaporteSupostoPaiFile}
+                          onRemove={() => removeDocument("passaporteSupostoPai")}
                         />
                       )}
                     </div>
@@ -1216,7 +2881,8 @@ export default function NovaAcaoCivelPage() {
                       )}
                     </div>
                   )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
 

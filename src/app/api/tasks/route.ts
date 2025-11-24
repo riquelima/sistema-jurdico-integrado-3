@@ -27,7 +27,20 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query
     if (error) throw error
 
-    const tasks = (data || []).map((r: any) => ({
+    type TaskItem = {
+      id: number;
+      moduleType: string;
+      recordId: number;
+      stepIndex: number;
+      responsibleName?: string;
+      dueDate?: string;
+      createdAt: string;
+      updatedAt: string;
+      clientName?: string | null;
+      caseType?: string | null;
+    };
+
+    const tasks: TaskItem[] = (data || []).map((r: any) => ({
       id: r.id,
       moduleType: r.module_type,
       recordId: r.record_id,
@@ -36,17 +49,19 @@ export async function GET(request: NextRequest) {
       dueDate: r.due_date,
       createdAt: r.created_at,
       updatedAt: r.updated_at,
+      clientName: null,
+      caseType: null,
     }))
 
     // Optionally enrich with clientName for known modules (acoes_civeis, acoes_trabalhistas)
-    const byModule: Record<string, any[]> = {}
-    tasks.forEach(t => {
+    const byModule: Record<string, TaskItem[]> = {}
+    tasks.forEach((t: TaskItem) => {
       byModule[t.moduleType] = byModule[t.moduleType] || []
       byModule[t.moduleType].push(t)
     })
 
     const enrichCivil = async () => {
-      const ids = (byModule['acoes_civeis'] || []).map(t => t.recordId)
+      const ids = (byModule['acoes_civeis'] || []).map((t: TaskItem) => t.recordId)
       if (!ids.length) return
       const { data: rows, error: e } = await supabase
         .from('acoes_civeis')
@@ -54,7 +69,7 @@ export async function GET(request: NextRequest) {
         .in('id', ids)
       if (e) return
       const map = new Map((rows || []).map((r: any) => [r.id, { clientName: r.client_name, caseType: r.type }]))
-      byModule['acoes_civeis'].forEach(t => {
+      byModule['acoes_civeis'].forEach((t: TaskItem) => {
         const m = map.get(t.recordId)
         t.clientName = m?.clientName || t.clientName || null
         t.caseType = m?.caseType || null
@@ -62,12 +77,12 @@ export async function GET(request: NextRequest) {
     }
 
     const enrich = async (table: string, moduleKey: string, idField = 'id', nameField = 'client_name') => {
-      const ids = (byModule[moduleKey] || []).map(t => t.recordId)
+      const ids = (byModule[moduleKey] || []).map((t: TaskItem) => t.recordId)
       if (!ids.length) return
       const { data: rows, error: e } = await supabase.from(table).select(`${idField}, ${nameField}`).in(idField, ids)
       if (e) return
       const map = new Map((rows || []).map((r: any) => [r[idField], r[nameField]]))
-      byModule[moduleKey].forEach(t => { t.clientName = map.get(t.recordId) || null })
+      byModule[moduleKey].forEach((t: TaskItem) => { t.clientName = map.get(t.recordId) || null })
     }
 
     await enrichCivil()
