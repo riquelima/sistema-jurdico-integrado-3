@@ -13,8 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Save, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import Link from "next/link";
+import { DocumentPreview } from "@/components/ui/document-preview";
 
 export default function NovoVistoPage() {
   const router = useRouter();
@@ -28,19 +29,33 @@ export default function NovoVistoPage() {
     clientName: "",
     type: "Turismo",
     cpf: "",
+    cpfDoc: "",
     rnm: "",
+    rnmDoc: "",
     passaporte: "",
+    passaporteDoc: "",
     comprovanteEndereco: "",
+    comprovanteEnderecoDoc: "",
     certidaoNascimentoFilhos: "",
+    certidaoNascimentoFilhosDoc: "",
     cartaoCnpj: "",
+    cartaoCnpjDoc: "",
     contratoEmpresa: "",
+    contratoEmpresaDoc: "",
     escrituraImoveis: "",
+    escrituraImoveisDoc: "",
     reservasPassagens: "",
+    reservasPassagensDoc: "",
     reservasHotel: "",
+    reservasHotelDoc: "",
     seguroViagem: "",
+    seguroViagemDoc: "",
     roteiroViagem: "",
+    roteiroViagemDoc: "",
     taxa: "",
+    taxaDoc: "",
   });
+  const [uploadingDocs, setUploadingDocs] = useState<Record<string, boolean>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +72,10 @@ export default function NovoVistoPage() {
       });
 
       if (response.ok) {
+        const newRecord = await response.json();
+        if (newRecord?.id) {
+          await convertTemporaryUploads(newRecord.id);
+        }
         router.push("/dashboard/vistos");
       } else {
         alert("Erro ao criar visto");
@@ -71,6 +90,90 @@ export default function NovoVistoPage() {
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleDocumentUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: string
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingDocs((prev) => ({ ...prev, [field]: true }));
+
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", file);
+
+      const response = await fetch("/api/documents/upload", {
+        method: "POST",
+        body: formDataUpload,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        handleChange(field, data.fileUrl);
+      } else {
+        const errorData = await response.json();
+        console.error("Upload error:", errorData);
+        alert(errorData.error || "Erro ao enviar documento");
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      alert("Erro ao enviar documento");
+    } finally {
+      setUploadingDocs((prev) => ({ ...prev, [field]: false }));
+    }
+  };
+
+  const removeDocument = (field: string) => {
+    handleChange(field, "");
+  };
+
+  const convertTemporaryUploads = async (caseId: number) => {
+    const documentFields = [
+      "cpfDoc",
+      "rnmDoc",
+      "passaporteDoc",
+      "comprovanteEnderecoDoc",
+      "certidaoNascimentoFilhosDoc",
+      "cartaoCnpjDoc",
+      "contratoEmpresaDoc",
+      "escrituraImoveisDoc",
+      "reservasPassagensDoc",
+      "reservasHotelDoc",
+      "seguroViagemDoc",
+      "roteiroViagemDoc",
+      "taxaDoc",
+    ];
+
+    const documentsToConvert: { fieldName: string; fileUrl: string }[] = [];
+    for (const field of documentFields) {
+      const fileUrl = (formData as any)[field];
+      if (fileUrl) {
+        documentsToConvert.push({ fieldName: field, fileUrl });
+      }
+    }
+
+    if (documentsToConvert.length > 0) {
+      try {
+        const response = await fetch("/api/documents/convert-temporary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            caseId,
+            moduleType: "vistos",
+            clientName: formData.clientName,
+            documents: documentsToConvert,
+          }),
+        });
+        if (!response.ok) {
+          console.error("Erro ao converter uploads temporários");
+        }
+      } catch (error) {
+        console.error("Erro ao converter uploads temporários:", error);
+      }
+    }
   };
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -176,6 +279,33 @@ export default function NovoVistoPage() {
                             placeholder="Status ou informações do documento"
                           className="h-11 border-2 focus:border-cyan-500"
                           />
+                          <div className="flex items-center gap-2">
+                            {!formData.cpfDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="cpfDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "cpfDoc")}
+                                  disabled={uploadingDocs.cpfDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="cpfDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.cpfDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.cpfDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.cpfDoc}
+                              onRemove={() => removeDocument("cpfDoc")}
+                            />
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="rnm" className="text-sm font-medium">RNM</Label>
@@ -186,6 +316,33 @@ export default function NovoVistoPage() {
                             placeholder="Status ou informações do documento"
                           className="h-11 border-2 focus:border-cyan-500"
                           />
+                          <div className="flex items-center gap-2">
+                            {!formData.rnmDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="rnmDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "rnmDoc")}
+                                  disabled={uploadingDocs.rnmDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="rnmDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.rnmDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.rnmDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.rnmDoc}
+                              onRemove={() => removeDocument("rnmDoc")}
+                            />
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="passaporte" className="text-sm font-medium">Passaporte</Label>
@@ -196,6 +353,33 @@ export default function NovoVistoPage() {
                             placeholder="Status ou informações do documento"
                           className="h-11 border-2 focus:border-cyan-500"
                           />
+                          <div className="flex items-center gap-2">
+                            {!formData.passaporteDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="passaporteDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "passaporteDoc")}
+                                  disabled={uploadingDocs.passaporteDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="passaporteDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.passaporteDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.passaporteDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.passaporteDoc}
+                              onRemove={() => removeDocument("passaporteDoc")}
+                            />
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="comprovanteEndereco" className="text-sm font-medium">
@@ -210,6 +394,33 @@ export default function NovoVistoPage() {
                             placeholder="Status ou informações do documento"
                           className="h-11 border-2 focus:border-cyan-500"
                           />
+                          <div className="flex items-center gap-2">
+                            {!formData.comprovanteEnderecoDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="comprovanteEnderecoDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "comprovanteEnderecoDoc")}
+                                  disabled={uploadingDocs.comprovanteEnderecoDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="comprovanteEnderecoDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.comprovanteEnderecoDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.comprovanteEnderecoDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.comprovanteEnderecoDoc}
+                              onRemove={() => removeDocument("comprovanteEnderecoDoc")}
+                            />
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -252,6 +463,33 @@ export default function NovoVistoPage() {
                             placeholder="Status ou informações do documento"
                             className="h-11 border-2 focus:border-primary"
                           />
+                          <div className="flex items-center gap-2">
+                            {!formData.certidaoNascimentoFilhosDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="certidaoNascimentoFilhosDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "certidaoNascimentoFilhosDoc")}
+                                  disabled={uploadingDocs.certidaoNascimentoFilhosDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="certidaoNascimentoFilhosDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.certidaoNascimentoFilhosDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.certidaoNascimentoFilhosDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.certidaoNascimentoFilhosDoc}
+                              onRemove={() => removeDocument("certidaoNascimentoFilhosDoc")}
+                            />
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="cartaoCnpj" className="text-sm font-medium">
@@ -266,6 +504,33 @@ export default function NovoVistoPage() {
                             placeholder="Status ou informações do documento"
                             className="h-11 border-2 focus:border-primary"
                           />
+                          <div className="flex items-center gap-2">
+                            {!formData.cartaoCnpjDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="cartaoCnpjDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "cartaoCnpjDoc")}
+                                  disabled={uploadingDocs.cartaoCnpjDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="cartaoCnpjDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.cartaoCnpjDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.cartaoCnpjDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.cartaoCnpjDoc}
+                              onRemove={() => removeDocument("cartaoCnpjDoc")}
+                            />
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="escrituraImoveis" className="text-sm font-medium">
@@ -280,6 +545,33 @@ export default function NovoVistoPage() {
                             placeholder="Status ou informações do documento"
                             className="h-11 border-2 focus:border-primary"
                           />
+                          <div className="flex items-center gap-2">
+                            {!formData.escrituraImoveisDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="escrituraImoveisDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "escrituraImoveisDoc")}
+                                  disabled={uploadingDocs.escrituraImoveisDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="escrituraImoveisDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.escrituraImoveisDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.escrituraImoveisDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.escrituraImoveisDoc}
+                              onRemove={() => removeDocument("escrituraImoveisDoc")}
+                            />
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -322,6 +614,33 @@ export default function NovoVistoPage() {
                             placeholder="Status ou informações do documento"
                             className="h-11 border-2 focus:border-primary"
                           />
+                          <div className="flex items-center gap-2">
+                            {!formData.reservasPassagensDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="reservasPassagensDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "reservasPassagensDoc")}
+                                  disabled={uploadingDocs.reservasPassagensDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="reservasPassagensDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.reservasPassagensDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.reservasPassagensDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.reservasPassagensDoc}
+                              onRemove={() => removeDocument("reservasPassagensDoc")}
+                            />
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="reservasHotel" className="text-sm font-medium">
@@ -336,6 +655,33 @@ export default function NovoVistoPage() {
                             placeholder="Status ou informações do documento"
                             className="h-11 border-2 focus:border-primary"
                           />
+                          <div className="flex items-center gap-2">
+                            {!formData.reservasHotelDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="reservasHotelDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "reservasHotelDoc")}
+                                  disabled={uploadingDocs.reservasHotelDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="reservasHotelDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.reservasHotelDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.reservasHotelDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.reservasHotelDoc}
+                              onRemove={() => removeDocument("reservasHotelDoc")}
+                            />
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="seguroViagem" className="text-sm font-medium">
@@ -350,6 +696,33 @@ export default function NovoVistoPage() {
                             placeholder="Status ou informações do documento"
                             className="h-11 border-2 focus:border-primary"
                           />
+                          <div className="flex items-center gap-2">
+                            {!formData.seguroViagemDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="seguroViagemDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "seguroViagemDoc")}
+                                  disabled={uploadingDocs.seguroViagemDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="seguroViagemDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.seguroViagemDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.seguroViagemDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.seguroViagemDoc}
+                              onRemove={() => removeDocument("seguroViagemDoc")}
+                            />
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="roteiroViagem" className="text-sm font-medium">
@@ -364,6 +737,33 @@ export default function NovoVistoPage() {
                             placeholder="Status ou informações do documento"
                             className="h-11 border-2 focus:border-primary"
                           />
+                          <div className="flex items-center gap-2">
+                            {!formData.roteiroViagemDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="roteiroViagemDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "roteiroViagemDoc")}
+                                  disabled={uploadingDocs.roteiroViagemDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="roteiroViagemDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.roteiroViagemDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.roteiroViagemDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.roteiroViagemDoc}
+                              onRemove={() => removeDocument("roteiroViagemDoc")}
+                            />
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="taxa" className="text-sm font-medium">Taxa</Label>
@@ -374,6 +774,33 @@ export default function NovoVistoPage() {
                             placeholder="Status ou informações do documento"
                             className="h-11 border-2 focus:border-primary"
                           />
+                          <div className="flex items-center gap-2">
+                            {!formData.taxaDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="taxaDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "taxaDoc")}
+                                  disabled={uploadingDocs.taxaDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="taxaDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.taxaDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.taxaDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.taxaDoc}
+                              onRemove={() => removeDocument("taxaDoc")}
+                            />
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -400,6 +827,33 @@ export default function NovoVistoPage() {
                       placeholder="Status ou informações do documento"
                       className="h-11 border-2 focus:border-primary"
                     />
+                    <div className="flex items-center gap-2">
+                      {!formData.cartaoCnpjDoc ? (
+                        <>
+                          <input
+                            type="file"
+                            id="cartaoCnpjDocInput2"
+                            className="hidden"
+                            onChange={(e) => handleDocumentUpload(e, "cartaoCnpjDoc")}
+                            disabled={uploadingDocs.cartaoCnpjDoc}
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          />
+                          <Label
+                            htmlFor="cartaoCnpjDocInput2"
+                            className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                          >
+                            <Upload className="h-4 w-4" />
+                            {uploadingDocs.cartaoCnpjDoc ? "Enviando..." : "Upload Documento"}
+                          </Label>
+                        </>
+                      ) : null}
+                    </div>
+                    {formData.cartaoCnpjDoc && (
+                      <DocumentPreview
+                        fileUrl={formData.cartaoCnpjDoc}
+                        onRemove={() => removeDocument("cartaoCnpjDoc")}
+                      />
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="contratoEmpresa" className="text-sm font-medium">
@@ -414,6 +868,33 @@ export default function NovoVistoPage() {
                       placeholder="Status ou informações do documento"
                       className="h-11 border-2 focus:border-primary"
                     />
+                    <div className="flex items-center gap-2">
+                      {!formData.contratoEmpresaDoc ? (
+                        <>
+                          <input
+                            type="file"
+                            id="contratoEmpresaDocInput"
+                            className="hidden"
+                            onChange={(e) => handleDocumentUpload(e, "contratoEmpresaDoc")}
+                            disabled={uploadingDocs.contratoEmpresaDoc}
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          />
+                          <Label
+                            htmlFor="contratoEmpresaDocInput"
+                            className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                          >
+                            <Upload className="h-4 w-4" />
+                            {uploadingDocs.contratoEmpresaDoc ? "Enviando..." : "Upload Documento"}
+                          </Label>
+                        </>
+                      ) : null}
+                    </div>
+                    {formData.contratoEmpresaDoc && (
+                      <DocumentPreview
+                        fileUrl={formData.contratoEmpresaDoc}
+                        onRemove={() => removeDocument("contratoEmpresaDoc")}
+                      />
+                    )}
                   </div>
                   {formData.type === "Investidor" && (
                     <div className="space-y-2">
@@ -429,6 +910,33 @@ export default function NovoVistoPage() {
                         placeholder="Status ou informações do documento"
                         className="h-11 border-2 focus:border-primary"
                       />
+                      <div className="flex items-center gap-2">
+                        {!formData.escrituraImoveisDoc ? (
+                          <>
+                            <input
+                              type="file"
+                              id="escrituraImoveisDocInput2"
+                              className="hidden"
+                              onChange={(e) => handleDocumentUpload(e, "escrituraImoveisDoc")}
+                              disabled={uploadingDocs.escrituraImoveisDoc}
+                              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                            />
+                            <Label
+                              htmlFor="escrituraImoveisDocInput2"
+                              className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                            >
+                              <Upload className="h-4 w-4" />
+                              {uploadingDocs.escrituraImoveisDoc ? "Enviando..." : "Upload Documento"}
+                            </Label>
+                          </>
+                        ) : null}
+                      </div>
+                      {formData.escrituraImoveisDoc && (
+                        <DocumentPreview
+                          fileUrl={formData.escrituraImoveisDoc}
+                          onRemove={() => removeDocument("escrituraImoveisDoc")}
+                        />
+                      )}
                     </div>
                   )}
                 </div>

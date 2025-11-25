@@ -34,6 +34,7 @@ interface Visto {
 }
 
 export default function VistosPage() {
+  const normalizeStatus = (status: string) => (status || "").toLowerCase();
   const { data: vistosData, isLoading, error, refetch } = useDataCache(
     "vistos",
     async () => {

@@ -3,26 +3,26 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { 
   LayoutDashboard, 
   FileText, 
   Briefcase, 
   Shield, 
-  Home,
-  Globe,
-  LogOut,
-  Menu,
-  Bell,
-  X,
-  ChevronLeft,
-  User,
-  Settings,
-  Search,
-  Plus,
-  Calendar,
-  TrendingUp,
-  Users,
-  Scale
+  Home, 
+  Globe, 
+  LogOut, 
+  Menu, 
+  Bell, 
+  X, 
+  ChevronLeft, 
+  User, 
+  Settings, 
+  Search, 
+  Plus, 
+  Calendar, 
+  TrendingUp, 
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -208,14 +208,16 @@ export default function DashboardLayout({
     <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Header do Sidebar */}
       <div className="p-6 border-b border-slate-200">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center">
-            <Scale className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-800">Sistema Jurídico</h2>
-            <p className="text-xs text-slate-500">Silva & Ferrari</p>
-          </div>
+        <div className="mb-4 flex justify-center">
+          <Image
+            src="https://i.imgur.com/9R0VFkm.png"
+            alt="Sistema Jurídico Logo"
+            width={180}
+            height={60}
+            className="object-contain"
+            priority
+            unoptimized
+          />
         </div>
         
         {/* Search */}
@@ -329,14 +331,20 @@ export default function DashboardLayout({
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-80 p-0">
-                  <Sidebar />
-                </SheetContent>
-              </Sheet>
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
-                <Scale className="w-4 h-4 text-white" />
-              </div>
-            </div>
+              <SheetContent side="left" className="w-80 p-0">
+                <Sidebar />
+              </SheetContent>
+            </Sheet>
+            <Image
+              src="https://i.imgur.com/9R0VFkm.png"
+              alt="Sistema Jurídico Logo"
+              width={96}
+              height={32}
+              className="object-contain"
+              priority
+              unoptimized
+            />
+          </div>
             
             <div className="flex items-center gap-2">
               {pathname === "/dashboard" && <NotificationBell />}

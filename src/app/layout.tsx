@@ -50,6 +50,11 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  icons: {
+    icon: "https://cdn-icons-png.flaticon.com/512/2970/2970715.png",
+    shortcut: "https://cdn-icons-png.flaticon.com/512/2970/2970715.png",
+    apple: "https://cdn-icons-png.flaticon.com/512/2970/2970715.png",
+  },
 };
 
 export default function RootLayout({

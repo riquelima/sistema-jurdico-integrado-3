@@ -848,17 +848,176 @@ export default function CaseDetailPage() {
             </div>
           );
         }
+        if (caseData?.type === 'Alteração de Nome') {
+          return (
+            <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
+              <h4 className="font-semibold text-slate-900">Cadastro de Documentos</h4>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-1">
+                  <Label>Cliente</Label>
+                  <Input value={caseData?.clientName || ''} readOnly className="bg-white" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Tipo de Ação</Label>
+                  <Input value={caseData?.type || ''} readOnly className="bg-white" />
+                </div>
+              </div>
+
+              <div className="space-y-8">
+                <div className="space-y-2">
+                  <h4 className="text-base font-semibold">Dados da Família</h4>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-1">
+                      <Label>Nome da Mãe</Label>
+                      <Input className="bg-white" value={String((caseData as any).nomeMae || '')}
+                        onChange={(e) => setCaseData(prev => prev ? { ...prev, nomeMae: e.target.value } : prev)}
+                        onBlur={(e) => patchCaseField({ nomeMae: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Nome do Pai</Label>
+                      <Input className="bg-white" value={String((caseData as any).nomePaiRegistral || '')}
+                        onChange={(e) => setCaseData(prev => prev ? { ...prev, nomePaiRegistral: e.target.value } : prev)}
+                        onBlur={(e) => patchCaseField({ nomePaiRegistral: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Nome da Criança</Label>
+                      <Input className="bg-white" value={String((caseData as any).nomeCrianca || '')}
+                        onChange={(e) => setCaseData(prev => prev ? { ...prev, nomeCrianca: e.target.value } : prev)}
+                        onBlur={(e) => patchCaseField({ nomeCrianca: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-base font-semibold">Documentos dos Responsáveis</h4>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-1">
+                      <Label>RNM / RNE / RG Mãe</Label>
+                      <Input className="bg-white" value={String(caseData.rnmMae || '')}
+                        onChange={(e) => setCaseData(prev => prev ? { ...prev, rnmMae: e.target.value } : prev)}
+                        onBlur={(e) => patchCaseField({ rnmMae: e.target.value })}
+                      />
+                      <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'rnmMaeFile'); }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>RNM / RNE / RG Pai</Label>
+                      <Input className="bg-white" value={String(caseData.rnmPai || '')}
+                        onChange={(e) => setCaseData(prev => prev ? { ...prev, rnmPai: e.target.value } : prev)}
+                        onBlur={(e) => patchCaseField({ rnmPai: e.target.value })}
+                      />
+                      <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'rnmPaiFile'); }}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-1">
+                      <Label>CPF Mãe</Label>
+                      <Input className="bg-white" value={String(caseData.cpfMae || '')}
+                        onChange={(e) => setCaseData(prev => prev ? { ...prev, cpfMae: e.target.value } : prev)}
+                        onBlur={(e) => patchCaseField({ cpfMae: e.target.value })}
+                      />
+                      <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'cpfMaeFile'); }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>CPF Pai</Label>
+                      <Input className="bg-white" value={String(caseData.cpfPai || '')}
+                        onChange={(e) => setCaseData(prev => prev ? { ...prev, cpfPai: e.target.value } : prev)}
+                        onBlur={(e) => patchCaseField({ cpfPai: e.target.value })}
+                      />
+                      <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'cpfPaiFile'); }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-base font-semibold">Documentos da Criança</h4>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-1">
+                      <Label>Certidão de Nascimento da Criança</Label>
+                      <Input className="bg-white" value={String(caseData.certidaoNascimento || '')}
+                        onChange={(e) => setCaseData(prev => prev ? { ...prev, certidaoNascimento: e.target.value } : prev)}
+                        onBlur={(e) => patchCaseField({ certidaoNascimento: e.target.value })}
+                      />
+                      <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'certidaoNascimentoFile'); }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-base font-semibold">Comprovação de Residência</h4>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-1">
+                      <Label>Comprovante de Endereço</Label>
+                      <Input className="bg-white" value={String(caseData.comprovanteEndereco || '')}
+                        onChange={(e) => setCaseData(prev => prev ? { ...prev, comprovanteEndereco: e.target.value } : prev)}
+                        onBlur={(e) => patchCaseField({ comprovanteEndereco: e.target.value })}
+                      />
+                      <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'comprovanteEnderecoFile'); }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-base font-semibold">Passaportes</h4>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-1">
+                      <Label>Passaporte da Mãe</Label>
+                      <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'passaporteMaeFile'); }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Passaporte do Pai</Label>
+                      <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'passaportePaiRegistralFile'); }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Passaporte da Criança</Label>
+                      <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'passaporteFile'); }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3">
+                <div className="flex items-center gap-2">
+                  <Input type="file" className="flex-1" accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) { handleDrop([f]); } }}
+                  />
+                </div>
+                <p className="text-sm text-slate-600">Formatos aceitos: PDF, JPG, PNG</p>
+              </div>
+            </div>
+          );
+        }
         return (
           <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
             <h4 className="font-semibold text-slate-900">Cadastro de Documentos</h4>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-1">
                 <Label>Cliente</Label>
-                <Input value={caseData?.clientName || ""} readOnly className="bg-white" />
+                <Input value={caseData?.clientName || ''} readOnly className="bg-white" />
               </div>
               <div className="space-y-1">
                 <Label>Tipo de Ação</Label>
-                <Input value={caseData?.type || ""} readOnly className="bg-white" />
+                <Input value={caseData?.type || ''} readOnly className="bg-white" />
               </div>
             </div>
           </div>
