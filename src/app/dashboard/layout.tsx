@@ -64,6 +64,95 @@ const PREFETCH_FUNCTIONS = {
   "/dashboard/vistos": prefetchVistos,
 };
 
+function Sidebar({
+  searchQuery,
+  setSearchQuery,
+  pathname,
+  menuItems,
+  onNavigate,
+  user,
+  handleLogout,
+}: {
+  searchQuery: string;
+  setSearchQuery: (v: string) => void;
+  pathname: string | null;
+  menuItems: { title: string; href: string; icon: any; description: string }[];
+  onNavigate: () => void;
+  user: User | null;
+  handleLogout: () => void;
+}) {
+  return (
+    <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="p-6 border-b border-slate-200">
+        <div className="mb-4 flex justify-center">
+          <Image
+            src="https://i.imgur.com/9R0VFkm.png"
+            alt="Sistema Jurídico Logo"
+            width={180}
+            height={60}
+            className="object-contain"
+            priority
+            unoptimized
+          />
+        </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <Input
+            placeholder="Buscar..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.currentTarget.value)}
+            className="pl-9 bg-white/50 border-slate-200 focus:border-blue-400 focus:ring-blue-400"
+          />
+        </div>
+      </div>
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        {menuItems.map((item) => (
+          <OptimizedLink
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            prefetchData={PREFETCH_FUNCTIONS[item.href as keyof typeof PREFETCH_FUNCTIONS]}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+              pathname === item.href
+                ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
+                : "text-slate-600 hover:bg-white/70 hover:text-slate-900 hover:shadow-sm"
+            }`}
+          >
+            <item.icon className="h-5 w-5" />
+            <div className="flex-1">
+              <div className="text-sm font-medium">{item.title}</div>
+              <div className="text-xs opacity-75">{item.description}</div>
+            </div>
+          </OptimizedLink>
+        ))}
+      </nav>
+      <div className="p-4 border-t border-slate-200">
+        <Card className="p-3 bg-white/70 backdrop-blur-sm border-slate-200">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-blue-800 text-white">
+                {user?.name?.charAt(0)?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-900 truncate">Administrador</p>
+              <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              className="h-8 w-8 text-slate-400 hover:text-slate-600"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardLayout({
   children,
 }: {
@@ -204,83 +293,6 @@ export default function DashboardLayout({
     },
   ];
 
-  const Sidebar = () => (
-    <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header do Sidebar */}
-      <div className="p-6 border-b border-slate-200">
-        <div className="mb-4 flex justify-center">
-          <Image
-            src="https://i.imgur.com/9R0VFkm.png"
-            alt="Sistema Jurídico Logo"
-            width={180}
-            height={60}
-            className="object-contain"
-            priority
-            unoptimized
-          />
-        </div>
-        
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          <Input
-            placeholder="Buscar..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-white/50 border-slate-200 focus:border-blue-400 focus:ring-blue-400"
-          />
-        </div>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {menuItems.map((item) => (
-          <OptimizedLink
-            key={item.href}
-            href={item.href}
-            onClick={() => setMobileMenuOpen(false)}
-            prefetchData={PREFETCH_FUNCTIONS[item.href as keyof typeof PREFETCH_FUNCTIONS]}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
-              pathname === item.href
-                ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
-                : "text-slate-600 hover:bg-white/70 hover:text-slate-900 hover:shadow-sm"
-            }`}
-          >
-            <item.icon className="h-5 w-5" />
-            <div className="flex-1">
-              <div className="text-sm font-medium">{item.title}</div>
-              <div className="text-xs opacity-75">{item.description}</div>
-            </div>
-          </OptimizedLink>
-        ))}
-      </nav>
-
-      {/* User Profile */}
-      <div className="p-4 border-t border-slate-200">
-        <Card className="p-3 bg-white/70 backdrop-blur-sm border-slate-200">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-blue-800 text-white">
-                {user?.name?.charAt(0)?.toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900 truncate">Administrador</p>
-              <p className="text-xs text-slate-500 truncate">{user?.email}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleLogout}
-              className="h-8 w-8 text-slate-400 hover:text-slate-600"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </Card>
-      </div>
-    </div>
-  );
 
   if (!user) {
     return null;
@@ -290,7 +302,15 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col border-r border-slate-200/50 w-80">
-        <Sidebar />
+        <Sidebar
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          pathname={pathname}
+          menuItems={menuItems}
+          onNavigate={() => setMobileMenuOpen(false)}
+          user={user}
+          handleLogout={handleLogout}
+        />
       </aside>
 
       {/* Main Content Area */}
@@ -332,7 +352,15 @@ export default function DashboardLayout({
                   </Button>
                 </SheetTrigger>
               <SheetContent side="left" className="w-80 p-0">
-                <Sidebar />
+                <Sidebar
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  pathname={pathname}
+                  menuItems={menuItems}
+                  onNavigate={() => setMobileMenuOpen(false)}
+                  user={user}
+                  handleLogout={handleLogout}
+                />
               </SheetContent>
             </Sheet>
             <Image
