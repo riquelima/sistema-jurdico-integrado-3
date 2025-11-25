@@ -40,6 +40,8 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
+import { FIELD_TO_DOCUMENT_NAME } from "@/lib/supabase";
+
 // Workflow steps for each case type
 const WORKFLOWS = {
   "Exame DNA": [
@@ -279,6 +281,14 @@ export default function CaseDetailPage() {
           try {
             localStorage.setItem('acoes-civeis-status-update', JSON.stringify({ id, status: newStatus, t: Date.now() }));
             window.dispatchEvent(new CustomEvent('acoes-civeis-status-updated', { detail: { id, status: newStatus } }));
+            const msg = `Status atualizado para "${newStatus}" em ${caseData?.clientName || ''} - ${caseData?.type || ''}`;
+            await fetch(`/api/alerts`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ moduleType: "Ações Cíveis", recordId: id, alertFor: "admin", message: msg, isRead: false })
+            });
+            try { localStorage.setItem('alerts-updated', JSON.stringify({ t: Date.now() })); } catch {}
+            window.dispatchEvent(new Event('alerts-updated'));
           } catch {}
         }
       }
@@ -303,6 +313,8 @@ export default function CaseDetailPage() {
         const updatedCase = { ...caseData!, currentStep: stepIndex + 1 };
         setCaseData(updatedCase);
         setExpandedStep(null);
+        try { localStorage.setItem('alerts-updated', JSON.stringify({ t: Date.now() })); } catch {}
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('alerts-updated'));
       }
     } catch (error) {
       console.error("Erro ao atualizar etapa:", error);
@@ -344,6 +356,19 @@ export default function CaseDetailPage() {
       });
       if (res.ok) {
         setAssignments(prev => ({ ...prev, [index]: { responsibleName, dueDate } }));
+        const steps = getProcessFlowSteps(caseData?.type || "");
+        const stepTitle = steps[index] || `Etapa ${index + 1}`;
+        const dueBR = dueDate ? (() => { const [y, m, d] = dueDate.split("-"); return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`; })() : "—";
+        const message = `Tarefa "${stepTitle}" atribuída a ${responsibleName || "—"} com prazo ${dueBR} para: ${caseData?.clientName || ""} - ${caseData?.type || ""}`;
+        try {
+          await fetch(`/api/alerts`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ moduleType: "Ações Cíveis", recordId: id, alertFor: "admin", message, isRead: false })
+          });
+          try { localStorage.setItem('alerts-updated', JSON.stringify({ t: Date.now() })); } catch {}
+          if (typeof window !== 'undefined') window.dispatchEvent(new Event('alerts-updated'));
+        } catch {}
         return true;
       } else {
         const err = await safeJson(res);
@@ -430,6 +455,17 @@ export default function CaseDetailPage() {
       });
       if (response.ok) {
         await refreshDocuments();
+        const displayName = FIELD_TO_DOCUMENT_NAME[fieldName] || fieldName;
+        const msg = `Documento "${displayName}" anexado em ${caseData?.clientName || ''} - ${caseData?.type || ''}`;
+        try {
+          await fetch(`/api/alerts`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ moduleType: "Ações Cíveis", recordId: id, alertFor: "admin", message: msg, isRead: false })
+          });
+          try { localStorage.setItem('alerts-updated', JSON.stringify({ t: Date.now() })); } catch {}
+          if (typeof window !== 'undefined') window.dispatchEvent(new Event('alerts-updated'));
+        } catch {}
       }
     } catch (error) {
       console.error("Erro ao fazer upload do arquivo:", error);
@@ -478,6 +514,16 @@ export default function CaseDetailPage() {
             file_size: file.size,
             uploaded_at: new Date().toISOString(),
           } as any]);
+          const msg = `Documento "Resultado do Exame de DNA" anexado em ${caseData?.clientName || ''} - ${caseData?.type || ''}`;
+          try {
+            await fetch(`/api/alerts`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ moduleType: "Ações Cíveis", recordId: id, alertFor: "admin", message: msg, isRead: false })
+            });
+            try { localStorage.setItem('alerts-updated', JSON.stringify({ t: Date.now() })); } catch {}
+            if (typeof window !== 'undefined') window.dispatchEvent(new Event('alerts-updated'));
+          } catch {}
         }
       }
     } catch (error) {

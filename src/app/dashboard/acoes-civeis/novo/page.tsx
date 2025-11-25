@@ -315,7 +315,7 @@ export default function NovaAcaoCivelPage() {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                moduleType: 'acoes_civeis',
+                moduleType: 'Ações Cíveis',
                 recordId: data.id,
                 alertFor: 'admin',
                 message: `${getStepTitle(formData.type, 0)} concluído para: ${formData.clientName} - ${formData.type}`,

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/lib/supabase";
 
 interface Alert {
   id: number;
@@ -59,11 +60,73 @@ export const NotificationBell = () => {
 
   useEffect(() => {
     fetchAlerts();
-    
-    // Poll for new alerts every 30 seconds
     const interval = setInterval(fetchAlerts, 30000);
-    
-    return () => clearInterval(interval);
+
+    const channel = supabase
+      .channel("alerts-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "alerts" },
+        (payload: any) => {
+          const a = payload?.new;
+          if (!a) return;
+          if (a.is_read) return;
+          const mapped = {
+            id: a.id,
+            message: a.message,
+            moduleType: a.module_type,
+            alertFor: a.alert_for,
+            isRead: a.is_read,
+            createdAt: a.created_at,
+          } as Alert;
+          setAlerts((prev) => {
+            const exists = prev.some((p) => p.id === mapped.id);
+            const next = exists ? prev.map((p) => (p.id === mapped.id ? mapped : p)) : [mapped, ...prev];
+            return next.filter((p) => !p.isRead);
+          });
+          setUnreadCount((prev) => prev + 1);
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "alerts" },
+        (payload: any) => {
+          const a = payload?.new;
+          if (!a) return;
+          const mapped = {
+            id: a.id,
+            message: a.message,
+            moduleType: a.module_type,
+            alertFor: a.alert_for,
+            isRead: a.is_read,
+            createdAt: a.created_at,
+          } as Alert;
+          setAlerts((prev) => {
+            const next = prev.map((p) => (p.id === mapped.id ? mapped : p)).filter((p) => !p.isRead);
+            return next;
+          });
+          if (a.is_read) setUnreadCount((prev) => Math.max(0, prev - 1));
+        }
+      )
+      .subscribe();
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "alerts-updated") fetchAlerts();
+    };
+    const onCustom = () => fetchAlerts();
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", onStorage);
+      window.addEventListener("alerts-updated", onCustom as EventListener);
+    }
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("storage", onStorage);
+        window.removeEventListener("alerts-updated", onCustom as EventListener);
+      }
+    };
   }, []);
 
   const markAsRead = async (alertId: number) => {
@@ -186,14 +249,6 @@ export const NotificationBell = () => {
                       <p className="text-sm text-slate-900 font-medium leading-relaxed">
                         {alert.message}
                       </p>
-                      <div className="flex gap-2 flex-wrap">
-                        <Badge className="text-xs bg-slate-800 text-white border-0">
-                          {alert.alertFor}
-                        </Badge>
-                        <Badge className="text-xs bg-slate-600 text-white border-0">
-                          {alert.moduleType}
-                        </Badge>
-                      </div>
                       <div className="flex items-center justify-between mt-2">
                         <span className="text-xs text-slate-600">
                           {alert.createdAt && !isNaN(new Date(alert.createdAt).getTime()) 

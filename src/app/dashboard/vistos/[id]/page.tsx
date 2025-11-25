@@ -403,6 +403,16 @@ export default function VistoDetailsPage() {
       });
       if (res.ok) {
         setAssignments(prev => ({ ...prev, [index]: { responsibleName, dueDate } }));
+        const stepTitle = (caseData?.steps?.[index]?.title) || ((WORKFLOWS[caseData?.type || "Visto de Trabalho"] || [])[index]) || `Etapa ${index + 1}`;
+        const dueBR = dueDate ? (() => { const [y, m, d] = dueDate.split("-"); return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`; })() : "—";
+        const message = `Tarefa "${stepTitle}" atribuída a ${responsibleName || "—"} com prazo ${dueBR} para: ${caseData?.clientName || ""} - ${caseData?.type || ""}`;
+        try {
+          await fetch(`/api/alerts`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ moduleType: "Vistos", recordId: params.id as string, alertFor: "admin", message, isRead: false })
+          });
+        } catch {}
         return true;
       } else {
         const err = await res.json().catch(() => ({}));

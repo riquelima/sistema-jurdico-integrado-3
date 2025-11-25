@@ -18,6 +18,8 @@ interface TaskItem {
   responsibleName?: string;
   dueDate?: string;
   clientName?: string | null;
+  caseType?: string;
+  type?: string;
 }
 
 export default function CalendarPage() {
@@ -26,6 +28,104 @@ export default function CalendarPage() {
   const [responsible, setResponsible] = useState<string>("");
   const [from, setFrom] = useState<Date | undefined>(undefined);
   const [to, setTo] = useState<Date | undefined>(undefined);
+
+  const getCivilStepTitle = (caseType: string | undefined, stepIndex: number) => {
+    const STANDARD_CIVIL_STEPS = [
+      "Cadastro Documentos",
+      "Agendar Exame DNA",
+      "Elaboração Procuração",
+      "Aguardar procuração assinada",
+      "À Protocolar",
+      "Processo Protocolado",
+      "Processo Finalizado",
+    ];
+    const ALTERACAO_NOME_STEPS = [
+      "Cadastro Documentos",
+      "Emissão da Guia Judicial",
+      "Elaboração Procuração",
+      "Aguardar procuração assinada",
+      "Peticionar",
+      "À Protocolar",
+      "Processo Protocolado",
+      "Processo Finalizado",
+    ];
+    const steps = caseType === "Alteração de Nome" ? ALTERACAO_NOME_STEPS : STANDARD_CIVIL_STEPS;
+    return steps[stepIndex] || `Etapa ${stepIndex + 1}`;
+  };
+
+  const getTrabalhistaStepTitle = (type: string | undefined, stepIndex: number) => {
+    const WORKFLOWS: Record<string, string[]> = {
+      "Ação Trabalhista": [
+        "Análise Inicial",
+        "Petição Inicial",
+        "Citação",
+        "Contestação",
+        "Audiência Inicial",
+        "Instrução Processual",
+        "Alegações Finais",
+        "Sentença",
+        "Execução/Recurso",
+      ],
+    };
+    const steps = WORKFLOWS[type || "Ação Trabalhista"] || [];
+    return steps[stepIndex] || `Etapa ${stepIndex + 1}`;
+  };
+
+  const getVistosStepTitle = (type: string | undefined, stepIndex: number) => {
+    const WORKFLOWS: Record<string, string[]> = {
+      "Visto de Trabalho": [
+        "Cadastro de Documentos",
+        "Análise de Elegibilidade",
+        "Preparação da Documentação",
+        "Agendamento no Consulado",
+        "Entrevista Consular",
+        "Aguardar Resultado",
+        "Retirada do Visto",
+        "Processo Finalizado",
+      ],
+      "Visto de Turismo": [
+        "Cadastro de Documentos",
+        "Verificação de Requisitos",
+        "Preparação da Documentação",
+        "Agendamento no Consulado",
+        "Entrevista Consular",
+        "Aguardar Resultado",
+        "Retirada do Visto",
+        "Processo Finalizado",
+      ],
+      "Visto de Estudante": [
+        "Cadastro de Documentos",
+        "Verificação de Aceitação Acadêmica",
+        "Preparação da Documentação",
+        "Comprovação Financeira",
+        "Agendamento no Consulado",
+        "Entrevista Consular",
+        "Aguardar Resultado",
+        "Retirada do Visto",
+        "Processo Finalizado",
+      ],
+      "Visto de Reunião Familiar": [
+        "Cadastro de Documentos",
+        "Verificação de Vínculo Familiar",
+        "Preparação da Documentação",
+        "Comprovação de Relacionamento",
+        "Agendamento no Consulado",
+        "Entrevista Consular",
+        "Aguardar Resultado",
+        "Retirada do Visto",
+        "Processo Finalizado",
+      ],
+    };
+    const steps = WORKFLOWS[type || "Visto de Trabalho"] || [];
+    return steps[stepIndex] || `Etapa ${stepIndex + 1}`;
+  };
+
+  const getStepTitle = (t: TaskItem) => {
+    if (t.moduleType === "acoes_civeis") return getCivilStepTitle(t.caseType, t.stepIndex);
+    if (t.moduleType === "acoes_trabalhistas") return getTrabalhistaStepTitle(t.type, t.stepIndex);
+    if (t.moduleType === "vistos") return getVistosStepTitle(t.type, t.stepIndex);
+    return `Etapa ${t.stepIndex + 1}`;
+  };
 
   const fetchTasks = async () => {
     const params = new URLSearchParams();
@@ -118,7 +218,7 @@ export default function CalendarPage() {
                   <div className="flex items-center gap-3">
                     <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700"><User className="h-3 w-3" />{t.responsibleName || "—"}</span>
                     <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700"><FileText className="h-3 w-3" />{t.clientName || `${t.moduleType} #${t.recordId}`}</span>
-                    <span className="text-xs text-slate-500">Etapa {t.stepIndex + 1}</span>
+                    <span className="text-xs text-slate-500">{getStepTitle(t)}</span>
                   </div>
                   <Link href={getDetailHref(t)} className="text-sm text-blue-600 hover:underline">Abrir</Link>
                 </div>

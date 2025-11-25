@@ -124,9 +124,21 @@ export default function DashboardPage() {
     };
     window.addEventListener('focus', onFocus);
     const interval = setInterval(onFocus, 60000);
+    const refreshAlerts = () => {
+      fetch('/api/alerts?isRead=false&limit=10')
+        .then(r => r.ok ? r.json() : [])
+        .then(j => setAlerts(Array.isArray(j) ? j : []))
+        .catch(() => {});
+    };
+    const onStorage = (e: StorageEvent) => { if (e.key === 'alerts-updated') refreshAlerts(); };
+    const onCustom = () => refreshAlerts();
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('alerts-updated', onCustom as EventListener);
     return () => {
       window.removeEventListener('focus', onFocus);
       clearInterval(interval);
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('alerts-updated', onCustom as EventListener);
     };
   }, []);
 
@@ -388,10 +400,6 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-900 mb-1">{alert.message}</p>
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <Badge className="text-xs bg-slate-200 text-slate-700 border-0">{alert.alertFor}</Badge>
-                        <Badge className="text-xs bg-slate-200 text-slate-700 border-0">{alert.moduleType}</Badge>
-                      </div>
                     </div>
                   </div>
                 ))}

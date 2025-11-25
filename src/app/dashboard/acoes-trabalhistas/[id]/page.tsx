@@ -171,6 +171,17 @@ export default function AcaoTrabalhistaDetailPage() {
       });
       if (res.ok) {
         setAssignments(prev => ({ ...prev, [index]: { responsibleName, dueDate } }));
+        const steps = WORKFLOWS["Ação Trabalhista"] || [];
+        const stepTitle = steps[index] || `Etapa ${index + 1}`;
+        const dueBR = dueDate ? (() => { const [y, m, d] = dueDate.split("-"); return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`; })() : "—";
+        const message = `Tarefa "${stepTitle}" atribuída a ${responsibleName || "—"} com prazo ${dueBR} para: ${caseData?.clientName || ""} - ${caseData?.type || ""}`;
+        try {
+          await fetch(`/api/alerts`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ moduleType: "Ações Trabalhistas", recordId: id, alertFor: "admin", message, isRead: false })
+          });
+        } catch {}
         return true;
       } else {
         const err = await res.json().catch(() => ({}));
@@ -218,6 +229,14 @@ export default function AcaoTrabalhistaDetailPage() {
           try {
             localStorage.setItem('acoes-trabalhistas-status-update', JSON.stringify({ id, status: newStatus, t: Date.now() }));
             window.dispatchEvent(new CustomEvent('acoes-trabalhistas-status-updated', { detail: { id, status: newStatus } }));
+            const msg = `Status atualizado para "${newStatus}"`;
+            await fetch(`/api/alerts`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ moduleType: "Ações Trabalhistas", recordId: id, alertFor: "admin", message: msg, isRead: false })
+            });
+            try { localStorage.setItem('alerts-updated', JSON.stringify({ t: Date.now() })); } catch {}
+            window.dispatchEvent(new Event('alerts-updated'));
           } catch {}
         }
       }
@@ -244,6 +263,8 @@ export default function AcaoTrabalhistaDetailPage() {
         const updatedCase = { ...caseData!, currentStep: stepIndex + 1 };
         setCaseData(updatedCase);
         setExpandedStep(null);
+        try { localStorage.setItem('alerts-updated', JSON.stringify({ t: Date.now() })); } catch {}
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('alerts-updated'));
       }
     } catch (error) {
       console.error("Erro ao atualizar etapa:", error);
@@ -302,6 +323,15 @@ export default function AcaoTrabalhistaDetailPage() {
         if (response.ok) {
           const result = await response.json();
           setDocuments(prev => [...prev, result.document]);
+          try {
+            await fetch(`/api/alerts`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ moduleType: "Ações Trabalhistas", recordId: id, alertFor: "admin", message: `Documento anexado: ${file.name}`, isRead: false })
+            });
+            try { localStorage.setItem('alerts-updated', JSON.stringify({ t: Date.now() })); } catch {}
+            if (typeof window !== 'undefined') window.dispatchEvent(new Event('alerts-updated'));
+          } catch {}
         }
       } catch (error) {
         console.error("Erro ao fazer upload do arquivo:", error);
@@ -418,6 +448,15 @@ export default function AcaoTrabalhistaDetailPage() {
         await loadDocuments();
         
         alert("✅ Arquivo enviado e salvo com sucesso!");
+        try {
+          await fetch(`/api/alerts`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ moduleType: "Ações Trabalhistas", recordId: id, alertFor: "admin", message: `Documento anexado: ${file.name}`, isRead: false })
+          });
+          try { localStorage.setItem('alerts-updated', JSON.stringify({ t: Date.now() })); } catch {}
+          if (typeof window !== 'undefined') window.dispatchEvent(new Event('alerts-updated'));
+        } catch {}
       } else {
         console.error("Erro no upload:", data);
         alert(`❌ Erro ao enviar arquivo: ${data.error}`);
