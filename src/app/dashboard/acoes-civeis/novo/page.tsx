@@ -89,6 +89,28 @@ interface FormData {
 
 export default function NovaAcaoCivelPage() {
   const router = useRouter();
+  const getStepTitle = (type: string, index: number) => {
+    const standard = [
+      "Cadastro de Informações",
+      "Agendar Exame DNA",
+      "Elaboração Procuração",
+      "Aguardar procuração assinada",
+      "À Protocolar",
+      "Protocolado",
+      "Processo Finalizado",
+    ];
+    const exameDna = [
+      "Cadastro Documentos",
+      "Agendar Exame DNA",
+      "Elaboração Procuração",
+      "Aguardar procuração assinada",
+      "À Protocolar",
+      "Protocolado",
+      "Processo Finalizado",
+    ];
+    const steps = type === "Exame DNA" ? exameDna : standard;
+    return steps[index] ?? `Passo ${index + 1}`;
+  };
   const [formData, setFormData] = useState<FormData>({
     clientName: "",
     type: "",
@@ -296,7 +318,7 @@ export default function NovaAcaoCivelPage() {
                 moduleType: 'acoes_civeis',
                 recordId: data.id,
                 alertFor: 'admin',
-                message: `Passo 1 concluído para: ${formData.clientName} - ${formData.type}`,
+                message: `${getStepTitle(formData.type, 0)} concluído para: ${formData.clientName} - ${formData.type}`,
                 isRead: false
               })
             });
