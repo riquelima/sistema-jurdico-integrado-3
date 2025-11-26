@@ -184,8 +184,8 @@ export default function PendenciasPage() {
 
       <Card className="border-slate-200 dark:border-slate-700 shadow-md">
         <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border-b border-slate-200 dark:border-slate-700">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="flex items-center gap-3">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+            <div className="flex flex-wrap items-center gap-3">
               <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" className="border-slate-300 dark:border-slate-700">
@@ -302,14 +302,14 @@ export default function PendenciasPage() {
                 </Badge>
               ) : null}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 md:justify-end">
               <Button onClick={fetchTasks} className="bg-slate-900 hover:bg-slate-800 text-white">Buscar</Button>
-              <Link href="/dashboard/calendario">
-                <Button variant="outline" className="border-slate-300 dark:border-slate-700">
+              <Button asChild variant="outline" className="border-slate-300 dark:border-slate-700">
+                <Link href="/dashboard/calendario">
                   <CalendarIcon className="h-4 w-4 mr-2" />
                   Ver Calendário
-                </Button>
-              </Link>
+                </Link>
+              </Button>
               <Button
                 variant="outline"
                 className="border-slate-300 dark:border-slate-700"
