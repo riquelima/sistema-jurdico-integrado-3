@@ -641,7 +641,11 @@ export default function CaseDetailPage() {
       "Processo Protocolado",
       "Processo Finalizado",
     ];
-    return type === "Exame DNA" ? EXAME_DNA_STEPS : type === "Alteração de Nome" ? ALTERACAO_NOME_STEPS : STANDARD_CIVIL_STEPS;
+    return type === "Exame DNA"
+      ? EXAME_DNA_STEPS
+      : (type === "Alteração de Nome" || type === "Guarda")
+      ? ALTERACAO_NOME_STEPS
+      : STANDARD_CIVIL_STEPS;
   };
 
   const handleObservationChange = (index: number, value: string) => {
@@ -894,7 +898,7 @@ export default function CaseDetailPage() {
             </div>
           );
         }
-        if (caseData?.type === 'Alteração de Nome') {
+        if (caseData?.type === 'Alteração de Nome' || caseData?.type === 'Guarda') {
           return (
             <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
               <h4 className="font-semibold text-slate-900">Cadastro de Documentos</h4>
@@ -1114,7 +1118,7 @@ export default function CaseDetailPage() {
             </div>
           );
         }
-        if (caseData?.type === "Alteração de Nome") {
+        if (caseData?.type === "Alteração de Nome" || caseData?.type === "Guarda") {
           return (
             <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
               <h4 className="font-semibold text-slate-900">Emissão da Guia Judicial</h4>
@@ -1178,6 +1182,24 @@ export default function CaseDetailPage() {
                 />
               </div>
             </div>
+            <div className="grid gap-3">
+              <div>
+                <Label>Observações</Label>
+                <Textarea
+                  placeholder="Adicione observações sobre esta etapa..."
+                  className="bg-white"
+                  rows={3}
+                  value={stepObservations[2] || ''}
+                  onChange={(e) => handleObservationChange(2, e.target.value)}
+                />
+              </div>
+              <div>
+                <Button onClick={() => handleSaveStepObservation(2)}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar Observações
+                </Button>
+              </div>
+            </div>
           </div>
         );
 
@@ -1200,11 +1222,29 @@ export default function CaseDetailPage() {
                 />
               </div>
             </div>
+            <div className="grid gap-3">
+              <div>
+                <Label>Observações</Label>
+                <Textarea
+                  placeholder="Adicione observações sobre esta etapa..."
+                  className="bg-white"
+                  rows={3}
+                  value={stepObservations[3] || ''}
+                  onChange={(e) => handleObservationChange(3, e.target.value)}
+                />
+              </div>
+              <div>
+                <Button onClick={() => handleSaveStepObservation(3)}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar Observações
+                </Button>
+              </div>
+            </div>
           </div>
         );
 
       case 4:
-        if (caseData?.type === "Alteração de Nome") {
+        if (caseData?.type === "Alteração de Nome" || caseData?.type === "Guarda") {
           return (
             <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
               <h4 className="font-semibold text-slate-900">Peticionar</h4>
@@ -1280,7 +1320,7 @@ export default function CaseDetailPage() {
         );
 
       case 5:
-        if (caseData?.type === "Alteração de Nome") {
+        if (caseData?.type === "Alteração de Nome" || caseData?.type === "Guarda") {
           return (
             <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
               <h4 className="font-semibold text-slate-900">À Protocolar</h4>
@@ -1377,7 +1417,7 @@ export default function CaseDetailPage() {
         );
 
       case 6:
-        if (caseData?.type === "Alteração de Nome") {
+        if (caseData?.type === "Alteração de Nome" || caseData?.type === "Guarda") {
           return (
             <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
               <h4 className="font-semibold text-slate-900">Processo Protocolado</h4>
@@ -1474,7 +1514,7 @@ export default function CaseDetailPage() {
         );
 
       case 7:
-        if (caseData?.type === "Alteração de Nome") {
+        if (caseData?.type === "Alteração de Nome" || caseData?.type === "Guarda") {
           return (
             <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
               <h4 className="font-semibold text-slate-900">Processo Finalizado</h4>

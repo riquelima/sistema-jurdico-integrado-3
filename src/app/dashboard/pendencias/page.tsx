@@ -85,7 +85,11 @@ export default function PendenciasPage() {
       "Processo Protocolado",
       "Processo Finalizado",
     ];
-    const steps = caseType === "Exame DNA" ? EXAME_DNA_STEPS : caseType === "Alteração de Nome" ? ALTERACAO_NOME_STEPS : STANDARD_CIVIL_STEPS;
+    const steps = caseType === "Exame DNA"
+      ? EXAME_DNA_STEPS
+      : (caseType === "Alteração de Nome" || caseType === "Guarda")
+      ? ALTERACAO_NOME_STEPS
+      : STANDARD_CIVIL_STEPS;
     return steps[stepIndex] || `Passo ${stepIndex}`;
   };
 
