@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Calendar as CalendarIcon, User, FileText } from "lucide-react";
 import { DayPicker } from "react-day-picker";
+import { ptBR } from "date-fns/locale";
 import "react-day-picker/dist/style.css";
 
 interface TaskItem {
@@ -192,11 +193,29 @@ export default function CalendarPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-md border p-2">
               <label className="text-sm font-medium">De</label>
-              <DayPicker mode="single" selected={from} onSelect={setFrom} weekStartsOn={1} captionLayout="buttons" />
+              <DayPicker
+                mode="single"
+                selected={from}
+                onSelect={setFrom}
+                weekStartsOn={1}
+                captionLayout="buttons"
+                locale={ptBR}
+                className="w-full"
+                style={{ "--rdp-cell-size": "3rem" } as React.CSSProperties }
+              />
             </div>
             <div className="rounded-md border p-2">
               <label className="text-sm font-medium">Até</label>
-              <DayPicker mode="single" selected={to} onSelect={setTo} weekStartsOn={1} captionLayout="buttons" />
+              <DayPicker
+                mode="single"
+                selected={to}
+                onSelect={setTo}
+                weekStartsOn={1}
+                captionLayout="buttons"
+                locale={ptBR}
+                className="w-full"
+                style={{ "--rdp-cell-size": "3rem" } as React.CSSProperties }
+              />
             </div>
           </div>
         </CardContent>
