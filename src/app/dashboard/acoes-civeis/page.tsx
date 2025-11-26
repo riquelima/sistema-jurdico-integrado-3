@@ -247,12 +247,28 @@ export default function AcoesCiveisPage() {
       "Processo Protocolado",
       "Processo Finalizado",
     ];
+    const USUCAPIAO_STEPS = [
+      "Cadastro de Documentos",
+      "Elaboração da Procuração",
+      "Contratação de um Engenheiro",
+      "Elaboração da Petição Inicial",
+      "Emissão da Guia Judicial",
+      "À Protocolar",
+      "Processo Finalizado",
+    ];
+    const DIVORCIO_LITIGIO_STEPS = [
+      "Cadastro de Documentos",
+      "Elaboração de Procuração do Cliente, Petição do Cliente e Emissão da Guia Judicial",
+      "À Protocolar",
+      "Processo Finalizado",
+    ];
     const steps = type === "Exame DNA"
       ? EXAME_DNA_STEPS
       : (type === "Alteração de Nome" || type === "Guarda" || type === "Acordos de Guarda")
       ? ALTERACAO_NOME_STEPS
-      : STANDARD_CIVIL_STEPS;
-    return steps[index] || `Passo ${index}`;
+      : (type === "Usucapião" ? USUCAPIAO_STEPS : ((type === "Divórcio Litígio" || type === "Divórcio Consensual") ? DIVORCIO_LITIGIO_STEPS : STANDARD_CIVIL_STEPS));
+    const clampedIndex = Math.min(Math.max(index, 0), steps.length - 1);
+    return steps[clampedIndex];
   };
 
   const getStatusColor = (status: string) => {

@@ -12,6 +12,16 @@ function mapDbFieldsToFrontend(record: any) {
     currentStep: record.current_step,
     status: record.status,
     notes: record.notes,
+    ownerName: (record as any).owner_name,
+    ownerCpf: (record as any).owner_cpf,
+    ownerRnm: (record as any).owner_rnm,
+    ownerRnmDoc: (record as any).owner_rnm_doc,
+    endereco: (record as any).endereco,
+    declaracaoVizinhosDoc: (record as any).declaracao_vizinhos_doc,
+    matriculaImovelDoc: (record as any).matricula_imovel_doc,
+    contaAguaDoc: (record as any).conta_agua_doc,
+    contaLuzDoc: (record as any).conta_luz_doc,
+    iptuDoc: (record as any).iptu_doc,
     nomeMae: record.nome_mae,
     nomePaiRegistral: record.nome_pai_registral,
     nomeSupostoPai: record.nome_suposto_pai,
@@ -154,6 +164,10 @@ export async function POST(request: NextRequest) {
     type, 
     currentStep,
     status,
+    ownerName,
+    ownerCpf,
+    ownerRnm,
+    endereco,
     nomeMae,
     nomePaiRegistral,
     nomeSupostoPai,
@@ -187,6 +201,8 @@ export async function POST(request: NextRequest) {
     aguaLuzIptu,
     camposExigencias,
     // Document URL fields
+    ownerRnmFile,
+    ownerCpfFile,
     rnmMaeFile,
     rnmPaiFile,
     rnmSupostoPaiFile,
@@ -214,6 +230,9 @@ export async function POST(request: NextRequest) {
     custasFile,
     peticaoInicialFile,
     matriculaImovelFile,
+    contaAguaFile,
+    contaLuzFile,
+    iptuFile,
     aguaLuzIptuFile,
     camposExigenciasFile
   } = body;
@@ -227,6 +246,10 @@ export async function POST(request: NextRequest) {
     };
 
     // Add optional fields if provided
+    if (ownerName !== undefined) insertData.owner_name = ownerName;
+    if (ownerCpf !== undefined) insertData.owner_cpf = ownerCpf;
+    if (ownerRnm !== undefined) insertData.owner_rnm = ownerRnm;
+    if (endereco !== undefined) insertData.endereco = endereco;
     if (nomeMae !== undefined) insertData.nome_mae = nomeMae;
     if (nomePaiRegistral !== undefined) insertData.nome_pai_registral = nomePaiRegistral;
     if (nomeCrianca !== undefined) insertData.nome_crianca = nomeCrianca;
@@ -260,6 +283,8 @@ export async function POST(request: NextRequest) {
     if (camposExigencias !== undefined) insertData.campos_exigencias = camposExigencias;
     
     // Add document URL fields if provided
+    if (ownerRnmFile !== undefined) insertData.owner_rnm_doc = ownerRnmFile;
+    if (ownerCpfFile !== undefined) insertData.owner_cpf_doc = ownerCpfFile;
     if (rnmMaeFile !== undefined) insertData.rnm_mae_doc = rnmMaeFile;
     if (rnmPaiFile !== undefined) insertData.rnm_pai_doc = rnmPaiFile;
     if (rnmSupostoPaiFile !== undefined) insertData.rnm_suposto_pai_doc = rnmSupostoPaiFile;
@@ -287,6 +312,9 @@ export async function POST(request: NextRequest) {
     if (custasFile !== undefined) insertData.custas_doc = custasFile;
     if (peticaoInicialFile !== undefined) insertData.peticao_inicial_doc = peticaoInicialFile;
     if (matriculaImovelFile !== undefined) insertData.matricula_imovel_doc = matriculaImovelFile;
+    if (contaAguaFile !== undefined) insertData.conta_agua_doc = contaAguaFile;
+    if (contaLuzFile !== undefined) insertData.conta_luz_doc = contaLuzFile;
+    if (iptuFile !== undefined) insertData.iptu_doc = iptuFile;
     if (aguaLuzIptuFile !== undefined) insertData.agua_luz_iptu_doc = aguaLuzIptuFile;
     if (camposExigenciasFile !== undefined) insertData.campos_exigencias_doc = camposExigenciasFile;
 

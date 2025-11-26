@@ -18,16 +18,18 @@ const FIELD_TO_STEP_MAP: Record<string, string> = {
   certidaoNascimentoFile: 'documentos-iniciais',
   comprovanteEnderecoFile: 'documentos-iniciais',
   passaporteFile: 'documentos-iniciais',
-  guiaPagaFile: 'documentos-iniciais',
+  guiaPagaFile: 'guia-judicial',
   
   // Exame DNA
   resultadoExameDnaFile: 'exame-dna',
   
   // Procuração
   procuracaoAnexadaFile: 'procuracao',
+  procuracaoClienteFile: 'procuracao',
   
   // Petição
   peticaoAnexadaFile: 'peticao',
+  peticaoClienteFile: 'peticao',
   
   // Processo
   processoAnexadoFile: 'processo',
@@ -37,6 +39,15 @@ const FIELD_TO_STEP_MAP: Record<string, string> = {
   
   // Finalização
   documentosProcessoFinalizadoFile: 'finalizacao',
+  // Usucapião
+  ownerRnmFile: 'usucapiao-dono',
+  ownerCpfFile: 'usucapiao-dono',
+  declaracaoVizinhosFile: 'usucapiao-vizinhos',
+  matriculaImovelFile: 'usucapiao-matricula',
+  contaAguaFile: 'usucapiao-agua',
+  contaLuzFile: 'usucapiao-luz',
+  iptuFile: 'usucapiao-iptu',
+  contratoEngenheiroFile: 'usucapiao-engenheiro',
 };
 
 export async function POST(request: NextRequest) {
@@ -261,6 +272,16 @@ export async function POST(request: NextRequest) {
         'processoAnexadoFile': 'processo_anexado_doc',
         'documentosFinaisAnexadosFile': 'documentos_finais_anexados_doc',
         'documentosProcessoFinalizadoFile': 'documentos_processo_finalizado_doc'
+        ,
+        // Usucapião
+        'ownerRnmFile': 'owner_rnm_doc',
+        'ownerCpfFile': 'owner_cpf_doc',
+        'declaracaoVizinhosFile': 'declaracao_vizinhos_doc',
+        'matriculaImovelFile': 'matricula_imovel_doc',
+        'contaAguaFile': 'conta_agua_doc',
+        'contaLuzFile': 'conta_luz_doc',
+        'iptuFile': 'iptu_doc',
+        'contratoEngenheiroFile': 'contrato_engenheiro_doc'
       };
       
       const dbFieldName = fieldNameMapping[fieldName] || fieldName.replace(/([A-Z])/g, '_$1').toLowerCase();

@@ -142,7 +142,6 @@ export default function CalendarPage() {
 
   useEffect(() => {
     fetchTasks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const groupedByDate = useMemo(() => {

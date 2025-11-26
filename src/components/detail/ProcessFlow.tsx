@@ -49,6 +49,25 @@ const ALTERACAO_NOME_STEPS = [
   "Processo Finalizado",
 ];
 
+// Divórcio Litígio steps
+const DIVORCIO_LITIGIO_STEPS = [
+  "Cadastro de Documentos",
+  "Elaboração de Procuração do Cliente, Petição do Cliente e Emissão da Guia Judicial",
+  "À Protocolar",
+  "Processo Finalizado",
+];
+
+// Usucapião steps
+const USUCAPIAO_STEPS = [
+  "Cadastro de Documentos",
+  "Elaboração da Procuração",
+  "Contratação de um Engenheiro",
+  "Elaboração da Petição Inicial",
+  "Emissão da Guia Judicial",
+  "À Protocolar",
+  "Processo Finalizado",
+];
+
 export function ProcessFlow({ 
   caseType, 
   currentStep, 
@@ -65,7 +84,11 @@ export function ProcessFlow({
     ? EXAME_DNA_STEPS
     : (caseType === "Alteração de Nome" || caseType === "Guarda" || caseType === "Acordos de Guarda")
       ? ALTERACAO_NOME_STEPS
-      : STANDARD_CIVIL_STEPS;
+    : (caseType === "Divórcio Litígio" || caseType === "Divórcio Consensual")
+      ? DIVORCIO_LITIGIO_STEPS
+      : (caseType === "Usucapião")
+        ? USUCAPIAO_STEPS
+        : STANDARD_CIVIL_STEPS;
 
   return (
     <Card>

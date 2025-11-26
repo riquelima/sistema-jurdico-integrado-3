@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Upload, Download, Trash2, Edit2 } from "lucide-react";
+import { FIELD_TO_DOCUMENT_NAME } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -67,6 +68,18 @@ export function DocumentPanel({
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
     onDropFiles?.(files);
+  };
+
+  const getFieldDisplayName = (field?: string) => {
+    if (!field) return "—";
+    const key = field.endsWith("File") ? field : `${field}File`;
+    const mapped = FIELD_TO_DOCUMENT_NAME[key];
+    if (mapped) return mapped;
+    const humanized = field
+      .replace(/([A-Z])/g, " $1")
+      .replace(/^\s+/, "")
+      .toLowerCase();
+    return humanized.charAt(0).toUpperCase() + humanized.slice(1);
   };
 
   return (
@@ -173,7 +186,7 @@ export function DocumentPanel({
                   </p>
                   {doc.field_name && (
                     <p className="text-xs text-blue-600 mt-1">
-                      Campo: {doc.field_name}
+                      Campo: {getFieldDisplayName(doc.field_name)}
                     </p>
                   )}
                 </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { FIELD_TO_DOCUMENT_NAME } from '@/lib/supabase';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,6 +20,7 @@ export async function POST(request: NextRequest) {
 
     // Mapeamento de nomes de campos para colunas do banco
     const fieldNameMapping: Record<string, string> = {
+      // DNA e gerais
       'rnmMae': 'rnm_mae_doc',
       'rnmPai': 'rnm_pai_doc', 
       'rnmSupostoPai': 'rnm_suposto_pai_doc',
@@ -31,7 +33,21 @@ export async function POST(request: NextRequest) {
       'peticaoAnexada': 'peticao_anexada_doc',
       'processoAnexado': 'processo_anexado_doc',
       'documentosFinaisAnexados': 'documentos_finais_anexados_doc',
-      'documentosProcessoFinalizado': 'documentos_processo_finalizado_doc'
+      'documentosProcessoFinalizado': 'documentos_processo_finalizado_doc',
+      // Usucapião
+      'ownerRnm': 'owner_rnm_doc',
+      'ownerCpf': 'owner_cpf_doc',
+      'declaracaoVizinhos': 'declaracao_vizinhos_doc',
+      'matriculaImovel': 'matricula_imovel_doc',
+      'contaAgua': 'conta_agua_doc',
+      'contaLuz': 'conta_luz_doc',
+      'iptu': 'iptu_doc',
+      'peticaoInicial': 'peticao_inicial_doc',
+      'camposExigencias': 'campos_exigencias_doc',
+      // Passaportes específicos
+      'passaporteMae': 'passaporte_mae_doc',
+      'passaportePaiRegistral': 'passaporte_pai_registral_doc',
+      'passaporteSupostoPai': 'passaporte_suposto_pai_doc',
     };
 
     // Preparar dados para atualizar a tabela do caso
@@ -43,7 +59,8 @@ export async function POST(request: NextRequest) {
       
       // Extrair informações do arquivo da URL
       const fileName = fileUrl.split('/').pop() || 'document';
-      const documentDisplayName = fieldName.replace(/([A-Z])/g, ' $1').trim();
+      const displayKey = fieldName.endsWith('File') ? fieldName : `${fieldName}File`;
+      const documentDisplayName = FIELD_TO_DOCUMENT_NAME[displayKey] || fieldName.replace(/([A-Z])/g, ' $1').trim();
       
       // Salvar metadados na tabela documents
       const { error: insertError } = await supabaseAdmin

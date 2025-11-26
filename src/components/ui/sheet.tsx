@@ -42,6 +42,8 @@ const SheetOverlay = React.forwardRef<
   />
 ))
 
+SheetOverlay.displayName = "SheetOverlay"
+
 function SheetContent({
   className,
   children,

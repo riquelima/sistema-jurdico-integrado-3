@@ -35,16 +35,18 @@ export const FIELD_TO_DOCUMENT_NAME: Record<string, string> = {
   certidaoNascimentoFile: 'Certidão de Nascimento',
   comprovanteEnderecoFile: 'Comprovante de Endereço',
   passaporteFile: 'Passaporte',
-  guiaPagaFile: 'Guia Paga',
+  guiaPagaFile: 'Guia Judicial',
   
   // Exame DNA
   resultadoExameDnaFile: 'Resultado do Exame de DNA',
   
   // Procuração
-  procuracaoAnexadaFile: 'Procuração Anexada',
+  procuracaoAnexadaFile: 'Procuração do Cliente',
+  procuracaoClienteFile: 'Procuração do Cliente',
   
   // Petição
-  peticaoAnexadaFile: 'Petição Anexada',
+  peticaoAnexadaFile: 'Petição do Cliente',
+  peticaoClienteFile: 'Petição do Cliente',
   
   // Processo
   processoAnexadoFile: 'Processo Anexado',
@@ -54,6 +56,15 @@ export const FIELD_TO_DOCUMENT_NAME: Record<string, string> = {
   
   // Finalização
   documentosProcessoFinalizadoFile: 'Documentos do Processo Finalizado',
+  // Usucapião
+  ownerRnmFile: 'RNM do Dono do Imóvel',
+  ownerCpfFile: 'CPF do Dono do Imóvel',
+  declaracaoVizinhosFile: 'Declaração dos Vizinhos',
+  matriculaImovelFile: 'Matrícula do Imóvel',
+  contaAguaFile: 'Conta de Água',
+  contaLuzFile: 'Conta de Luz',
+  iptuFile: 'IPTU',
+  contratoEngenheiroFile: 'Contrato/Laudo do Engenheiro',
 };
 
 function sanitizeFileName(fileName: string): string {

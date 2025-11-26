@@ -92,20 +92,18 @@ const WORKFLOWS = {
     "Processo Finalizado",
   ],
   "Divórcio Litígio": [
-    "Cadastro dos Documentos",
-    "Petição Cliente",
-    "Procuração Cliente",
-    "Custas",
+    "Cadastro de Documentos",
+    "Procuração, Petição e Guia Judicial",
+    "À Protocolar",
     "Processo Finalizado",
   ],
   "Usucapião": [
-    "Petição Inicial",
-    "Matrícula do Imóvel / Transcrição",
-    "Procuração",
-    "Publicação no Diário",
-    "Citação",
-    "Sentença",
-    "Custas",
+    "Cadastro de Documentos",
+    "Elaboração da Procuração",
+    "Contratação de um Engenheiro",
+    "Elaboração da Petição Inicial",
+    "Emissão da Guia Judicial",
+    "À Protocolar",
     "Processo Finalizado",
   ],
   "Pensão Alimentícia": [
@@ -647,10 +645,29 @@ export default function CaseDetailPage() {
       "Processo Protocolado",
       "Processo Finalizado",
     ];
+    const DIVORCIO_LITIGIO_STEPS = [
+      "Cadastro de Documentos",
+      "Procuração, Petição e Guia Judicial",
+      "À Protocolar",
+      "Processo Finalizado",
+    ];
+    const USUCAPIAO_STEPS = [
+      "Cadastro de Documentos",
+      "Elaboração da Procuração",
+      "Contratação de um Engenheiro",
+      "Elaboração da Petição Inicial",
+      "Emissão da Guia Judicial",
+      "À Protocolar",
+      "Processo Finalizado",
+    ];
     return type === "Exame DNA"
       ? EXAME_DNA_STEPS
       : (type === "Alteração de Nome" || type === "Guarda" || type === "Acordos de Guarda")
       ? ALTERACAO_NOME_STEPS
+      : (type === "Divórcio Litígio" || type === "Divórcio Consensual")
+      ? DIVORCIO_LITIGIO_STEPS
+      : (type === "Usucapião")
+      ? USUCAPIAO_STEPS
       : STANDARD_CIVIL_STEPS;
   };
 
@@ -904,6 +921,118 @@ export default function CaseDetailPage() {
             </div>
           );
         }
+        {
+          const typeNorm = (caseData?.type || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          if (typeNorm === 'usucapiao') {
+            return (
+              <div className="space-y-8 p-4 bg-slate-50 rounded-lg">
+                <h4 className="font-semibold text-slate-900">Cadastro</h4>
+
+                <div className="space-y-2">
+                  <h4 className="text-base font-semibold">Dono do Imóvel</h4>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-1">
+                      <Label>Nome Completo</Label>
+                      <Input
+                        className="bg-white"
+                        value={String((caseData as any).ownerName || '')}
+                        onChange={(e) => setCaseData(prev => prev ? { ...prev, ownerName: e.target.value } : prev)}
+                        onBlur={(e) => patchCaseField({ ownerName: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>CPF</Label>
+                      <Input
+                        className="bg-white"
+                        value={String((caseData as any).ownerCpf || '')}
+                        onChange={(e) => setCaseData(prev => prev ? { ...prev, ownerCpf: e.target.value } : prev)}
+                        onBlur={(e) => patchCaseField({ ownerCpf: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>RNM</Label>
+                      <Input
+                        className="bg-white"
+                        value={String((caseData as any).ownerRnm || '')}
+                        onChange={(e) => setCaseData(prev => prev ? { ...prev, ownerRnm: e.target.value } : prev)}
+                        onBlur={(e) => patchCaseField({ ownerRnm: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>RNM (Documento)</Label>
+                      <Input
+                        type="file"
+                        className="bg-white"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'ownerRnmFile'); }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-base font-semibold">Endereço</h4>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-1 md:col-span-2">
+                      <Label>Endereço</Label>
+                      <Input
+                        className="bg-white"
+                        value={String((caseData as any).endereco || '')}
+                        onChange={(e) => setCaseData(prev => prev ? { ...prev, endereco: e.target.value } : prev)}
+                        onBlur={(e) => patchCaseField({ endereco: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1 md:col-span-2">
+                      <Label>Comprovante de Endereço</Label>
+                      <Input
+                        type="file"
+                        className="bg-white"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'comprovanteEnderecoFile'); }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-base font-semibold">Documentos Complementares</h4>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-1">
+                      <Label>Declaração dos Vizinhos</Label>
+                      <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'declaracaoVizinhosFile'); }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Matrícula do Imóvel</Label>
+                      <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'matriculaImovelFile'); }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Conta de Água</Label>
+                      <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'contaAguaFile'); }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Conta de Luz</Label>
+                      <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'contaLuzFile'); }}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>IPTU</Label>
+                      <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'iptuFile'); }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+        }
         if (caseData?.type === 'Alteração de Nome' || caseData?.type === 'Guarda' || caseData?.type === 'Acordos de Guarda') {
           return (
             <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
@@ -1063,6 +1192,116 @@ export default function CaseDetailPage() {
             </div>
           );
         }
+        {
+          const typeNorm = (caseData?.type || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          if (typeNorm === 'divorcio litigio') {
+          return (
+            <div className="space-y-8 p-4 bg-slate-50 rounded-lg">
+              <h4 className="font-semibold text-slate-900">Cadastro de Documentos</h4>
+
+              <div className="space-y-2">
+                <h4 className="text-base font-semibold">Nomes das Partes</h4>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label>Nome do Cônjuge A</Label>
+                    <Input
+                      className="bg-white"
+                      value={String((caseData as any).nomeMae || '')}
+                      onChange={(e) => setCaseData(prev => prev ? { ...prev, nomeMae: e.target.value } : prev)}
+                      onBlur={(e) => patchCaseField({ nomeMae: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Nome do Cônjuge B</Label>
+                    <Input
+                      className="bg-white"
+                      value={String((caseData as any).nomePaiRegistral || '')}
+                      onChange={(e) => setCaseData(prev => prev ? { ...prev, nomePaiRegistral: e.target.value } : prev)}
+                      onBlur={(e) => patchCaseField({ nomePaiRegistral: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-base font-semibold">Documentos de Identificação (RNM e CPF de ambos)</h4>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label>RNM / RNE / RG Cônjuge A</Label>
+                    <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'rnmMaeFile'); }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>RNM / RNE / RG Cônjuge B</Label>
+                    <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'rnmPaiFile'); }}
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label>CPF Cônjuge A</Label>
+                    <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'cpfMaeFile'); }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>CPF Cônjuge B</Label>
+                    <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'cpfPaiFile'); }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-base font-semibold">Filhos (se houver)</h4>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label>Certidão de Nascimento da Criança</Label>
+                    <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'certidaoNascimentoFile'); }}
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label>Guarda (caso tiver filhos)</Label>
+                    <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'documentosFinaisAnexadosFile'); }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-base font-semibold">Comprovante de Endereço</h4>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label>Comprovante de Endereço</Label>
+                    <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'comprovanteEnderecoFile'); }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-base font-semibold">Termo de Partilhas (caso possuir bens)</h4>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label>Termo de Partilhas</Label>
+                    <Input type="file" className="bg-white" accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadCaseFile(f, 'documentosFinaisAnexadosFile'); }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+          }
+        }
         return (
           <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
             <h4 className="font-semibold text-slate-900">Cadastro de Documentos</h4>
@@ -1124,6 +1363,115 @@ export default function CaseDetailPage() {
             </div>
           );
         }
+        {
+          const typeNorm = (caseData?.type || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          if (typeNorm === 'divorcio litigio') {
+            return (
+              <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
+                <h4 className="font-semibold text-slate-900">Procuração, Petição e Guia Judicial</h4>
+                <div className="grid gap-3">
+                  <div>
+                    <Label>Procuração do Cliente</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      className="bg-white"
+                      aria-label="Selecionar arquivo de procuração"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadCaseFile(f, 'procuracaoAnexadaFile');
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label>Petição do Cliente</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      className="bg-white"
+                      aria-label="Selecionar arquivo da petição"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadCaseFile(f, 'peticaoAnexadaFile');
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label>Guia Judicial</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="bg-white"
+                      aria-label="Selecionar arquivo da guia judicial"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadCaseFile(f, 'guiaPagaFile');
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-3">
+                  <div>
+                    <Label>Observações</Label>
+                    <Textarea
+                      placeholder="Adicione observações sobre esta etapa..."
+                      className="bg-white"
+                      rows={3}
+                      value={stepObservations[1] || ''}
+                      onChange={(e) => handleObservationChange(1, e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Button onClick={() => handleSaveStepObservation(1)}>
+                      <Save className="h-4 w-4 mr-2" />
+                      Salvar Observações
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+        }
+        {
+          const typeNorm = (caseData?.type || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          if (typeNorm === 'usucapiao') {
+            return (
+              <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
+                <h4 className="font-semibold text-slate-900">Elaboração da Procuração</h4>
+                <div className="grid gap-3">
+                  <div>
+                    <Label>Procuração</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      className="bg-white"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadCaseFile(f, 'procuracaoAnexadaFile');
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label>Observações</Label>
+                    <Textarea
+                      placeholder="Adicione observações sobre esta etapa..."
+                      className="bg-white"
+                      rows={3}
+                      value={stepObservations[1] || ''}
+                      onChange={(e) => handleObservationChange(1, e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Button onClick={() => handleSaveStepObservation(1)}>
+                      <Save className="h-4 w-4 mr-2" />
+                      Salvar Observações
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+        }
         if (caseData?.type === "Alteração de Nome" || caseData?.type === "Guarda" || caseData?.type === "Acordos de Guarda") {
           return (
             <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
@@ -1170,6 +1518,89 @@ export default function CaseDetailPage() {
         );
       
       case 2:
+        {
+          const typeNorm = (caseData?.type || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          if (typeNorm === 'divorcio litigio') {
+            return (
+              <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
+                <h4 className="font-semibold text-slate-900">À Protocolar</h4>
+                <div className="grid gap-3">
+                  <div>
+                    <Label>Processo</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      className="bg-white"
+                      aria-label="Selecionar arquivo do processo"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadCaseFile(f, 'processoAnexadoFile');
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-3">
+                  <div>
+                    <Label>Observações</Label>
+                    <Textarea
+                      placeholder="Adicione observações sobre esta etapa..."
+                      className="bg-white"
+                      rows={3}
+                      value={stepObservations[2] || ''}
+                      onChange={(e) => handleObservationChange(2, e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Button onClick={() => handleSaveStepObservation(2)}>
+                      <Save className="h-4 w-4 mr-2" />
+                      Salvar Observações
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+        }
+        {
+          const typeNorm = (caseData?.type || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          if (typeNorm === 'usucapiao') {
+            return (
+              <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
+                <h4 className="font-semibold text-slate-900">Contratação de um Engenheiro</h4>
+                <div className="grid gap-3">
+                  <div>
+                    <Label>Contrato/Laudo do Engenheiro</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      className="bg-white"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadCaseFile(f, 'contratoEngenheiroFile');
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label>Observações</Label>
+                    <Textarea
+                      placeholder="Adicione observações sobre esta etapa..."
+                      className="bg-white"
+                      rows={3}
+                      value={stepObservations[2] || ''}
+                      onChange={(e) => handleObservationChange(2, e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Button onClick={() => handleSaveStepObservation(2)}>
+                      <Save className="h-4 w-4 mr-2" />
+                      Salvar Observações
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+        }
         return (
           <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
             <h4 className="font-semibold text-slate-900">Elaboração Procuração</h4>
@@ -1210,6 +1641,89 @@ export default function CaseDetailPage() {
         );
 
       case 3:
+        {
+          const typeNorm = (caseData?.type || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          if (typeNorm === 'divorcio litigio') {
+            return (
+              <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
+                <h4 className="font-semibold text-slate-900">Processo Finalizado</h4>
+                <div className="grid gap-3">
+                  <div>
+                    <Label>Documento Final</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      className="bg-white"
+                      aria-label="Selecionar documento de finalização"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadCaseFile(f, 'documentosProcessoFinalizadoFile');
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-3">
+                  <div>
+                    <Label>Observações</Label>
+                    <Textarea
+                      placeholder="Adicione observações sobre a finalização..."
+                      className="bg-white"
+                      rows={3}
+                      value={stepObservations[3] || ''}
+                      onChange={(e) => handleObservationChange(3, e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Button onClick={() => handleSaveStepObservation(3)}>
+                      <Save className="h-4 w-4 mr-2" />
+                      Salvar Observações
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+        }
+        {
+          const typeNorm = (caseData?.type || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          if (typeNorm === 'usucapiao') {
+            return (
+              <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
+                <h4 className="font-semibold text-slate-900">Elaboração da Petição Inicial</h4>
+                <div className="grid gap-3">
+                  <div>
+                    <Label>Petição Inicial</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      className="bg-white"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadCaseFile(f, 'peticaoAnexadaFile');
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label>Observações</Label>
+                    <Textarea
+                      placeholder="Adicione observações sobre esta etapa..."
+                      className="bg-white"
+                      rows={3}
+                      value={stepObservations[3] || ''}
+                      onChange={(e) => handleObservationChange(3, e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Button onClick={() => handleSaveStepObservation(3)}>
+                      <Save className="h-4 w-4 mr-2" />
+                      Salvar Observações
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+        }
         return (
           <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
             <h4 className="font-semibold text-slate-900">Aguardar Procuração Assinada</h4>
@@ -1288,6 +1802,46 @@ export default function CaseDetailPage() {
             </div>
           );
         }
+        {
+          const typeNorm = (caseData?.type || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          if (typeNorm === 'usucapiao') {
+            return (
+              <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
+                <h4 className="font-semibold text-slate-900">Emissão da Guia Judicial</h4>
+                <div className="grid gap-3">
+                  <div>
+                    <Label>Guia Judicial</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="bg-white"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadCaseFile(f, 'guiaPagaFile');
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label>Observações</Label>
+                    <Textarea
+                      placeholder="Adicione observações sobre esta etapa..."
+                      className="bg-white"
+                      rows={3}
+                      value={stepObservations[4] || ''}
+                      onChange={(e) => handleObservationChange(4, e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Button onClick={() => handleSaveStepObservation(4)}>
+                      <Save className="h-4 w-4 mr-2" />
+                      Salvar Observações
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+        }
         return (
           <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
             <h4 className="font-semibold text-slate-900">À Protocolar</h4>
@@ -1363,6 +1917,46 @@ export default function CaseDetailPage() {
               </div>
             </div>
           );
+        }
+        {
+          const typeNorm = (caseData?.type || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          if (typeNorm === 'usucapiao') {
+            return (
+              <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
+                <h4 className="font-semibold text-slate-900">À Protocolar</h4>
+                <div className="grid gap-3">
+                  <div>
+                    <Label>Processo</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      className="bg-white"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadCaseFile(f, 'processoAnexadoFile');
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label>Observações</Label>
+                    <Textarea
+                      placeholder="Adicione observações sobre esta etapa..."
+                      className="bg-white"
+                      rows={3}
+                      value={stepObservations[5] || ''}
+                      onChange={(e) => handleObservationChange(5, e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Button onClick={() => handleSaveStepObservation(5)}>
+                      <Save className="h-4 w-4 mr-2" />
+                      Salvar Observações
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
         }
         return (
           <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
@@ -1481,6 +2075,46 @@ export default function CaseDetailPage() {
               </div>
             </div>
           );
+        }
+        {
+          const typeNorm = (caseData?.type || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          if (typeNorm === 'usucapiao') {
+            return (
+              <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
+                <h4 className="font-semibold text-slate-900">Processo Finalizado</h4>
+                <div className="grid gap-3">
+                  <div>
+                    <Label>Documento Final</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      className="bg-white"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadCaseFile(f, 'documentosProcessoFinalizadoFile');
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label>Observações</Label>
+                    <Textarea
+                      placeholder="Adicione observações sobre a finalização..."
+                      className="bg-white"
+                      rows={3}
+                      value={stepObservations[6] || ''}
+                      onChange={(e) => handleObservationChange(6, e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Button onClick={() => handleSaveStepObservation(6)}>
+                      <Save className="h-4 w-4 mr-2" />
+                      Salvar Observações
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
         }
         return (
           <div className="space-y-4 p-4 bg-slate-50 rounded-lg">

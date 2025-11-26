@@ -37,13 +37,24 @@ export async function GET(
       throw error;
     }
 
-    const mapped = {
-      id: data.id,
-      clientName: data.client_name,
-      type: data.type,
-      currentStep: data.current_step,
-      status: data.status,
-      notes: data.notes,
+      const mapped = {
+        id: data.id,
+        clientName: data.client_name,
+        type: data.type,
+        currentStep: data.current_step,
+        status: data.status,
+        notes: data.notes,
+        ownerName: (data as any).owner_name,
+        ownerCpf: (data as any).owner_cpf,
+        ownerRnm: (data as any).owner_rnm,
+        ownerRnmDoc: (data as any).owner_rnm_doc,
+        ownerCpfDoc: (data as any).owner_cpf_doc,
+        endereco: (data as any).endereco,
+        declaracaoVizinhosDoc: (data as any).declaracao_vizinhos_doc,
+        matriculaImovelDoc: (data as any).matricula_imovel_doc,
+        contaAguaDoc: (data as any).conta_agua_doc,
+        contaLuzDoc: (data as any).conta_luz_doc,
+        iptuDoc: (data as any).iptu_doc,
       nomeMae: data.nome_mae,
       nomePaiRegistral: data.nome_pai_registral,
       nomeSupostoPai: data.nome_suposto_pai,
@@ -133,6 +144,10 @@ export async function PATCH(
     if (body.currentStep !== undefined) updateData.current_step = body.currentStep;
     if (body.status !== undefined) updateData.status = String(body.status).trim();
     if (body.notes !== undefined) updateData.notes = body.notes ?? null;
+    if (body.ownerName !== undefined) updateData.owner_name = body.ownerName ?? null;
+    if (body.ownerCpf !== undefined) updateData.owner_cpf = body.ownerCpf ?? null;
+    if (body.ownerRnm !== undefined) updateData.owner_rnm = body.ownerRnm ?? null;
+    if (body.endereco !== undefined) updateData.endereco = body.endereco ?? null;
     if (body.nomeMae !== undefined) updateData.nome_mae = body.nomeMae ?? null;
     if (body.nomePaiRegistral !== undefined) updateData.nome_pai_registral = body.nomePaiRegistral ?? null;
     if (body.nomeSupostoPai !== undefined) updateData.nome_suposto_pai = body.nomeSupostoPai ?? null;
