@@ -1,243 +1,125 @@
 // Funções de prefetch para cada módulo do sistema
 
-export const prefetchAcoesTrabalhistas = async () => {
-  try {
-    const response = await fetch("/api/acoes-trabalhistas?limit=100");
-    if (!response.ok) {
-      console.warn(`Failed to prefetch Ações Trabalhistas: HTTP ${response.status}`);
-      return [];
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const isAbortError = (e: any) => !!e && (e.name === "AbortError" || (typeof e.message === "string" && e.message.toLowerCase().includes("aborted")));
+const shouldRetryStatus = (s: number) => s === 429 || (s >= 500 && s <= 599);
+
+async function fetchWithRetry(url: string, init?: RequestInit, retries = 2, backoffMs = 200) {
+  let attempt = 0;
+  while (attempt <= retries) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(url, { ...init, signal: controller.signal });
+      clearTimeout(timeout);
+      if (!res.ok && shouldRetryStatus(res.status) && attempt < retries) {
+        await sleep(backoffMs * Math.pow(2, attempt));
+        attempt++;
+        continue;
+      }
+      return res;
+    } catch (err: any) {
+      if (attempt < retries && isAbortError(err)) {
+        await sleep(backoffMs * Math.pow(2, attempt));
+        attempt++;
+        continue;
+      }
+      if (attempt < retries) {
+        await sleep(backoffMs * Math.pow(2, attempt));
+        attempt++;
+        continue;
+      }
+      return null;
     }
-    const text = await response.text();
-    if (!text) return [];
-    return JSON.parse(text);
-  } catch (error) {
-    console.warn("Failed to prefetch Ações Trabalhistas:", error);
-    return [];
   }
+  return null;
+}
+
+async function safeJson(res: Response | null, fallback: any) {
+  if (!res || !res.ok) return fallback;
+  const text = await res.text();
+  if (!text) return fallback;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return fallback;
+  }
+}
+
+export const prefetchAcoesTrabalhistas = async () => {
+  const res = await fetchWithRetry("/api/acoes-trabalhistas?limit=100");
+  return await safeJson(res, []);
 };
 
 export const prefetchAcoesCiveis = async () => {
-  try {
-    const response = await fetch("/api/acoes-civeis?limit=100");
-    if (!response.ok) {
-      console.warn(`Failed to prefetch Ações Cíveis: HTTP ${response.status}`);
-      return [];
-    }
-    const text = await response.text();
-    if (!text) return [];
-    return JSON.parse(text);
-  } catch (error) {
-    console.warn("Failed to prefetch Ações Cíveis:", error);
-    return [];
-  }
+  const res = await fetchWithRetry("/api/acoes-civeis?limit=100");
+  return await safeJson(res, []);
 };
 
 export const prefetchAcoesCriminais = async () => {
-  try {
-    const response = await fetch("/api/acoes-criminais?limit=100");
-    if (!response.ok) {
-      console.warn(`Failed to prefetch Ações Criminais: HTTP ${response.status}`);
-      return [];
-    }
-    const text = await response.text();
-    if (!text) return [];
-    return JSON.parse(text);
-  } catch (error) {
-    console.warn("Failed to prefetch Ações Criminais:", error);
-    return [];
-  }
+  const res = await fetchWithRetry("/api/acoes-criminais?limit=100");
+  return await safeJson(res, []);
 };
 
 export const prefetchCompraVenda = async () => {
-  try {
-    const response = await fetch("/api/compra-venda-imoveis?limit=100");
-    if (!response.ok) {
-      console.warn(`Failed to prefetch Compra e Venda: HTTP ${response.status}`);
-      return [];
-    }
-    const text = await response.text();
-    if (!text) return [];
-    return JSON.parse(text);
-  } catch (error) {
-    console.warn("Failed to prefetch Compra e Venda:", error);
-    return [];
-  }
+  const res = await fetchWithRetry("/api/compra-venda-imoveis?limit=100");
+  return await safeJson(res, []);
 };
 
 export const prefetchPerdaNacionalidade = async () => {
-  try {
-    const response = await fetch("/api/perda-nacionalidade?limit=100");
-    if (!response.ok) {
-      console.warn(`Failed to prefetch Perda de Nacionalidade: HTTP ${response.status}`);
-      return [];
-    }
-    const text = await response.text();
-    if (!text) return [];
-    return JSON.parse(text);
-  } catch (error) {
-    console.warn("Failed to prefetch Perda de Nacionalidade:", error);
-    return [];
-  }
+  const res = await fetchWithRetry("/api/perda-nacionalidade?limit=100");
+  return await safeJson(res, []);
 };
 
 export const prefetchVistos = async () => {
-  try {
-    const response = await fetch("/api/vistos?limit=100");
-    if (!response.ok) {
-      console.warn(`Failed to prefetch Vistos: HTTP ${response.status}`);
-      return [];
-    }
-    const text = await response.text();
-    if (!text) return [];
-    return JSON.parse(text);
-  } catch (error) {
-    console.warn("Failed to prefetch Vistos:", error);
-    return [];
-  }
+  const res = await fetchWithRetry("/api/vistos?limit=100");
+  return await safeJson(res, []);
 };
 
 export const prefetchDashboard = async () => {
   try {
-    // Prefetch de dados do dashboard (estatísticas, notificações, etc.)
-    const responses = await Promise.allSettled([
-      fetch("/api/dashboard/stats"),
-      fetch("/api/notifications/unread"),
-      fetch("/api/recent-activities")
+    const [statsRes, notificationsRes, activitiesRes] = await Promise.all([
+      fetchWithRetry("/api/dashboard/stats"),
+      fetchWithRetry("/api/notifications/unread"),
+      fetchWithRetry("/api/recent-activities")
     ]);
-    
-    const parseResponse = async (response: Response) => {
-      if (!response.ok) return null;
-      const text = await response.text();
-      if (!text) return null;
-      try {
-        return JSON.parse(text);
-      } catch {
-        return null;
-      }
-    };
-    
     return {
-      stats: responses[0].status === 'fulfilled' ? await parseResponse(responses[0].value) : {},
-      notifications: responses[1].status === 'fulfilled' ? await parseResponse(responses[1].value) : [],
-      activities: responses[2].status === 'fulfilled' ? await parseResponse(responses[2].value) : []
+      stats: await safeJson(statsRes, {}),
+      notifications: await safeJson(notificationsRes, []),
+      activities: await safeJson(activitiesRes, [])
     };
-  } catch (error) {
-    console.warn("Failed to prefetch Dashboard:", error);
+  } catch {
     return { stats: {}, notifications: [], activities: [] };
   }
 };
 
 // Funções de prefetch para páginas de detalhes individuais
 export const prefetchAcaoTrabalhistaById = async (id: string) => {
-  try {
-    const response = await fetch(`/api/acoes-trabalhistas/${id}`);
-    if (!response.ok) {
-      console.warn(`Failed to prefetch Ação Trabalhista ${id}: HTTP ${response.status}`);
-      return null;
-    }
-    const text = await response.text();
-    if (!text) {
-      console.warn(`Empty response for Ação Trabalhista ${id}`);
-      return null;
-    }
-    return JSON.parse(text);
-  } catch (error) {
-    console.warn(`Failed to prefetch Ação Trabalhista ${id}:`, error);
-    return null;
-  }
+  const res = await fetchWithRetry(`/api/acoes-trabalhistas/${id}`);
+  return await safeJson(res, null);
 };
 
 export const prefetchAcaoCivilById = async (id: string) => {
-  try {
-    const response = await fetch(`/api/acoes-civeis/${id}`);
-    if (!response.ok) {
-      console.warn(`Failed to prefetch Ação Civil ${id}: HTTP ${response.status}`);
-      return null;
-    }
-    const text = await response.text();
-    if (!text) {
-      console.warn(`Empty response for Ação Civil ${id}`);
-      return null;
-    }
-    return JSON.parse(text);
-  } catch (error) {
-    console.warn(`Failed to prefetch Ação Civil ${id}:`, error);
-    return null;
-  }
+  const res = await fetchWithRetry(`/api/acoes-civeis/${id}`);
+  return await safeJson(res, null);
 };
 
 export const prefetchAcaoCriminalById = async (id: string) => {
-  try {
-    const response = await fetch(`/api/acoes-criminais/${id}`);
-    if (!response.ok) {
-      console.warn(`Failed to prefetch Ação Criminal ${id}: HTTP ${response.status}`);
-      return null;
-    }
-    const text = await response.text();
-    if (!text) {
-      console.warn(`Empty response for Ação Criminal ${id}`);
-      return null;
-    }
-    return JSON.parse(text);
-  } catch (error) {
-    console.warn(`Failed to prefetch Ação Criminal ${id}:`, error);
-    return null;
-  }
+  const res = await fetchWithRetry(`/api/acoes-criminais/${id}`);
+  return await safeJson(res, null);
 };
 
 export const prefetchCompraVendaById = async (id: string) => {
-  try {
-    const response = await fetch(`/api/compra-venda-imoveis?id=${id}`);
-    if (!response.ok) {
-      console.warn(`Failed to prefetch Compra e Venda ${id}: HTTP ${response.status}`);
-      return null;
-    }
-    const text = await response.text();
-    if (!text) {
-      console.warn(`Empty response for Compra e Venda ${id}`);
-      return null;
-    }
-    return JSON.parse(text);
-  } catch (error) {
-    console.warn(`Failed to prefetch Compra e Venda ${id}:`, error);
-    return null;
-  }
+  const res = await fetchWithRetry(`/api/compra-venda-imoveis?id=${id}`);
+  return await safeJson(res, null);
 };
 
 export const prefetchPerdaNacionalidadeById = async (id: string) => {
-  try {
-    const response = await fetch(`/api/perda-nacionalidade/${id}`);
-    if (!response.ok) {
-      console.warn(`Failed to prefetch Perda de Nacionalidade ${id}: HTTP ${response.status}`);
-      return null;
-    }
-    const text = await response.text();
-    if (!text) {
-      console.warn(`Empty response for Perda de Nacionalidade ${id}`);
-      return null;
-    }
-    return JSON.parse(text);
-  } catch (error) {
-    console.warn(`Failed to prefetch Perda de Nacionalidade ${id}:`, error);
-    return null;
-  }
+  const res = await fetchWithRetry(`/api/perda-nacionalidade/${id}`);
+  return await safeJson(res, null);
 };
 
 export const prefetchVistoById = async (id: string) => {
-  try {
-    const response = await fetch(`/api/vistos/${id}`);
-    if (!response.ok) {
-      console.warn(`Failed to prefetch Visto ${id}: HTTP ${response.status}`);
-      return null;
-    }
-    const text = await response.text();
-    if (!text) {
-      console.warn(`Empty response for Visto ${id}`);
-      return null;
-    }
-    return JSON.parse(text);
-  } catch (error) {
-    console.warn(`Failed to prefetch Visto ${id}:`, error);
-    return null;
-  }
+  const res = await fetchWithRetry(`/api/vistos/${id}`);
+  return await safeJson(res, null);
 };
