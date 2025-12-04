@@ -175,14 +175,30 @@ export default function NovaCompraVendaPage() {
           <CardContent className="space-y-6 p-8">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="clientName">Nome Completo</Label>
+                <Label htmlFor="enderecoImovel">Endereço do Imóvel</Label>
                 <Input
-                  id="clientName"
-                  value={formData.clientName}
-                  onChange={(e) => handleChange("clientName", e.target.value)}
-                  placeholder="Digite o nome completo do cliente"
+                  id="enderecoImovel"
+                  value={formData.enderecoImovel}
+                  onChange={(e) => handleChange("enderecoImovel", e.target.value)}
                   className="h-12 border-2 focus:border-emerald-500"
                 />
+                <div className="space-y-2">
+                  <Label htmlFor="comprovanteEnderecoImovelDocInlineInput">Comprovante de Endereço do Imóvel</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="comprovanteEnderecoImovelDocInlineInput"
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] || null;
+                        setSelectedFiles(prev => ({ ...prev, comprovanteEnderecoImovelDocInlineInput: f?.name || "" }));
+                        handleTempUpload('comprovanteEnderecoImovelDoc', f);
+                      }}
+                    />
+                    <Label htmlFor="comprovanteEnderecoImovelDocInlineInput" className="rounded-md border px-2 py-1 text-xs text-slate-700 bg-white hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-100">Selecionar arquivo</Label>
+                    <span className="text-xs text-muted-foreground">{selectedFiles.comprovanteEnderecoImovelDocInlineInput || "Nenhum arquivo selecionado"}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -194,6 +210,16 @@ export default function NovaCompraVendaPage() {
           <CardContent className="space-y-8 p-8">
             {/* Property Info */}
             <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="clientName">Nome do Cliente</Label>
+                <Input
+                  id="clientName"
+                  value={formData.clientName}
+                  onChange={(e) => handleChange("clientName", e.target.value)}
+                  placeholder="Digite o nome completo do cliente"
+                  className="h-12 border-2 focus:border-emerald-500"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="numeroMatricula">Nº Matrícula</Label>
                 <Input
@@ -206,25 +232,12 @@ export default function NovaCompraVendaPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cadastroContribuinte">
-                  Cadastro Contribuinte
-                </Label>
+                <Label htmlFor="cadastroContribuinte">Cadastro Contribuinte</Label>
                 <Input
                   id="cadastroContribuinte"
                   value={formData.cadastroContribuinte}
                   onChange={(e) =>
                     handleChange("cadastroContribuinte", e.target.value)
-                  }
-                  className="h-12 border-2 focus:border-emerald-500"
-                />
-              </div>
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="enderecoImovel">Endereço do Imóvel</Label>
-                <Input
-                  id="enderecoImovel"
-                  value={formData.enderecoImovel}
-                  onChange={(e) =>
-                    handleChange("enderecoImovel", e.target.value)
                   }
                   className="h-12 border-2 focus:border-emerald-500"
                 />

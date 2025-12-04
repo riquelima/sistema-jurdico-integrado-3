@@ -45,46 +45,15 @@ import { DocumentPanel } from "@/components/detail/DocumentPanel";
 import { NotesPanel } from "@/components/detail/NotesPanel";
 
 const WORKFLOW_STEPS = [
-  {
-    id: 1,
-    title: "Cadastro dos Documentos",
-    description: "Informações iniciais do requerente",
-  },
-  {
-    id: 2,
-    title: "Fazer Procuração e Pedido de Perda",
-    description: "Elaboração de documentos legais",
-  },
-  {
-    id: 3,
-    title: "Enviar Procuração e Pedido - Cobrar Assinaturas",
-    description: "Coleta de assinaturas necessárias",
-  },
-  {
-    id: 4,
-    title: "Protocolar com Procuração e Acordo Assinados",
-    description: "Protocolo no cartório",
-  },
-  {
-    id: 5,
-    title: "Exigências do Juiz",
-    description: "Atendimento a exigências judiciais",
-  },
-  {
-    id: 6,
-    title: "Processo Deferido - Enviar DOU e Solicitar Passaporte Chinês",
-    description: "Documentação final e solicitações",
-  },
-  {
-    id: 7,
-    title: "Protocolar Exigência com Passaporte Chinês - Aguardar Portaria",
-    description: "Protocolo de exigências finais",
-  },
-  {
-    id: 8,
-    title: "Processo Ratificado (Finalizado)",
-    description: "Finalização do processo",
-  },
+  { id: 1, title: "Cadastro de Documento", description: "Informações iniciais do requerente" },
+  { id: 2, title: "Fazer a Procuração e o Pedido de Perda", description: "Elaboração de documentos legais" },
+  { id: 3, title: "Colher assinaturas nas Procurações e Pedidos", description: "Coleta de assinaturas necessárias" },
+  { id: 4, title: "Protocolar no SEI", description: "Registro do protocolo no SEI" },
+  { id: 5, title: "Processo Protocolado", description: "Confirmação de protocolo e comprovantes" },
+  { id: 6, title: "Processo Deferido", description: "Registro do deferimento e DOU" },
+  { id: 7, title: "Passaporte Chinês", description: "Solicitação e registro de passaporte chinês" },
+  { id: 8, title: "Manifesto", description: "Registro do manifesto" },
+  { id: 9, title: "Protocolar no SEI", description: "Protocolo do manifesto no SEI" },
 ];
 
 export default function PerdaNacionalidadeDetailPage() {
@@ -105,6 +74,8 @@ export default function PerdaNacionalidadeDetailPage() {
   const [newDocumentName, setNewDocumentName] = useState("");
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [assignments, setAssignments] = useState<Record<number, { responsibleName?: string; dueDate?: string }>>({});
+  const [recordFields, setRecordFields] = useState<any>({});
 
   useEffect(() => {
     fetchCaseData();
@@ -113,7 +84,7 @@ export default function PerdaNacionalidadeDetailPage() {
 
   const fetchCaseData = async () => {
     try {
-      const response = await fetch(`/api/perda-nacionalidade/${params.id}`);
+      const response = await fetch(`/api/perda-nacionalidade?id=${params.id}`);
       if (response.ok) {
         const data = await response.json();
         setCaseData(data);
@@ -122,6 +93,21 @@ export default function PerdaNacionalidadeDetailPage() {
         setCompletedSteps(data.completedSteps || []);
         setStepData(data.stepData || {});
         setStepNotes(data.stepNotes || {});
+        setRecordFields({
+          nomeMae: data.nomeMae || "",
+          nomePai: data.nomePai || "",
+          nomeCrianca: data.nomeCrianca || "",
+          rnmMae: data.rnmMae || "",
+          rnmPai: data.rnmPai || "",
+          cpfMae: data.cpfMae || "",
+          cpfPai: data.cpfPai || "",
+          passaporteMae: data.passaporteMae || "",
+          passaportePai: data.passaportePai || "",
+          passaporteCrianca: data.passaporteCrianca || "",
+          rgCrianca: data.rgCrianca || "",
+          documentoChines: data.documentoChines || "",
+          traducaoJuramentada: data.traducaoJuramentada || "",
+        });
       }
     } catch (error) {
       console.error("Erro ao buscar dados do caso:", error);
@@ -132,7 +118,7 @@ export default function PerdaNacionalidadeDetailPage() {
 
   const fetchDocuments = async () => {
     try {
-      const response = await fetch(`/api/documents?moduleType=perda_nacionalidade&recordId=${params.id}`);
+      const response = await fetch(`/api/documents/${params.id}?moduleType=perda_nacionalidade`);
       if (response.ok) {
         const data = await response.json();
         setDocuments(data || []);
@@ -141,6 +127,21 @@ export default function PerdaNacionalidadeDetailPage() {
       console.error("Erro ao buscar documentos:", error);
     }
   };
+
+  useEffect(() => {
+    const loadAssignments = async () => {
+      try {
+        const res = await fetch(`/api/step-assignments?moduleType=perda_nacionalidade&recordId=${params.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          const map: Record<number, { responsibleName?: string; dueDate?: string }> = {};
+          (data || []).forEach((a: any) => { map[a.stepIndex] = { responsibleName: a.responsibleName, dueDate: a.dueDate }; });
+          setAssignments(map);
+        }
+      } catch {}
+    };
+    loadAssignments();
+  }, [params.id]);
 
   const handleDeleteDocument = async (documentId: string) => {
     try {
@@ -193,6 +194,23 @@ export default function PerdaNacionalidadeDetailPage() {
     try {
       const response = await fetch('/api/documents/upload', { method: 'POST', body: fd });
       if (response.ok) {
+        const { url } = await response.json();
+        if (field && url) {
+          try {
+            await fetch(`/api/perda-nacionalidade?id=${params.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ [field]: url }),
+            });
+            setCaseData((prev: any) => ({ ...(prev || {}), [field]: url }));
+            if (typeof step === 'number') {
+              setStepData((prev: any) => ({
+                ...prev,
+                [step]: { ...((prev || {})[step] || {}), [field]: url },
+              }));
+            }
+          } catch {}
+        }
         await fetchDocuments();
       }
     } catch (error) {
@@ -328,7 +346,7 @@ export default function PerdaNacionalidadeDetailPage() {
 
   const handleDeleteCase = async () => {
     try {
-      const response = await fetch(`/api/perda-nacionalidade/${params.id}`, {
+      const response = await fetch(`/api/perda-nacionalidade?id=${params.id}`, {
         method: "DELETE",
       });
       if (response.ok) {
@@ -347,10 +365,30 @@ export default function PerdaNacionalidadeDetailPage() {
 
   const renderPerdaNacionalidadeStepContent = (stepIndex: number) => {
     const currentStepData = stepData[stepIndex] || {};
-    
     const updateStepData = (field: string, value: any) => {
-      const newData = { ...currentStepData, [field]: value };
-      saveStepData(stepIndex, newData);
+      setStepData((prev: any) => ({
+        ...prev,
+        [stepIndex]: { ...((prev || {})[stepIndex] || {}), [field]: value },
+      }));
+    };
+    const updateFieldLocal = (field: string, value: any) => {
+      setRecordFields((prev: any) => ({ ...prev, [field]: value }));
+    };
+
+    const saveRecordFields = async () => {
+      try {
+        const payload = { ...recordFields };
+        const res = await fetch(`/api/perda-nacionalidade?id=${params.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          setCaseData((prev: any) => ({ ...(prev || {}), ...payload }));
+        }
+      } catch (e) {
+        console.error("Erro ao salvar dados do cadastro:", e);
+      }
     };
 
     const renderFileUpload = (fieldName: string, label: string) => (
@@ -375,64 +413,138 @@ export default function PerdaNacionalidadeDetailPage() {
     );
 
     switch (stepIndex) {
-      case 0: // Cadastro dos Documentos
+      case 0:
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>RNM</Label>
+                <Label>Nome da Mãe</Label>
                 <Input
-                  value={currentStepData.rnm || ""}
-                  onChange={(e) => updateStepData("rnm", e.target.value)}
+                  value={recordFields.nomeMae || ""}
+                  onChange={(e) => updateFieldLocal("nomeMae", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Nome do Pai</Label>
+                <Input
+                  value={recordFields.nomePai || ""}
+                  onChange={(e) => updateFieldLocal("nomePai", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Nome da Criança</Label>
+                <Input
+                  value={recordFields.nomeCrianca || ""}
+                  onChange={(e) => updateFieldLocal("nomeCrianca", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>RNM da Mãe</Label>
+                <Input
+                  value={recordFields.rnmMae || ""}
+                  onChange={(e) => updateFieldLocal("rnmMae", e.target.value)}
                   placeholder="Número do RNM"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Nome Completo</Label>
+                <Label>CPF da Mãe</Label>
                 <Input
-                  value={currentStepData.nomeCompleto || ""}
-                  onChange={(e) => updateStepData("nomeCompleto", e.target.value)}
-                  placeholder="Nome completo do requerente"
+                  value={recordFields.cpfMae || ""}
+                  onChange={(e) => updateFieldLocal("cpfMae", e.target.value)}
+                  placeholder="CPF"
                 />
               </div>
               <div className="space-y-2">
-                <Label>CPF</Label>
+                <Label>RNM do Pai</Label>
                 <Input
-                  value={currentStepData.cpf || ""}
-                  onChange={(e) => updateStepData("cpf", e.target.value)}
-                  placeholder="CPF do requerente"
+                  value={recordFields.rnmPai || ""}
+                  onChange={(e) => updateFieldLocal("rnmPai", e.target.value)}
+                  placeholder="Número do RNM"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Nacionalidade Atual</Label>
+                <Label>CPF do Pai</Label>
                 <Input
-                  value={currentStepData.nacionalidadeAtual || ""}
-                  onChange={(e) => updateStepData("nacionalidadeAtual", e.target.value)}
-                  placeholder="Nacionalidade atual"
+                  value={recordFields.cpfPai || ""}
+                  onChange={(e) => updateFieldLocal("cpfPai", e.target.value)}
+                  placeholder="CPF"
                 />
               </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderFileUpload("rnmDoc", "RNM (Documento)")}
-              {renderFileUpload("passaporte", "Passaporte")}
-              {renderFileUpload("certidaoNascimento", "Certidão de Nascimento")}
-              {renderFileUpload("comprovanteEndereco", "Comprovante de Endereço")}
+              <div className="space-y-2">
+                <Label>Passaporte da Mãe</Label>
+                <Input
+                  value={recordFields.passaporteMae || ""}
+                  onChange={(e) => updateFieldLocal("passaporteMae", e.target.value)}
+                  placeholder="Número do passaporte"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Passaporte do Pai</Label>
+                <Input
+                  value={recordFields.passaportePai || ""}
+                  onChange={(e) => updateFieldLocal("passaportePai", e.target.value)}
+                  placeholder="Número do passaporte"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Passaporte da Criança</Label>
+                <Input
+                  value={recordFields.passaporteCrianca || ""}
+                  onChange={(e) => updateFieldLocal("passaporteCrianca", e.target.value)}
+                  placeholder="Número do passaporte"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>RG da Criança</Label>
+                <Input
+                  value={recordFields.rgCrianca || ""}
+                  onChange={(e) => updateFieldLocal("rgCrianca", e.target.value)}
+                  placeholder="Número do RG"
+                />
+              </div>
             </div>
 
-            <Button onClick={() => saveStepData(stepIndex, currentStepData)}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {renderFileUpload("rnmMaeDoc", "RNM da Mãe (Documento)")}
+              {renderFileUpload("cpfMaeDoc", "CPF da Mãe (Documento)")}
+              {renderFileUpload("rnmPaiDoc", "RNM do Pai (Documento)")}
+              {renderFileUpload("cpfPaiDoc", "CPF do Pai (Documento)")}
+              {renderFileUpload("certidaoNascimentoDoc", "Certidão de Nascimento da Criança")}
+              {renderFileUpload("comprovanteEnderecoDoc", "Comprovante de Endereço")}
+              {renderFileUpload("passaporteMaeDoc", "Passaporte da Mãe (Documento)")}
+              {renderFileUpload("passaportePaiDoc", "Passaporte do Pai (Documento)")}
+              {renderFileUpload("passaporteCriancaDoc", "Passaporte da Criança (Documento)")}
+              {renderFileUpload("rgCriancaDoc", "RG da Criança (Documento)")}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Documento Chinês</Label>
+              <Input
+                value={recordFields.documentoChines || ""}
+                onChange={(e) => updateFieldLocal("documentoChines", e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Tradução Juramentada</Label>
+              <Input
+                value={recordFields.traducaoJuramentada || ""}
+                onChange={(e) => updateFieldLocal("traducaoJuramentada", e.target.value)}
+              />
+            </div>
+
+            <Button onClick={saveRecordFields}>
               <Save className="w-4 h-4 mr-2" />
               Salvar Dados
             </Button>
           </div>
         );
 
-      case 1: // Fazer Procuração e Pedido de Perda
+      case 1:
         return (
           <div className="space-y-6">
             <div className="space-y-4">
-              {renderFileUpload("procuracao", "Procuração")}
-              {renderFileUpload("pedidoPerda", "Pedido de Perda de Nacionalidade")}
+              {renderFileUpload("procuracaoDoc", "Procuração")}
+              {renderFileUpload("pedidoPerdaDoc", "Pedido de Perda de Nacionalidade")}
             </div>
             
             <div className="space-y-2">
@@ -451,20 +563,20 @@ export default function PerdaNacionalidadeDetailPage() {
           </div>
         );
 
-      case 2: // Enviar Procuração e Pedido - Cobrar Assinaturas
+      case 2:
         return (
           <div className="space-y-6">
             <div className="space-y-4">
-              {renderFileUpload("procuracaoAssinada", "Procuração Assinada")}
-              {renderFileUpload("pedidoAssinado", "Pedido Assinado")}
+              {renderFileUpload("procuracaoAssinadaDoc", "Procuração Assinada")}
+              {renderFileUpload("pedidoAssinadoDoc", "Pedido Assinado")}
             </div>
             
             <div className="space-y-2">
-              <Label>Data de Envio</Label>
+              <Label>Data da Coleta de Assinaturas</Label>
               <Input
                 type="date"
-                value={currentStepData.dataEnvio || ""}
-                onChange={(e) => updateStepData("dataEnvio", e.target.value)}
+                value={currentStepData.dataColetaAssinaturas || ""}
+                onChange={(e) => updateStepData("dataColetaAssinaturas", e.target.value)}
               />
             </div>
 
@@ -475,11 +587,11 @@ export default function PerdaNacionalidadeDetailPage() {
           </div>
         );
 
-      case 3: // Protocolar com Procuração e Acordo Assinados
+      case 3:
         return (
           <div className="space-y-6">
             <div className="space-y-4">
-              {renderFileUpload("protocoloProcesso", "Protocolo do Processo")}
+              {renderFileUpload("protocoloDoc", "Protocolo no SEI")}
             </div>
             
             <div className="space-y-2">
@@ -507,20 +619,20 @@ export default function PerdaNacionalidadeDetailPage() {
           </div>
         );
 
-      case 4: // Exigências do Juiz
+      case 4:
         return (
           <div className="space-y-6">
             <div className="space-y-4">
-              {renderFileUpload("exigenciasJuiz", "Exigências do Juiz")}
-              {renderFileUpload("respostaExigencias", "Resposta às Exigências")}
+              {renderFileUpload("comprovanteProtocoladoDoc", "Comprovante de Protocolo")}
+              {renderFileUpload("extratoSeiDoc", "Extrato do SEI")}
             </div>
             
             <div className="space-y-2">
-              <Label>Descrição das Exigências</Label>
-              <Textarea
-                value={currentStepData.descricaoExigencias || ""}
-                onChange={(e) => updateStepData("descricaoExigencias", e.target.value)}
-                placeholder="Descreva as exigências do juiz"
+              <Label>Data de Confirmação</Label>
+              <Input
+                type="date"
+                value={currentStepData.dataProtocolado || ""}
+                onChange={(e) => updateStepData("dataProtocolado", e.target.value)}
               />
             </div>
 
@@ -531,12 +643,11 @@ export default function PerdaNacionalidadeDetailPage() {
           </div>
         );
 
-      case 5: // Processo Deferido - Enviar DOU e Solicitar Passaporte Chinês
+      case 5:
         return (
           <div className="space-y-6">
             <div className="space-y-4">
-              {renderFileUpload("dou", "DOU (Diário Oficial da União)")}
-              {renderFileUpload("solicitacaoPassaporte", "Solicitação de Passaporte Chinês")}
+              {renderFileUpload("douDoc", "DOU (Diário Oficial da União)")}
             </div>
             
             <div className="space-y-2">
@@ -555,12 +666,12 @@ export default function PerdaNacionalidadeDetailPage() {
           </div>
         );
 
-      case 6: // Protocolar Exigência com Passaporte Chinês - Aguardar Portaria
+      case 6:
         return (
           <div className="space-y-6">
             <div className="space-y-4">
-              {renderFileUpload("passaporteChinês", "Passaporte Chinês")}
-              {renderFileUpload("protocoloExigencia", "Protocolo da Exigência")}
+              {renderFileUpload("passaporteChinesDoc", "Passaporte Chinês")}
+              {renderFileUpload("portariaDoc", "Portaria")}
             </div>
             
             <div className="space-y-2">
@@ -579,29 +690,51 @@ export default function PerdaNacionalidadeDetailPage() {
           </div>
         );
 
-      case 7: // Processo Ratificado (Finalizado)
+      case 7:
         return (
           <div className="space-y-6">
             <div className="space-y-4">
-              {renderFileUpload("documentosFinais", "Documentos Finais")}
-              {renderFileUpload("processoFinalizado", "Processo Finalizado")}
+              {renderFileUpload("manifestoDoc", "Manifesto")}
             </div>
             
             <div className="space-y-2">
-              <Label>Data de Finalização</Label>
+              <Label>Data do Manifesto</Label>
               <Input
                 type="date"
-                value={currentStepData.dataFinalizacao || ""}
-                onChange={(e) => updateStepData("dataFinalizacao", e.target.value)}
+                value={currentStepData.dataManifesto || ""}
+                onChange={(e) => updateStepData("dataManifesto", e.target.value)}
+              />
+            </div>
+            
+            <Button onClick={() => saveStepData(stepIndex, currentStepData)}>
+              <Save className="w-4 h-4 mr-2" />
+              Salvar
+            </Button>
+          </div>
+        );
+
+      case 8:
+        return (
+          <div className="space-y-6">
+            <div className="space-y-4">
+              {renderFileUpload("protocoloManifestoDoc", "Protocolo do Manifesto no SEI")}
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Número do Protocolo</Label>
+              <Input
+                value={currentStepData.numeroProtocoloManifesto || ""}
+                onChange={(e) => updateStepData("numeroProtocoloManifesto", e.target.value)}
+                placeholder="Número do protocolo do manifesto"
               />
             </div>
             
             <div className="space-y-2">
-              <Label>Observações Finais</Label>
-              <Textarea
-                value={currentStepData.observacoesFinais || ""}
-                onChange={(e) => updateStepData("observacoesFinais", e.target.value)}
-                placeholder="Observações sobre a finalização do processo"
+              <Label>Data de Protocolo</Label>
+              <Input
+                type="date"
+                value={currentStepData.dataProtocoloManifesto || ""}
+                onChange={(e) => updateStepData("dataProtocoloManifesto", e.target.value)}
               />
             </div>
 
@@ -701,7 +834,7 @@ export default function PerdaNacionalidadeDetailPage() {
 
       <DetailLayout
         backHref="/dashboard/perda-nacionalidade"
-        title={caseData?.title || "Perda de Nacionalidade"}
+        title={caseData?.clientName || "Perda de Nacionalidade"}
         subtitle="Processo de perda de nacionalidade brasileira"
         onDelete={handleDeleteCase}
         left={
@@ -711,21 +844,38 @@ export default function PerdaNacionalidadeDetailPage() {
                 key={step.id}
                 index={step.id}
                 title={step.title}
-                isCurrent={false}
-                isCompleted={completedSteps.includes(index)}
-                isPending={false}
+                isCurrent={index === (caseData?.currentStep || 0)}
+                isCompleted={index < (caseData?.currentStep || 0)}
+                isPending={index > (caseData?.currentStep || 0)}
                 expanded={expandedSteps.includes(index)}
                 onToggle={() => toggleStep(index)}
-                onMarkComplete={() => {
-                  toggleStepCompletion(index);
-                  const newSteps = completedSteps.includes(index)
-                    ? completedSteps.filter(i => i !== index)
-                    : [...completedSteps, index];
-                  fetch(`/api/perda-nacionalidade/${params.id}`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ completedSteps: newSteps }),
-                  }).catch(() => {});
+                onMarkComplete={async () => {
+                  const nextStep = index + 1;
+                  try {
+                    const r = await fetch(`/api/perda-nacionalidade?id=${params.id}`, {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ currentStep: nextStep })
+                    });
+                    if (r.ok) {
+                      setCaseData((prev: any) => ({ ...(prev || {}), currentStep: nextStep }));
+                    }
+                  } catch {}
+                }}
+                assignment={assignments[index]}
+                onSaveAssignment={async ({ responsibleName, dueDate }) => {
+                  try {
+                    const r = await fetch('/api/step-assignments', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ moduleType: 'perda_nacionalidade', recordId: params.id, stepIndex: index, responsibleName, dueDate })
+                    });
+                    if (r.ok) {
+                      setAssignments(prev => ({ ...prev, [index]: { responsibleName, dueDate } }));
+                      return true;
+                    }
+                  } catch {}
+                  return false;
                 }}
               >
                 {expandedSteps.includes(index) && renderStepContent(index)}
@@ -738,92 +888,42 @@ export default function PerdaNacionalidadeDetailPage() {
             <StatusPanel
               status={status}
               onStatusChange={saveStatus}
-              currentStep={completedSteps.length}
+              currentStep={(caseData?.currentStep ?? 0) + 1}
               totalSteps={WORKFLOW_STEPS.length}
               createdAt={caseData?.createdAt}
               updatedAt={caseData?.updatedAt}
             />
 
-            {/* Document Panel */}
             <DocumentPanel
-              onDropFiles={(files) => {
-                // Handle file drop functionality
-                handleFileUpload(files);
-              }}
+              onDropFiles={(files) => handleFileUpload(files)}
               uploading={uploading}
+              documents={documents}
+              loadingDocuments={false}
+              isDragOver={dragActive}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDocumentDownload={(doc) => {
+                const url = (doc as any).file_path || (doc as any).url;
+                if (url && typeof window !== 'undefined') window.open(url, '_blank');
+              }}
+              onDocumentDelete={(doc) => handleDeleteDocument(String((doc as any).id))}
+              editingDocumentId={editingDocument as any}
+              editingDocumentName={newDocumentName}
+              onDocumentNameChange={(name) => setNewDocumentName(name)}
+              onDocumentNameSave={(documentId) => handleRenameDocument(documentId as any, newDocumentName)}
+              onDocumentNameKeyPress={(e, documentId) => {
+                if (e.key === 'Enter') {
+                  handleRenameDocument(documentId as any, newDocumentName);
+                } else if (e.key === 'Escape') {
+                  setEditingDocument(null);
+                  setNewDocumentName('');
+                }
+              }}
+              onDocumentDoubleClick={(doc) => {
+                setEditingDocument(String((doc as any).id));
+                setNewDocumentName((doc as any).document_name || (doc as any).file_name || (doc as any).name || '');
+              }}
             />
-
-            {/* Documents List */}
-            {documents.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Documentos</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {documents.map((doc) => (
-                    <div key={doc.id} className="flex items-center justify-between p-2 border rounded">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4" />
-                        {editingDocument === doc.id ? (
-                          <div className="flex items-center gap-2">
-                            <Input
-                              value={newDocumentName}
-                              onChange={(e) => setNewDocumentName(e.target.value)}
-                              className="h-8"
-                              autoFocus
-                            />
-                            <Button
-                              size="sm"
-                              onClick={() => handleRenameDocument(doc.id, newDocumentName)}
-                            >
-                              <Save className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setEditingDocument(null);
-                                setNewDocumentName("");
-                              }}
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className="text-sm truncate">{doc.name}</span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setEditingDocument(doc.id);
-                            setNewDocumentName(doc.name);
-                          }}
-                        >
-                          <Edit2 className="w-3 h-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => window.open(doc.url, '_blank')}
-                        >
-                          <Download className="w-3 h-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDeleteDocument(doc.id)}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
 
             {/* Notes Panel */}
             <NotesPanel

@@ -33,6 +33,7 @@ export function StepItem({ index, title, isCurrent, isCompleted, isPending, expa
   const [due, setDue] = useState(assignment?.dueDate || "");
   const [showRespList, setShowRespList] = useState(false);
   const [saveError, setSaveError] = useState<string>("");
+  const [assignOpen, setAssignOpen] = useState(false);
   const RESPONSAVEIS = [
     "Secretária – Jessica Cavallaro",
     "Advogada – Jailda Silva",
@@ -120,7 +121,7 @@ export function StepItem({ index, title, isCurrent, isCompleted, isPending, expa
             <div className="flex items-center gap-2 shrink-0">
               {isCurrent && <Edit2 className="h-4 w-4 text-muted-foreground" />}
               {canAssign && (
-                <Popover>
+                <Popover open={assignOpen} onOpenChange={setAssignOpen}>
                   <PopoverTrigger asChild>
                     <button className="rounded-md border px-2 py-1 text-xs text-slate-700 bg-white hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-100">
                       Definir Responsável
@@ -181,6 +182,8 @@ export function StepItem({ index, title, isCurrent, isCompleted, isPending, expa
                             : true;
                           if (!ok) {
                             setSaveError("Falha ao salvar. Verifique sua conexão ou tente novamente.");
+                          } else {
+                            setAssignOpen(false);
                           }
                         }}>Salvar</Button>
                       </div>

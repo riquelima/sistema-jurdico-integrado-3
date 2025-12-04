@@ -115,7 +115,7 @@ export const prefetchCompraVendaById = async (id: string) => {
 };
 
 export const prefetchPerdaNacionalidadeById = async (id: string) => {
-  const res = await fetchWithRetry(`/api/perda-nacionalidade/${id}`);
+  const res = await fetchWithRetry(`/api/perda-nacionalidade?id=${id}`);
   return await safeJson(res, null);
 };
 

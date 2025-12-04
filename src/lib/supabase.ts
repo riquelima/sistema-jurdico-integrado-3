@@ -77,6 +77,7 @@ export const FIELD_TO_DOCUMENT_NAME: Record<string, string> = {
   assinaturaContratoDoc: 'Contrato Assinado',
   escrituraDoc: 'Escritura',
   matriculaCartorioDoc: 'Matrícula do Cartório',
+  comprovanteEnderecoImovelDoc: 'Comprovante de Endereço do Imóvel',
   // Also support DocumentPanel mapping keys
   numeroMatriculaDocFile: 'Documento da Matrícula',
   cadastroContribuinteDocFile: 'Comprovante Cadastro Contribuinte',
@@ -89,6 +90,7 @@ export const FIELD_TO_DOCUMENT_NAME: Record<string, string> = {
   assinaturaContratoDocFile: 'Contrato Assinado',
   escrituraDocFile: 'Escritura',
   matriculaCartorioDocFile: 'Matrícula do Cartório',
+  comprovanteEnderecoImovelDocFile: 'Comprovante de Endereço do Imóvel',
   documentoAnexadoFile: 'Documento Anexado',
 };
 

@@ -21,6 +21,7 @@ function mapDbFieldsToFrontend(record: any) {
     cadastroContribuinte: record.cadastro_contribuinte,
     cadastroContribuinteDoc: record.cadastro_contribuinte_doc,
     enderecoImovel: record.endereco_imovel,
+    comprovanteEnderecoImovelDoc: record.comprovante_endereco_imovel_doc,
     rgVendedores: record.rg_vendedores,
     rgVendedoresDoc: record.rg_vendedores_doc,
     cpfVendedores: record.cpf_vendedores,
@@ -94,7 +95,21 @@ export async function GET(request: NextRequest) {
 
     // Apply filters
     if (search) {
-      query = query.ilike('endereco_imovel', `%${search}%`);
+      const s = search.replace(/,/g, ' ');
+      query = query.or(
+        [
+          `client_name.ilike.%${s}%`,
+          `numero_matricula.ilike.%${s}%`,
+          `cadastro_contribuinte.ilike.%${s}%`,
+          `endereco_imovel.ilike.%${s}%`,
+          `rg_vendedores.ilike.%${s}%`,
+          `cpf_vendedores.ilike.%${s}%`,
+          `rnm_comprador.ilike.%${s}%`,
+          `cpf_comprador.ilike.%${s}%`,
+          `endereco_comprador.ilike.%${s}%`,
+          `contract_notes.ilike.%${s}%`,
+        ].join(',')
+      );
     }
 
     if (status) {

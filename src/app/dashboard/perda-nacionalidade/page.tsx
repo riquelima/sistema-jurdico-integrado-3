@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Globe, Eye, FileText, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, Search, Globe, Eye, FileText, Clock, CheckCircle2, AlertCircle, Trash2, User, Calendar } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingState } from "@/components/loading-state";
@@ -20,6 +20,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface PerdaNacionalidadeCase {
   id: string;
@@ -41,6 +52,8 @@ export default function PerdaNacionalidadePage() {
   const cases = Array.isArray(casesData) ? casesData : [];
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [caseAssignments, setCaseAssignments] = useState<Record<number, { responsibleName?: string; dueDate?: string }>>({});
+  const lastAssignmentIdsRef = useRef<string>("");
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (e.key === 'perda-nacionalidade-status-update') {
@@ -58,7 +71,13 @@ export default function PerdaNacionalidadePage() {
 
   const filteredCases = cases.filter((c) => {
     const matchesSearch = c.clientName.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || (c.status || "").toLowerCase() === statusFilter.toLowerCase();
+    const statusVal = (c.status || "").toLowerCase();
+    const filterVal = statusFilter.toLowerCase();
+    const matchesStatus =
+      statusFilter === "all" ||
+      (filterVal === "finalizado"
+        ? ["finalizado", "ratificado"].includes(statusVal)
+        : statusVal === filterVal);
     return matchesSearch && matchesStatus;
   });
 
@@ -70,6 +89,8 @@ export default function PerdaNacionalidadePage() {
       case "deferido":
         return "bg-amber-500 text-white hover:bg-amber-600";
       case "ratificado":
+        return "bg-emerald-500 text-white hover:bg-emerald-600";
+      case "finalizado":
         return "bg-emerald-500 text-white hover:bg-emerald-600";
       default:
         return "bg-slate-500 text-white hover:bg-slate-600";
@@ -95,6 +116,7 @@ export default function PerdaNacionalidadePage() {
     if (s === "em andamento") return "Em andamento";
     if (s === "deferido") return "Deferido";
     if (s === "ratificado") return "Ratificado";
+    if (s === "finalizado") return "Finalizado";
     return status;
   };
 
@@ -103,8 +125,72 @@ export default function PerdaNacionalidadePage() {
     emAndamento: cases.filter(c => (c.status || "").toLowerCase() === "em andamento").length,
     deferido: cases.filter(c => (c.status || "").toLowerCase() === "deferido").length,
     ratificado: cases.filter(c => (c.status || "").toLowerCase() === "ratificado").length,
-    finalizado: cases.filter(c => (c.status || "").toLowerCase() === "ratificado").length,
+    finalizado: cases.filter(c => ["finalizado", "ratificado"].includes((c.status || "").toLowerCase())).length,
   };
+
+  const WORKFLOW_STEP_TITLES = [
+    "Cadastro de Documento",
+    "Fazer a Procuração e o Pedido de Perda",
+    "Colher assinaturas nas Procurações e Pedidos",
+    "Protocolar no SEI",
+    "Processo Protocolado",
+    "Processo Deferido",
+    "Passaporte Chinês",
+    "Manifesto",
+    "Protocolar no SEI",
+  ];
+
+  const getStepTitle = (index: number) => WORKFLOW_STEP_TITLES[(index || 0)] || `Etapa ${index + 1}`;
+
+  const handleDelete = async (id: number) => {
+    try {
+      const response = await fetch(`/api/perda-nacionalidade?id=${id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        // Atualiza via refetch
+        // @ts-ignore
+        (typeof refetch === 'function') && refetch();
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    const ids = cases.map((c: any) => c.id).join(",");
+    if (ids === lastAssignmentIdsRef.current) return;
+    lastAssignmentIdsRef.current = ids;
+
+    const loadAssignments = async () => {
+      const entries = await Promise.all(
+        cases.map(async (c: any) => {
+          try {
+            const res = await fetch(`/api/step-assignments?moduleType=perda_nacionalidade&recordId=${c.id}&stepIndex=${c.currentStep}`);
+            if (!res.ok) return [c.id, null] as const;
+            const data = await res.json();
+            const item = Array.isArray(data) ? (data[0] || null) : data;
+            return [c.id, item ? { responsibleName: item.responsibleName, dueDate: item.dueDate } : null] as const;
+          } catch {
+            return [c.id, null] as const;
+          }
+        })
+      );
+      const map: Record<number, { responsibleName?: string; dueDate?: string }> = {};
+      for (const [id, a] of entries) {
+        if (a) map[id] = a;
+      }
+      const nextStr = JSON.stringify(map);
+      const prevStr = JSON.stringify(caseAssignments);
+      if (nextStr !== prevStr) {
+        setCaseAssignments(map);
+      }
+    };
+
+    if (cases.length > 0) {
+      loadAssignments();
+    } else {
+      setCaseAssignments({});
+    }
+  }, [cases]);
 
   return (
     <div className="space-y-6 p-6">
@@ -200,8 +286,7 @@ export default function PerdaNacionalidadePage() {
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                <SelectItem value="Deferido">Deferido</SelectItem>
-                <SelectItem value="Ratificado">Ratificado</SelectItem>
+                <SelectItem value="Finalizado">Finalizado</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -238,8 +323,49 @@ export default function PerdaNacionalidadePage() {
           filteredCases.map((caseItem) => (
             <Card 
               key={caseItem.id} 
-              className="border-slate-200 dark:border-slate-700 hover:shadow-xl hover:border-amber-500/50 transition-all duration-200 bg-gradient-to-r from-white to-slate-50 dark:from-slate-900 dark:to-slate-800"
+              className="border-slate-200 dark:border-slate-700 hover:shadow-xl hover:border-amber-500/50 transition-all duration-200 bg-gradient-to-r from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 relative"
             >
+              <div className="absolute top-2 right-2 flex items-center gap-2">
+                <OptimizedLink 
+                  href={`/dashboard/perda-nacionalidade/${caseItem.id}`}
+                  prefetchData={() => prefetchPerdaNacionalidadeById(caseItem.id)}
+                >
+                  <Button 
+                    size="sm"
+                    className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md h-8 px-3"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </OptimizedLink>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-red-600 hover:text-white hover:bg-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all duration-200"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir o processo de {caseItem.clientName}? Esta ação não pode ser desfeita.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDelete(Number(caseItem.id))}
+                        className="bg-white text-red-600 border border-red-500 hover:bg-red-50 hover:text-red-700"
+                      >
+                        Excluir
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4 flex-1">
@@ -260,59 +386,53 @@ export default function PerdaNacionalidadePage() {
                         </Badge>
                       </div>
 
-                      <div className="flex items-center gap-6 text-sm">
-                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900 rounded">
-                            <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <span className="font-medium">Passo {caseItem.currentStep + 1} de 9</span>
+                      {/* removido bloco de data de criação fora da grade */}
+
+                      {/* Informações adicionais, padronizadas com Ações Cíveis */}
+                      <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Tipo de ação:</span>
+                          <span>Perda de Nacionalidade</span>
                         </div>
-                        
-                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                          <div className="p-1.5 bg-slate-100 dark:bg-slate-700 rounded">
-                            <Clock className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                          </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Fluxo atual:</span>
+                          <span>{getStepTitle(caseItem.currentStep || 0)}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Observações:</span>
+                          <span className="truncate max-w-[45ch]">
+                            {String(caseItem.notes || "—").slice(0, 90)}{caseItem.notes && caseItem.notes.length > 90 ? "…" : ""}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Criado em:</span>
                           <span>
                             {new Date(caseItem.createdAt).toLocaleDateString("pt-BR", {
                               day: "2-digit",
                               month: "long",
-                              year: "numeric"
+                              year: "numeric",
                             })}
                           </span>
                         </div>
-                      </div>
-
-                      {/* Barra de progresso */}
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-slate-600 dark:text-slate-400 font-medium">Progresso do Processo</span>
-                          <span className="text-slate-700 dark:text-slate-300 font-semibold">
-                            {Math.round(((caseItem.currentStep + 1) / 9) * 100)}%
-                          </span>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Responsável:</span>
+                          <span>{caseAssignments[caseItem.id]?.responsibleName || "—"}</span>
                         </div>
-                        <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-amber-500 to-amber-600 rounded-full transition-all duration-500"
-                            style={{ width: `${((caseItem.currentStep + 1) / 9) * 100}%` }}
-                          />
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Prazo:</span>
+                          <span>{caseAssignments[caseItem.id]?.dueDate ? new Date(caseAssignments[caseItem.id]!.dueDate!).toLocaleDateString("pt-BR") : "—"}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Botão de ação */}
-                  <OptimizedLink 
-                    href={`/dashboard/perda-nacionalidade/${caseItem.id}`}
-                    prefetchData={() => prefetchPerdaNacionalidadeById(caseItem.id)}
-                  >
-                    <Button 
-                      size="lg"
-                      className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md"
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Ver Detalhes
-                    </Button>
-                  </OptimizedLink>
+                  {/* Ações movidas para canto superior direito */}
                 </div>
               </CardContent>
             </Card>

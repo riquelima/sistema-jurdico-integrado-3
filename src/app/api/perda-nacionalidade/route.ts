@@ -14,6 +14,33 @@ function mapDbFieldsToFrontend(record: any) {
     createdAt: record.created_at,
     updatedAt: record.updated_at,
     currentStep: record.current_step ?? 0,
+    nomeMae: record.nome_mae,
+    nomePai: record.nome_pai,
+    nomeCrianca: record.nome_crianca,
+    rnmMae: record.rnm_mae,
+    rnmMaeDoc: record.rnm_mae_doc,
+    rnmPai: record.rnm_pai,
+    rnmPaiDoc: record.rnm_pai_doc,
+    cpfMae: record.cpf_mae,
+    cpfMaeDoc: record.cpf_mae_doc,
+    cpfPai: record.cpf_pai,
+    cpfPaiDoc: record.cpf_pai_doc,
+    certidaoNascimento: record.certidao_nascimento,
+    certidaoNascimentoDoc: record.certidao_nascimento_doc,
+    comprovanteEndereco: record.comprovante_endereco,
+    comprovanteEnderecoDoc: record.comprovante_endereco_doc,
+    passaporteMae: record.passaporte_mae,
+    passaporteMaeDoc: record.passaporte_mae_doc,
+    passaportePai: record.passaporte_pai,
+    passaportePaiDoc: record.passaporte_pai_doc,
+    passaporteCrianca: record.passaporte_crianca,
+    passaporteCriancaDoc: record.passaporte_crianca_doc,
+    rgCrianca: record.rg_crianca,
+    rgCriancaDoc: record.rg_crianca_doc,
+    documentoChines: record.documento_chines,
+    documentoChinesDoc: record.documento_chines_doc,
+    traducaoJuramentada: record.traducao_juramentada,
+    traducaoJuramentadaDoc: record.traducao_juramentada_doc,
   };
 }
 
@@ -66,7 +93,24 @@ export async function GET(request: NextRequest) {
 
     // Apply filters
     if (search) {
-      query = query.ilike('client_name', `%${search}%`);
+      const s = search.replace(/,/g, ' ');
+      query = query.or(
+        [
+          `client_name.ilike.%${s}%`,
+          `nome_mae.ilike.%${s}%`,
+          `nome_pai.ilike.%${s}%`,
+          `nome_crianca.ilike.%${s}%`,
+          `rnm_mae.ilike.%${s}%`,
+          `rnm_pai.ilike.%${s}%`,
+          `cpf_mae.ilike.%${s}%`,
+          `cpf_pai.ilike.%${s}%`,
+          `certidao_nascimento.ilike.%${s}%`,
+          `comprovante_endereco.ilike.%${s}%`,
+          `documento_chines.ilike.%${s}%`,
+          `traducao_juramentada.ilike.%${s}%`,
+          `notes.ilike.%${s}%`,
+        ].join(',')
+      );
     }
 
     if (statusFilter) {
@@ -111,18 +155,29 @@ export async function POST(request: NextRequest) {
     // Prepare data for Supabase (map camelCase to snake_case)
     const insertData = {
       client_name: body.clientName.trim(),
+      nome_mae: body.nomeMae?.trim() || null,
+      nome_pai: body.nomePai?.trim() || null,
+      nome_crianca: body.nomeCrianca?.trim() || null,
       rnm_mae: body.rnmMae?.trim() || null,
       rnm_mae_doc: body.rnmMaeDoc?.trim() || null,
       rnm_pai: body.rnmPai?.trim() || null,
       rnm_pai_doc: body.rnmPaiDoc?.trim() || null,
       cpf_mae: body.cpfMae?.trim() || null,
       cpf_pai: body.cpfPai?.trim() || null,
+      cpf_mae_doc: body.cpfMaeDoc?.trim() || null,
+      cpf_pai_doc: body.cpfPaiDoc?.trim() || null,
       certidao_nascimento: body.certidaoNascimento?.trim() || null,
       certidao_nascimento_doc: body.certidaoNascimentoDoc?.trim() || null,
       comprovante_endereco: body.comprovanteEndereco?.trim() || null,
       comprovante_endereco_doc: body.comprovanteEnderecoDoc?.trim() || null,
-      passaportes: body.passaportes?.trim() || null,
-      passaportes_doc: body.passaportesDoc?.trim() || null,
+      passaporte_mae: body.passaporteMae?.trim() || null,
+      passaporte_mae_doc: body.passaporteMaeDoc?.trim() || null,
+      passaporte_pai: body.passaportePai?.trim() || null,
+      passaporte_pai_doc: body.passaportePaiDoc?.trim() || null,
+      passaporte_crianca: body.passaporteCrianca?.trim() || null,
+      passaporte_crianca_doc: body.passaporteCriancaDoc?.trim() || null,
+      rg_crianca: body.rgCrianca?.trim() || null,
+      rg_crianca_doc: body.rgCriancaDoc?.trim() || null,
       documento_chines: body.documentoChines?.trim() || null,
       documento_chines_doc: body.documentoChinesDoc?.trim() || null,
       traducao_juramentada: body.traducaoJuramentada?.trim() || null,
@@ -211,12 +266,23 @@ export async function PUT(request: NextRequest) {
     if (body.rnmPaiDoc !== undefined) updateData.rnm_pai_doc = body.rnmPaiDoc?.trim() || null;
     if (body.cpfMae !== undefined) updateData.cpf_mae = body.cpfMae?.trim() || null;
     if (body.cpfPai !== undefined) updateData.cpf_pai = body.cpfPai?.trim() || null;
+    if (body.cpfMaeDoc !== undefined) updateData.cpf_mae_doc = body.cpfMaeDoc?.trim() || null;
+    if (body.cpfPaiDoc !== undefined) updateData.cpf_pai_doc = body.cpfPaiDoc?.trim() || null;
+    if (body.nomeMae !== undefined) updateData.nome_mae = body.nomeMae?.trim() || null;
+    if (body.nomePai !== undefined) updateData.nome_pai = body.nomePai?.trim() || null;
+    if (body.nomeCrianca !== undefined) updateData.nome_crianca = body.nomeCrianca?.trim() || null;
     if (body.certidaoNascimento !== undefined) updateData.certidao_nascimento = body.certidaoNascimento?.trim() || null;
     if (body.certidaoNascimentoDoc !== undefined) updateData.certidao_nascimento_doc = body.certidaoNascimentoDoc?.trim() || null;
     if (body.comprovanteEndereco !== undefined) updateData.comprovante_endereco = body.comprovanteEndereco?.trim() || null;
     if (body.comprovanteEnderecoDoc !== undefined) updateData.comprovante_endereco_doc = body.comprovanteEnderecoDoc?.trim() || null;
-    if (body.passaportes !== undefined) updateData.passaportes = body.passaportes?.trim() || null;
-    if (body.passaportesDoc !== undefined) updateData.passaportes_doc = body.passaportesDoc?.trim() || null;
+    if (body.passaporteMae !== undefined) updateData.passaporte_mae = body.passaporteMae?.trim() || null;
+    if (body.passaporteMaeDoc !== undefined) updateData.passaporte_mae_doc = body.passaporteMaeDoc?.trim() || null;
+    if (body.passaportePai !== undefined) updateData.passaporte_pai = body.passaportePai?.trim() || null;
+    if (body.passaportePaiDoc !== undefined) updateData.passaporte_pai_doc = body.passaportePaiDoc?.trim() || null;
+    if (body.passaporteCrianca !== undefined) updateData.passaporte_crianca = body.passaporteCrianca?.trim() || null;
+    if (body.passaporteCriancaDoc !== undefined) updateData.passaporte_crianca_doc = body.passaporteCriancaDoc?.trim() || null;
+    if (body.rgCrianca !== undefined) updateData.rg_crianca = body.rgCrianca?.trim() || null;
+    if (body.rgCriancaDoc !== undefined) updateData.rg_crianca_doc = body.rgCriancaDoc?.trim() || null;
     if (body.documentoChines !== undefined) updateData.documento_chines = body.documentoChines?.trim() || null;
     if (body.documentoChinesDoc !== undefined) updateData.documento_chines_doc = body.documentoChinesDoc?.trim() || null;
     if (body.traducaoJuramentada !== undefined) updateData.traducao_juramentada = body.traducaoJuramentada?.trim() || null;

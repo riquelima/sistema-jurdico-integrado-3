@@ -433,6 +433,11 @@ export default function CompraVendaPage() {
 
                           <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300">
                           <div className="flex items-center gap-2">
+                            <Home className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                            <span className="font-medium">Endereço do Imóvel:</span>
+                            <span>{property.enderecoImovel || "—"}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
                             <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                             <span className="font-medium">Tipo de Ação:</span>
                             <span>Compra e Venda</span>

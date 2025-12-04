@@ -95,7 +95,25 @@ export async function GET(request: NextRequest) {
 
     // Apply filters
     if (search) {
-      query = query.ilike('client_name', `%${search}%`);
+      const s = search.replace(/,/g, ' ');
+      query = query.or(
+        [
+          `client_name.ilike.%${s}%`,
+          `type.ilike.%${s}%`,
+          `cpf.ilike.%${s}%`,
+          `rnm.ilike.%${s}%`,
+          `passaporte.ilike.%${s}%`,
+          `comprovante_endereco.ilike.%${s}%`,
+          `cartao_cnpj.ilike.%${s}%`,
+          `contrato_empresa.ilike.%${s}%`,
+          `escritura_imoveis.ilike.%${s}%`,
+          `reservas_passagens.ilike.%${s}%`,
+          `reservas_hotel.ilike.%${s}%`,
+          `roteiro_viagem.ilike.%${s}%`,
+          `taxa.ilike.%${s}%`,
+          `notes.ilike.%${s}%`,
+        ].join(',')
+      );
     }
 
     if (type) {

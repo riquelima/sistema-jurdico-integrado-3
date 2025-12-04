@@ -64,7 +64,14 @@ export async function GET(request: NextRequest) {
 
     // Apply filters
     if (search) {
-      query = query.ilike('client_name', `%${search}%`);
+      const s = search.replace(/,/g, ' ');
+      query = query.or(
+        [
+          `client_name.ilike.%${s}%`,
+          `notes.ilike.%${s}%`,
+          `status.ilike.%${s}%`,
+        ].join(',')
+      );
     }
 
     if (status) {

@@ -108,7 +108,34 @@ export async function GET(request: NextRequest) {
 
     // Apply filters
     if (search) {
-      query = query.ilike('client_name', `%${search}%`);
+      const s = search.replace(/,/g, ' ');
+      query = query.or(
+        [
+          `client_name.ilike.%${s}%`,
+          `type.ilike.%${s}%`,
+          `owner_name.ilike.%${s}%`,
+          `owner_cpf.ilike.%${s}%`,
+          `owner_rnm.ilike.%${s}%`,
+          `endereco.ilike.%${s}%`,
+          `nome_mae.ilike.%${s}%`,
+          `nome_pai_registral.ilike.%${s}%`,
+          `nome_suposto_pai.ilike.%${s}%`,
+          `nome_crianca.ilike.%${s}%`,
+          `rnm_mae.ilike.%${s}%`,
+          `rnm_pai.ilike.%${s}%`,
+          `rnm_suposto_pai.ilike.%${s}%`,
+          `cpf_mae.ilike.%${s}%`,
+          `cpf_pai.ilike.%${s}%`,
+          `cpf_suposto_pai.ilike.%${s}%`,
+          `certidao_nascimento.ilike.%${s}%`,
+          `comprovante_endereco.ilike.%${s}%`,
+          `passaporte.ilike.%${s}%`,
+          `numero_protocolo.ilike.%${s}%`,
+          `notes.ilike.%${s}%`,
+          `campos_exigencias.ilike.%${s}%`,
+          `matricula_imovel.ilike.%${s}%`,
+        ].join(',')
+      );
     }
 
     if (type) {
