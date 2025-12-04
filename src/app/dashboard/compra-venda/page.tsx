@@ -421,7 +421,7 @@ export default function CompraVendaPage() {
                       <div className="space-y-3 flex-1">
                         <div className="flex items-center gap-3 flex-wrap">
                           <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                            {property.clientName || "Cliente não informado"}
+                            {property.enderecoImovel || "—"}
                           </h3>
                           <Badge className={`${getStatusColor(property.status)} flex items-center gap-1.5 px-3 py-1 shadow-md`}>
                             {getStatusIcon(property.status)}
