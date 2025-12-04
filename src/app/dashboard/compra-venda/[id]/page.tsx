@@ -904,26 +904,6 @@ export default function CompraVendaDetailsPage() {
               />
               {renderDocLinks("certidoesDoc")}
             </div>
-            <Collapsible open={prazosOpen} onOpenChange={setPrazosOpen}>
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm">Prazos</Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="prazo-sinal">Prazo para Sinal</Label>
-                    <Input id="prazo-sinal" type="date" value={pendingPrazoSinal || ""} onChange={(e) => setPendingPrazoSinal(e.target.value)} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="prazo-escritura">Prazo para Escritura</Label>
-                    <Input id="prazo-escritura" type="date" value={pendingPrazoEscritura || ""} onChange={(e) => setPendingPrazoEscritura(e.target.value)} />
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <Button variant="default" size="sm" onClick={savePrazos} disabled={!pendingPrazoSinal && !pendingPrazoEscritura}>Salvar Prazos</Button>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
             <div className="space-y-2 mt-4">
               <Label>Observação da etapa</Label>
               <Textarea rows={3} value={stepNotes[2] || ""} onChange={(e) => setStepNoteLocal(2, e.target.value)} />
@@ -978,6 +958,42 @@ export default function CompraVendaDetailsPage() {
               />
               {renderDocLinks("assinaturaContratoDoc")}
             </div>
+            <Collapsible open={prazosOpen} onOpenChange={setPrazosOpen}>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" size="sm">Prazos</Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="prazo-sinal">Prazo para Sinal</Label>
+                    <Input id="prazo-sinal" type="date" value={pendingPrazoSinal || ""} onChange={(e) => setPendingPrazoSinal(e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="prazo-escritura">Prazo para Escritura</Label>
+                    <Input id="prazo-escritura" type="date" value={pendingPrazoEscritura || ""} onChange={(e) => setPendingPrazoEscritura(e.target.value)} />
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <Button variant="default" size="sm" onClick={savePrazos} disabled={!pendingPrazoSinal && !pendingPrazoEscritura}>Salvar Prazos</Button>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+            {(property?.prazoSinal || property?.prazoEscritura) && (
+              <div className="grid md:grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
+                <div>
+                  <p className="text-xs text-muted-foreground">Prazo para Sinal</p>
+                  <p className="text-sm font-medium">
+                    {property.prazoSinal ? new Date(property.prazoSinal).toLocaleDateString("pt-BR") : "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Prazo para Escritura</p>
+                  <p className="text-sm font-medium">
+                    {property.prazoEscritura ? new Date(property.prazoEscritura).toLocaleDateString("pt-BR") : "-"}
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="space-y-2 mt-4">
               <Label>Observação da etapa</Label>
               <Textarea rows={3} value={stepNotes[4] || ""} onChange={(e) => setStepNoteLocal(4, e.target.value)} />
@@ -1119,27 +1135,27 @@ export default function CompraVendaDetailsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {WORKFLOW_STEPS.map((step) => (
-                  <StepItem
-                    key={step.id}
-                    index={step.id}
-                    title={step.title}
-                    isCurrent={currentStep === step.id}
-                    isCompleted={completedSteps.includes(step.id)}
-                    isPending={currentStep < step.id}
-                    expanded={expandedStepId === step.id}
-                    onToggle={() => setExpandedStepId((prev) => (prev === step.id ? undefined : step.id))}
-                    onMarkComplete={() => toggleStepCompletion(step.id)}
-                    onMarkIncomplete={() => toggleStepCompletion(step.id)}
-                    assignment={assignments[step.id]}
-                    onSaveAssignment={async (a) => handleSaveAssignment(step.id, a.responsibleName, a.dueDate)}
-                    canAssign={!step.title.toLowerCase().includes("cadastro")}
-                    extraBadges={step.id === 2 ? [
-                      ...(property?.prazoSinal ? [{ label: `Sinal: ${new Date(property.prazoSinal).toLocaleDateString('pt-BR')}` }] : []),
-                      ...(property?.prazoEscritura ? [{ label: `Escritura: ${new Date(property.prazoEscritura).toLocaleDateString('pt-BR')}` }] : []),
-                    ] : []}
-                  >
-                    {renderStepContent(step.id)}
-                  </StepItem>
+                <StepItem
+                  key={step.id}
+                  index={step.id}
+                  title={step.title}
+                  isCurrent={currentStep === step.id}
+                  isCompleted={completedSteps.includes(step.id)}
+                  isPending={currentStep < step.id}
+                  expanded={expandedStepId === step.id}
+                  onToggle={() => setExpandedStepId((prev) => (prev === step.id ? undefined : step.id))}
+                  onMarkComplete={() => toggleStepCompletion(step.id)}
+                  onMarkIncomplete={() => toggleStepCompletion(step.id)}
+                  assignment={assignments[step.id]}
+                  onSaveAssignment={async (a) => handleSaveAssignment(step.id, a.responsibleName, a.dueDate)}
+                  canAssign={!step.title.toLowerCase().includes("cadastro")}
+                  extraBadges={step.id === 4 ? [
+                    ...(property?.prazoSinal ? [{ label: `Sinal: ${new Date(property.prazoSinal).toLocaleDateString('pt-BR')}` }] : []),
+                    ...(property?.prazoEscritura ? [{ label: `Escritura: ${new Date(property.prazoEscritura).toLocaleDateString('pt-BR')}` }] : []),
+                  ] : []}
+                >
+                  {renderStepContent(step.id)}
+                </StepItem>
                 ))}
               </CardContent>
             </Card>
