@@ -47,6 +47,13 @@ function mapDbFieldsToFrontend(record: any) {
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+function truncateString(value: string | undefined | null, max: number): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (trimmed.length <= max) return trimmed;
+  return trimmed.slice(0, max);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -154,43 +161,43 @@ export async function POST(request: NextRequest) {
 
     // Prepare data for Supabase (map camelCase to snake_case)
     const insertData = {
-      client_name: body.clientName.trim(),
-      nome_mae: body.nomeMae?.trim() || null,
+      client_name: truncateString(body.clientName, 500)!,
+      nome_mae: truncateString(body.nomeMae, 255),
       nome_pai: body.nomePai?.trim() || null,
       nome_crianca: body.nomeCrianca?.trim() || null,
-      rnm_mae: body.rnmMae?.trim() || null,
-      rnm_mae_doc: body.rnmMaeDoc?.trim() || null,
-      rnm_pai: body.rnmPai?.trim() || null,
-      rnm_pai_doc: body.rnmPaiDoc?.trim() || null,
-      cpf_mae: body.cpfMae?.trim() || null,
-      cpf_pai: body.cpfPai?.trim() || null,
-      cpf_mae_doc: body.cpfMaeDoc?.trim() || null,
-      cpf_pai_doc: body.cpfPaiDoc?.trim() || null,
+      rnm_mae: truncateString(body.rnmMae, 255),
+      rnm_mae_doc: truncateString(body.rnmMaeDoc, 500),
+      rnm_pai: truncateString(body.rnmPai, 255),
+      rnm_pai_doc: truncateString(body.rnmPaiDoc, 500),
+      cpf_mae: truncateString(body.cpfMae, 20),
+      cpf_pai: truncateString(body.cpfPai, 20),
+      cpf_mae_doc: truncateString(body.cpfMaeDoc, 500),
+      cpf_pai_doc: truncateString(body.cpfPaiDoc, 500),
       certidao_nascimento: body.certidaoNascimento?.trim() || null,
-      certidao_nascimento_doc: body.certidaoNascimentoDoc?.trim() || null,
+      certidao_nascimento_doc: truncateString(body.certidaoNascimentoDoc, 500),
       comprovante_endereco: body.comprovanteEndereco?.trim() || null,
-      comprovante_endereco_doc: body.comprovanteEnderecoDoc?.trim() || null,
-      passaporte_mae: body.passaporteMae?.trim() || null,
-      passaporte_mae_doc: body.passaporteMaeDoc?.trim() || null,
-      passaporte_pai: body.passaportePai?.trim() || null,
-      passaporte_pai_doc: body.passaportePaiDoc?.trim() || null,
-      passaporte_crianca: body.passaporteCrianca?.trim() || null,
-      passaporte_crianca_doc: body.passaporteCriancaDoc?.trim() || null,
-      rg_crianca: body.rgCrianca?.trim() || null,
-      rg_crianca_doc: body.rgCriancaDoc?.trim() || null,
+      comprovante_endereco_doc: truncateString(body.comprovanteEnderecoDoc, 500),
+      passaporte_mae: truncateString(body.passaporteMae, 255),
+      passaporte_mae_doc: truncateString(body.passaporteMaeDoc, 500),
+      passaporte_pai: truncateString(body.passaportePai, 255),
+      passaporte_pai_doc: truncateString(body.passaportePaiDoc, 500),
+      passaporte_crianca: truncateString(body.passaporteCrianca, 255),
+      passaporte_crianca_doc: truncateString(body.passaporteCriancaDoc, 500),
+      rg_crianca: truncateString(body.rgCrianca, 50),
+      rg_crianca_doc: truncateString(body.rgCriancaDoc, 500),
       documento_chines: body.documentoChines?.trim() || null,
-      documento_chines_doc: body.documentoChinesDoc?.trim() || null,
+      documento_chines_doc: truncateString(body.documentoChinesDoc, 500),
       traducao_juramentada: body.traducaoJuramentada?.trim() || null,
-      traducao_juramentada_doc: body.traducaoJuramentadaDoc?.trim() || null,
-      procuracao_doc: body.procuracaoDoc?.trim() || null,
-      pedido_perda_doc: body.pedidoPerdaDoc?.trim() || null,
-      protocolo_doc: body.protocoloDoc?.trim() || null,
-      dou_doc: body.douDoc?.trim() || null,
-      passaporte_chines_doc: body.passaporteChinesDoc?.trim() || null,
-      manifesto_doc: body.manifestoDoc?.trim() || null,
-      portaria_doc: body.portariaDoc?.trim() || null,
+      traducao_juramentada_doc: truncateString(body.traducaoJuramentadaDoc, 500),
+      procuracao_doc: truncateString(body.procuracaoDoc, 500),
+      pedido_perda_doc: truncateString(body.pedidoPerdaDoc, 500),
+      protocolo_doc: truncateString(body.protocoloDoc, 500),
+      dou_doc: truncateString(body.douDoc, 500),
+      passaporte_chines_doc: truncateString(body.passaporteChinesDoc, 500),
+      manifesto_doc: truncateString(body.manifestoDoc, 500),
+      portaria_doc: truncateString(body.portariaDoc, 500),
       current_step: body.currentStep ?? 0,
-      status: body.status?.trim() || 'Em Andamento',
+      status: truncateString(body.status, 50) || 'Em Andamento',
       notes: body.notes?.trim() || null,
     };
 
@@ -257,45 +264,45 @@ export async function PUT(request: NextRequest) {
           { status: 400 }
         );
       }
-      updateData.client_name = body.clientName.trim();
+      updateData.client_name = truncateString(body.clientName, 500);
     }
 
-    if (body.rnmMae !== undefined) updateData.rnm_mae = body.rnmMae?.trim() || null;
-    if (body.rnmMaeDoc !== undefined) updateData.rnm_mae_doc = body.rnmMaeDoc?.trim() || null;
-    if (body.rnmPai !== undefined) updateData.rnm_pai = body.rnmPai?.trim() || null;
-    if (body.rnmPaiDoc !== undefined) updateData.rnm_pai_doc = body.rnmPaiDoc?.trim() || null;
-    if (body.cpfMae !== undefined) updateData.cpf_mae = body.cpfMae?.trim() || null;
-    if (body.cpfPai !== undefined) updateData.cpf_pai = body.cpfPai?.trim() || null;
-    if (body.cpfMaeDoc !== undefined) updateData.cpf_mae_doc = body.cpfMaeDoc?.trim() || null;
-    if (body.cpfPaiDoc !== undefined) updateData.cpf_pai_doc = body.cpfPaiDoc?.trim() || null;
-    if (body.nomeMae !== undefined) updateData.nome_mae = body.nomeMae?.trim() || null;
+    if (body.rnmMae !== undefined) updateData.rnm_mae = truncateString(body.rnmMae, 255);
+    if (body.rnmMaeDoc !== undefined) updateData.rnm_mae_doc = truncateString(body.rnmMaeDoc, 500);
+    if (body.rnmPai !== undefined) updateData.rnm_pai = truncateString(body.rnmPai, 255);
+    if (body.rnmPaiDoc !== undefined) updateData.rnm_pai_doc = truncateString(body.rnmPaiDoc, 500);
+    if (body.cpfMae !== undefined) updateData.cpf_mae = truncateString(body.cpfMae, 20);
+    if (body.cpfPai !== undefined) updateData.cpf_pai = truncateString(body.cpfPai, 20);
+    if (body.cpfMaeDoc !== undefined) updateData.cpf_mae_doc = truncateString(body.cpfMaeDoc, 500);
+    if (body.cpfPaiDoc !== undefined) updateData.cpf_pai_doc = truncateString(body.cpfPaiDoc, 500);
+    if (body.nomeMae !== undefined) updateData.nome_mae = truncateString(body.nomeMae, 255);
     if (body.nomePai !== undefined) updateData.nome_pai = body.nomePai?.trim() || null;
     if (body.nomeCrianca !== undefined) updateData.nome_crianca = body.nomeCrianca?.trim() || null;
     if (body.certidaoNascimento !== undefined) updateData.certidao_nascimento = body.certidaoNascimento?.trim() || null;
-    if (body.certidaoNascimentoDoc !== undefined) updateData.certidao_nascimento_doc = body.certidaoNascimentoDoc?.trim() || null;
+    if (body.certidaoNascimentoDoc !== undefined) updateData.certidao_nascimento_doc = truncateString(body.certidaoNascimentoDoc, 500);
     if (body.comprovanteEndereco !== undefined) updateData.comprovante_endereco = body.comprovanteEndereco?.trim() || null;
-    if (body.comprovanteEnderecoDoc !== undefined) updateData.comprovante_endereco_doc = body.comprovanteEnderecoDoc?.trim() || null;
-    if (body.passaporteMae !== undefined) updateData.passaporte_mae = body.passaporteMae?.trim() || null;
-    if (body.passaporteMaeDoc !== undefined) updateData.passaporte_mae_doc = body.passaporteMaeDoc?.trim() || null;
-    if (body.passaportePai !== undefined) updateData.passaporte_pai = body.passaportePai?.trim() || null;
-    if (body.passaportePaiDoc !== undefined) updateData.passaporte_pai_doc = body.passaportePaiDoc?.trim() || null;
-    if (body.passaporteCrianca !== undefined) updateData.passaporte_crianca = body.passaporteCrianca?.trim() || null;
-    if (body.passaporteCriancaDoc !== undefined) updateData.passaporte_crianca_doc = body.passaporteCriancaDoc?.trim() || null;
-    if (body.rgCrianca !== undefined) updateData.rg_crianca = body.rgCrianca?.trim() || null;
-    if (body.rgCriancaDoc !== undefined) updateData.rg_crianca_doc = body.rgCriancaDoc?.trim() || null;
+    if (body.comprovanteEnderecoDoc !== undefined) updateData.comprovante_endereco_doc = truncateString(body.comprovanteEnderecoDoc, 500);
+    if (body.passaporteMae !== undefined) updateData.passaporte_mae = truncateString(body.passaporteMae, 255);
+    if (body.passaporteMaeDoc !== undefined) updateData.passaporte_mae_doc = truncateString(body.passaporteMaeDoc, 500);
+    if (body.passaportePai !== undefined) updateData.passaporte_pai = truncateString(body.passaportePai, 255);
+    if (body.passaportePaiDoc !== undefined) updateData.passaporte_pai_doc = truncateString(body.passaportePaiDoc, 500);
+    if (body.passaporteCrianca !== undefined) updateData.passaporte_crianca = truncateString(body.passaporteCrianca, 255);
+    if (body.passaporteCriancaDoc !== undefined) updateData.passaporte_crianca_doc = truncateString(body.passaporteCriancaDoc, 500);
+    if (body.rgCrianca !== undefined) updateData.rg_crianca = truncateString(body.rgCrianca, 50);
+    if (body.rgCriancaDoc !== undefined) updateData.rg_crianca_doc = truncateString(body.rgCriancaDoc, 500);
     if (body.documentoChines !== undefined) updateData.documento_chines = body.documentoChines?.trim() || null;
-    if (body.documentoChinesDoc !== undefined) updateData.documento_chines_doc = body.documentoChinesDoc?.trim() || null;
+    if (body.documentoChinesDoc !== undefined) updateData.documento_chines_doc = truncateString(body.documentoChinesDoc, 500);
     if (body.traducaoJuramentada !== undefined) updateData.traducao_juramentada = body.traducaoJuramentada?.trim() || null;
-    if (body.traducaoJuramentadaDoc !== undefined) updateData.traducao_juramentada_doc = body.traducaoJuramentadaDoc?.trim() || null;
-    if (body.procuracaoDoc !== undefined) updateData.procuracao_doc = body.procuracaoDoc?.trim() || null;
-    if (body.pedidoPerdaDoc !== undefined) updateData.pedido_perda_doc = body.pedidoPerdaDoc?.trim() || null;
-    if (body.protocoloDoc !== undefined) updateData.protocolo_doc = body.protocoloDoc?.trim() || null;
-    if (body.douDoc !== undefined) updateData.dou_doc = body.douDoc?.trim() || null;
-    if (body.passaporteChinesDoc !== undefined) updateData.passaporte_chines_doc = body.passaporteChinesDoc?.trim() || null;
-    if (body.manifestoDoc !== undefined) updateData.manifesto_doc = body.manifestoDoc?.trim() || null;
-    if (body.portariaDoc !== undefined) updateData.portaria_doc = body.portariaDoc?.trim() || null;
+    if (body.traducaoJuramentadaDoc !== undefined) updateData.traducao_juramentada_doc = truncateString(body.traducaoJuramentadaDoc, 500);
+    if (body.procuracaoDoc !== undefined) updateData.procuracao_doc = truncateString(body.procuracaoDoc, 500);
+    if (body.pedidoPerdaDoc !== undefined) updateData.pedido_perda_doc = truncateString(body.pedidoPerdaDoc, 500);
+    if (body.protocoloDoc !== undefined) updateData.protocolo_doc = truncateString(body.protocoloDoc, 500);
+    if (body.douDoc !== undefined) updateData.dou_doc = truncateString(body.douDoc, 500);
+    if (body.passaporteChinesDoc !== undefined) updateData.passaporte_chines_doc = truncateString(body.passaporteChinesDoc, 500);
+    if (body.manifestoDoc !== undefined) updateData.manifesto_doc = truncateString(body.manifestoDoc, 500);
+    if (body.portariaDoc !== undefined) updateData.portaria_doc = truncateString(body.portariaDoc, 500);
     if (body.currentStep !== undefined) updateData.current_step = body.currentStep;
-    if (body.status !== undefined) updateData.status = body.status.trim();
+    if (body.status !== undefined) updateData.status = truncateString(body.status, 50) || null;
     if (body.notes !== undefined) updateData.notes = body.notes?.trim() || null;
 
     const { data: updated, error } = await supabase

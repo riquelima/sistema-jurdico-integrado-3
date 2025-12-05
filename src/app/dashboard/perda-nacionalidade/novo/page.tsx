@@ -74,8 +74,11 @@ export default function NovaPerdaNacionalidadePage() {
             body: fd,
           });
           if (uploadResponse.ok) {
-            const { url } = await uploadResponse.json();
-            uploadedFileUrls[fieldKey] = url;
+            const result = await uploadResponse.json();
+            const url = result?.fileUrl ?? result?.url;
+            if (url) {
+              uploadedFileUrls[fieldKey] = url;
+            }
           }
         }
       }
