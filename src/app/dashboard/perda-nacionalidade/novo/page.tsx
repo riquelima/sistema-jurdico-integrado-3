@@ -102,8 +102,23 @@ export default function NovaPerdaNacionalidadePage() {
 
       const data = await response.json();
       toast.success("Processo criado com sucesso!");
-      
-      // Redirect to the list page
+
+      const docsToConvert = Object.entries(uploadedFileUrls).map(([fieldName, fileUrl]) => ({ fieldName, fileUrl }));
+      if (docsToConvert.length) {
+        try {
+          await fetch("/api/documents/convert-temporary", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              caseId: String(data.id),
+              moduleType: "perda_nacionalidade",
+              clientName: formData.clientName,
+              documents: docsToConvert,
+            }),
+          });
+        } catch {}
+      }
+
       router.push("/dashboard/perda-nacionalidade");
       router.refresh();
     } catch (error) {

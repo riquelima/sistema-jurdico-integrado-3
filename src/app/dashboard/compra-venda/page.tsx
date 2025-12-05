@@ -3,7 +3,9 @@
  import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { CardListItem } from "@/components/ui/card-list-item";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Home, Eye, AlertTriangle, Clock, CheckCircle2, AlertCircle, FileText, Building2, User, Users, Trash2, Calendar } from "lucide-react";
 import Link from "next/link";
@@ -190,35 +192,7 @@ export default function CompraVendaPage() {
     return "text-emerald-600 dark:text-emerald-400";
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Em andamento":
-        return "bg-blue-500 text-white hover:bg-blue-600";
-      case "Finalizado":
-        return "bg-emerald-500 text-white hover:bg-emerald-600";
-      default:
-        return "bg-slate-500 text-white hover:bg-slate-600";
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    const s = (status || "").toLowerCase();
-    switch (s) {
-      case "em andamento":
-        return <Clock className="h-4 w-4" />;
-      case "finalizado":
-        return <CheckCircle2 className="h-4 w-4" />;
-      default:
-        return <FileText className="h-4 w-4" />;
-    }
-  };
-
-  const normalizeStatusLabel = (status: string) => {
-    const s = (status || "").toLowerCase();
-    if (s === "em andamento") return "Em andamento";
-    if (s === "finalizado") return "Finalizado";
-    return status;
-  };
+  
 
   const handleDelete = async (id: number) => {
     try {
@@ -233,32 +207,19 @@ export default function CompraVendaPage() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header com gradiente */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-xl p-8 shadow-lg border border-slate-700">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-amber-500 rounded-lg">
-                <Building2 className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-white">Compra e Venda de Imóveis</h1>
-                <p className="text-slate-300 mt-1">
-                  Gerencie transações imobiliárias
-                </p>
-              </div>
-            </div>
-          </div>
+      <PageHeader
+        title="Compra e Venda de Imóveis"
+        description="Gerencie transações imobiliárias"
+        action={
           <Link href="/dashboard/compra-venda/novo">
             <Button size="lg" className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold shadow-lg">
               <Plus className="h-5 w-5 mr-2" />
               Nova Ação
             </Button>
           </Link>
-        </div>
-
-        {/* Cards de estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        }
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
             <div className="flex items-center justify-between">
               <div>
@@ -270,7 +231,6 @@ export default function CompraVendaPage() {
               </div>
             </div>
           </div>
-
           <div className="bg-blue-900 rounded-lg p-4 border border-blue-700">
             <div className="flex items-center justify-between">
               <div>
@@ -282,9 +242,6 @@ export default function CompraVendaPage() {
               </div>
             </div>
           </div>
-
-          
-
           <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700">
             <div className="flex items-center justify-between">
               <div>
@@ -297,7 +254,7 @@ export default function CompraVendaPage() {
             </div>
           </div>
         </div>
-      </div>
+      </PageHeader>
 
       {/* Filtros */}
       <Card className="border-slate-200 dark:border-slate-700 shadow-md">
@@ -364,175 +321,137 @@ export default function CompraVendaPage() {
             const daysUntilEscritura = getDaysUntil(property.prazoEscritura);
 
             return (
-              <Card 
-                key={property.id} 
-                className="border-slate-200 dark:border-slate-700 hover:shadow-xl hover:border-amber-500/50 transition-all duration-200 bg-gradient-to-r from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 relative"
-              >
-                <div className="absolute top-2 right-2 flex items-center gap-2">
-                  <OptimizedLink 
-                    href={`/dashboard/compra-venda/${property.id}`}
-                    prefetchData={() => prefetchCompraVendaById(property.id)}
-                  >
-                    <Button 
-                      size="sm"
-                      className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md h-8 px-3"
+              <CardListItem
+                key={property.id}
+                icon={<Home className="h-6 w-6 text-white" />}
+                title={property.enderecoImovel || "—"}
+                status={property.status}
+                rightActions={
+                  <>
+                    <OptimizedLink
+                      href={`/dashboard/compra-venda/${property.id}`}
+                      prefetchData={() => prefetchCompraVendaById(property.id)}
                     >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </OptimizedLink>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
                       <Button
-                        variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-red-600 hover:text-white hover:bg-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all duration-200"
+                        className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md h-8 px-3"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Eye className="h-4 w-4" />
                       </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Tem certeza que deseja excluir a transação de {property.clientName || 'Cliente'}? Esta ação não pode ser desfeita.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDelete(property.id)}
-                          className="bg-white text-red-600 border border-red-500 hover:bg-red-50 hover:text-red-700"
+                    </OptimizedLink>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-red-600 hover:text-white hover:bg-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all duration-200"
                         >
-                          Excluir
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-4 flex-1">
-                      {/* Ícone do processo */}
-                      <div className="p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg shadow-md flex-shrink-0">
-                        <Home className="h-6 w-6 text-white" />
-                      </div>
-
-                      {/* Informações do processo */}
-                      <div className="space-y-3 flex-1">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                            {property.enderecoImovel || "—"}
-                          </h3>
-                          <Badge className={`${getStatusColor(property.status)} flex items-center gap-1.5 px-3 py-1 shadow-md`}>
-                            {getStatusIcon(property.status)}
-                            {normalizeStatusLabel(property.status)}
-                          </Badge>
-                        </div>
-
-                        
-
-                          <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300">
-                          <div className="flex items-center gap-2">
-                            <Home className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                            <span className="font-medium">Endereço do Imóvel:</span>
-                            <span>{property.enderecoImovel || "—"}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                            <span className="font-medium">Tipo de Ação:</span>
-                            <span>Compra e Venda</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                            <span className="font-medium">Nome do Cliente:</span>
-                            <span>{property.clientName || "Não informado"}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                            <span className="font-medium">Vendedores:</span>
-                            <span>{property.rgVendedores ? `${String(property.rgVendedores).split(',').length} vendedor(es)` : "—"}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                            <span className="font-medium">Comprador:</span>
-                            <span>{property.rnmComprador || property.cpfComprador || "—"}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                            <span className="font-medium">Responsável:</span>
-                            <span>{caseAssignments[property.id]?.responsibleName || "—"}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                            <span className="font-medium">Prazo:</span>
-                            <span>{caseAssignments[property.id]?.dueDate ? new Date(caseAssignments[property.id]!.dueDate!).toLocaleDateString("pt-BR") : "—"}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                            <span className="font-medium">Fluxo atual:</span>
-                            <span>{getStepTitle(property.currentStep || 1)}</span>
-                          </div>
-                        </div>
-
-                        {/* Prazos */}
-                        {(property.prazoSinal || property.prazoEscritura) && (
-                          <div className="flex flex-wrap gap-4 pt-2">
-                            {property.prazoSinal && (
-                              <div className="flex items-center gap-2">
-                                {daysUntilSinal !== null && daysUntilSinal <= 7 && (
-                                  <AlertTriangle className="h-4 w-4 text-orange-600" />
-                                )}
-                                <div>
-                                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    Prazo Sinal
-                                  </p>
-                                  <p className={`text-sm font-medium ${getDeadlineColor(daysUntilSinal)}`}>
-                                    {new Date(property.prazoSinal).toLocaleDateString("pt-BR")}
-                                    {daysUntilSinal !== null && (
-                                      <span className="ml-2">
-                                        ({daysUntilSinal > 0 ? `${daysUntilSinal}d` : "Vencido"})
-                                      </span>
-                                    )}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                            
-                            {property.prazoEscritura && (
-                              <div className="flex items-center gap-2">
-                                {daysUntilEscritura !== null && daysUntilEscritura <= 7 && (
-                                  <AlertTriangle className="h-4 w-4 text-orange-600" />
-                                )}
-                                <div>
-                                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    Prazo Escritura
-                                  </p>
-                                  <p className={`text-sm font-medium ${getDeadlineColor(daysUntilEscritura)}`}>
-                                    {new Date(property.prazoEscritura).toLocaleDateString("pt-BR")}
-                                    {daysUntilEscritura !== null && (
-                                      <span className="ml-2">
-                                        ({daysUntilEscritura > 0 ? `${daysUntilEscritura}d` : "Vencido"})
-                                      </span>
-                                    )}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {property.contractNotes && (
-                          <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                            {`Observações: ${property.contractNotes}`}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja excluir a transação de {property.clientName || 'Cliente'}? Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(property.id)}
+                            className="bg-white text-red-600 border border-red-500 hover:bg-red-50 hover:text-red-700"
+                          >
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
+                }
+              >
+                <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300">
+                  <div className="flex items-center gap-2">
+                    <Home className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                    <span className="font-medium">Endereço do Imóvel:</span>
+                    <span>{property.enderecoImovel || "—"}</span>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                    <span className="font-medium">Tipo de Ação:</span>
+                    <span>Compra e Venda</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                    <span className="font-medium">Nome do Cliente:</span>
+                    <span>{property.clientName || "Não informado"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                    <span className="font-medium">Vendedores:</span>
+                    <span>{property.rgVendedores ? `${String(property.rgVendedores).split(',').length} vendedor(es)` : "—"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                    <span className="font-medium">Comprador:</span>
+                    <span>{property.rnmComprador || property.cpfComprador || "—"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                    <span className="font-medium">Responsável:</span>
+                    <span>{caseAssignments[property.id]?.responsibleName || "—"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                    <span className="font-medium">Prazo:</span>
+                    <span>{caseAssignments[property.id]?.dueDate ? new Date(caseAssignments[property.id]!.dueDate!).toLocaleDateString("pt-BR") : "—"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                    <span className="font-medium">Fluxo atual:</span>
+                    <span>{getStepTitle(property.currentStep || 1)}</span>
+                  </div>
+                </div>
+                {(property.prazoSinal || property.prazoEscritura) && (
+                  <div className="flex flex-wrap gap-4 pt-2">
+                    {property.prazoSinal && (
+                      <div className="flex items-center gap-2">
+                        {daysUntilSinal !== null && daysUntilSinal <= 7 && (
+                          <AlertTriangle className="h-4 w-4 text-orange-600" />
+                        )}
+                        <div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Prazo Sinal</p>
+                          <p className={`text-sm font-medium ${getDeadlineColor(daysUntilSinal)}`}>
+                            {new Date(property.prazoSinal).toLocaleDateString("pt-BR")}
+                            {daysUntilSinal !== null && (
+                              <span className="ml-2">({daysUntilSinal > 0 ? `${daysUntilSinal}d` : "Vencido"})</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {property.prazoEscritura && (
+                      <div className="flex items-center gap-2">
+                        {daysUntilEscritura !== null && daysUntilEscritura <= 7 && (
+                          <AlertTriangle className="h-4 w-4 text-orange-600" />
+                        )}
+                        <div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Prazo Escritura</p>
+                          <p className={`text-sm font-medium ${getDeadlineColor(daysUntilEscritura)}`}>
+                            {new Date(property.prazoEscritura).toLocaleDateString("pt-BR")}
+                            {daysUntilEscritura !== null && (
+                              <span className="ml-2">({daysUntilEscritura > 0 ? `${daysUntilEscritura}d` : "Vencido"})</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {property.contractNotes && (
+                  <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">{`Observações: ${property.contractNotes}`}</p>
+                )}
+              </CardListItem>
             );
           })
         )}

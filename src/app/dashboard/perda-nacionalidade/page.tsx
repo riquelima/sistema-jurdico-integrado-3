@@ -3,7 +3,9 @@
 import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { CardListItem } from "@/components/ui/card-list-item";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Globe, Eye, FileText, Clock, CheckCircle2, AlertCircle, Trash2, User, Calendar } from "lucide-react";
 import Link from "next/link";
@@ -194,32 +196,19 @@ export default function PerdaNacionalidadePage() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header com gradiente */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-xl p-8 shadow-lg border border-slate-700">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-amber-500 rounded-lg">
-                <Globe className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-white">Perda de Nacionalidade</h1>
-                <p className="text-slate-300 mt-1">
-                  Gerencie processos de perda de nacionalidade brasileira
-                </p>
-              </div>
-            </div>
-          </div>
+      <PageHeader
+        title="Perda de Nacionalidade"
+        description="Gerencie processos de perda de nacionalidade brasileira"
+        action={
           <Link href="/dashboard/perda-nacionalidade/novo">
             <Button size="lg" className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold shadow-lg">
               <Plus className="h-5 w-5 mr-2" />
               Nova Ação
             </Button>
           </Link>
-        </div>
-
-        {/* Cards de estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+        }
+      >
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
             <div className="flex items-center justify-between">
               <div>
@@ -231,7 +220,6 @@ export default function PerdaNacionalidadePage() {
               </div>
             </div>
           </div>
-
           <div className="bg-blue-900 rounded-lg p-4 border border-blue-700">
             <div className="flex items-center justify-between">
               <div>
@@ -243,9 +231,17 @@ export default function PerdaNacionalidadePage() {
               </div>
             </div>
           </div>
-
-          
-
+          <div className="bg-amber-900 rounded-lg p-4 border border-amber-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-amber-300 text-sm font-medium">Deferidos</p>
+                <p className="text-3xl font-bold text-amber-400 mt-1">{stats.deferido}</p>
+              </div>
+              <div className="p-3 bg-amber-800 rounded-lg">
+                <AlertCircle className="h-6 w-6 text-amber-400" />
+              </div>
+            </div>
+          </div>
           <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700">
             <div className="flex items-center justify-between">
               <div>
@@ -258,7 +254,7 @@ export default function PerdaNacionalidadePage() {
             </div>
           </div>
         </div>
-      </div>
+      </PageHeader>
 
       {/* Filtros */}
       <Card className="border-slate-200 dark:border-slate-700 shadow-md">
@@ -286,6 +282,8 @@ export default function PerdaNacionalidadePage() {
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+                <SelectItem value="Deferido">Deferido</SelectItem>
+                <SelectItem value="Ratificado">Ratificado</SelectItem>
                 <SelectItem value="Finalizado">Finalizado</SelectItem>
               </SelectContent>
             </Select>
@@ -321,121 +319,96 @@ export default function PerdaNacionalidadePage() {
           </Card>
         ) : (
           filteredCases.map((caseItem) => (
-            <Card 
-              key={caseItem.id} 
-              className="border-slate-200 dark:border-slate-700 hover:shadow-xl hover:border-amber-500/50 transition-all duration-200 bg-gradient-to-r from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 relative"
-            >
-              <div className="absolute top-2 right-2 flex items-center gap-2">
-                <OptimizedLink 
-                  href={`/dashboard/perda-nacionalidade/${caseItem.id}`}
-                  prefetchData={() => prefetchPerdaNacionalidadeById(caseItem.id)}
-                >
-                  <Button 
-                    size="sm"
-                    className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md h-8 px-3"
+            <CardListItem
+              key={caseItem.id}
+              icon={<Globe className="h-6 w-6 text-white" />}
+              title={caseItem.clientName}
+              status={caseItem.status}
+              rightActions={
+                <>
+                  <OptimizedLink
+                    href={`/dashboard/perda-nacionalidade/${caseItem.id}`}
+                    prefetchData={() => prefetchPerdaNacionalidadeById(caseItem.id)}
                   >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </OptimizedLink>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
                     <Button
-                      variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 text-red-600 hover:text-white hover:bg-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all duration-200"
+                      className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md h-8 px-3"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Eye className="h-4 w-4" />
                     </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Tem certeza que deseja excluir o processo de {caseItem.clientName}? Esta ação não pode ser desfeita.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDelete(Number(caseItem.id))}
-                        className="bg-white text-red-600 border border-red-500 hover:bg-red-50 hover:text-red-700"
+                  </OptimizedLink>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-red-600 hover:text-white hover:bg-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all duration-200"
                       >
-                        Excluir
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-4 flex-1">
-                    {/* Ícone do processo */}
-                    <div className="p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg shadow-md flex-shrink-0">
-                      <Globe className="h-6 w-6 text-white" />
-                    </div>
-
-                    {/* Informações do processo */}
-                    <div className="space-y-3 flex-1">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                          {caseItem.clientName}
-                        </h3>
-                        <Badge className={`${getStatusColor(caseItem.status)} flex items-center gap-1.5 px-3 py-1 shadow-md`}>
-                          {getStatusIcon(caseItem.status)}
-                          {normalizeStatusLabel(caseItem.status)}
-                        </Badge>
-                      </div>
-
-                      {/* removido bloco de data de criação fora da grade */}
-
-                      {/* Informações adicionais, padronizadas com Ações Cíveis */}
-                      <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                          <span className="font-medium">Tipo de ação:</span>
-                          <span>Perda de Nacionalidade</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                          <span className="font-medium">Fluxo atual:</span>
-                          <span>{getStepTitle(caseItem.currentStep || 0)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                          <span className="font-medium">Observações:</span>
-                          <span className="truncate max-w-[45ch]">
-                            {String(caseItem.notes || "—").slice(0, 90)}{caseItem.notes && caseItem.notes.length > 90 ? "…" : ""}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                          <span className="font-medium">Criado em:</span>
-                          <span>
-                            {new Date(caseItem.createdAt).toLocaleDateString("pt-BR", {
-                              day: "2-digit",
-                              month: "long",
-                              year: "numeric",
-                            })}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                          <span className="font-medium">Responsável:</span>
-                          <span>{caseAssignments[caseItem.id]?.responsibleName || "—"}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                          <span className="font-medium">Prazo:</span>
-                          <span>{caseAssignments[caseItem.id]?.dueDate ? new Date(caseAssignments[caseItem.id]!.dueDate!).toLocaleDateString("pt-BR") : "—"}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Ações movidas para canto superior direito */}
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza que deseja excluir o processo de {caseItem.clientName}? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(Number(caseItem.id))}
+                          className="bg-white text-red-600 border border-red-500 hover:bg-red-50 hover:text-red-700"
+                        >
+                          Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              }
+            >
+              <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                  <span className="font-medium">Tipo de ação:</span>
+                  <span>Perda de Nacionalidade</span>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                  <span className="font-medium">Fluxo atual:</span>
+                  <span>{getStepTitle(caseItem.currentStep || 0)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                  <span className="font-medium">Observações:</span>
+                  <span className="truncate max-w-[45ch]">
+                    {String(caseItem.notes || "—").slice(0, 90)}{caseItem.notes && caseItem.notes.length > 90 ? "…" : ""}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                  <span className="font-medium">Criado em:</span>
+                  <span>
+                    {new Date(caseItem.createdAt).toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                  <span className="font-medium">Responsável:</span>
+                  <span>{caseAssignments[caseItem.id]?.responsibleName || "—"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                  <span className="font-medium">Prazo:</span>
+                  <span>{caseAssignments[caseItem.id]?.dueDate ? new Date(caseAssignments[caseItem.id]!.dueDate!).toLocaleDateString("pt-BR") : "—"}</span>
+                </div>
+              </div>
+            </CardListItem>
           ))
         )}
       </div>
