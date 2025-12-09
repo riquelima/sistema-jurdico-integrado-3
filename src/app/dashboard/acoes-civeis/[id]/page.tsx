@@ -749,19 +749,31 @@ export default function CaseDetailPage() {
 
   const handleSaveStepObservation = async (index: number) => {
     const map = { ...stepObservations };
+    const payload: Record<string, any> = { stepNotes: map };
+    const sf = String((caseData as any)?.statusFinal || '').trim();
+    const sfo = String((caseData as any)?.statusFinalOutro || '').trim();
+    if (sf) payload.statusFinal = sf;
+    if (sfo) payload.statusFinalOutro = sfo;
     try {
       const response = await fetch(`/api/acoes-civeis/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stepNotes: map }),
+        body: JSON.stringify(payload),
       });
       if (response.ok) {
         const data = await response.json();
         const updatedMap = (data as any).stepNotes || map;
-        setCaseData(prev => prev ? { ...prev, stepNotes: updatedMap } : prev);
+        setCaseData(prev => prev ? { ...prev, stepNotes: updatedMap, statusFinal: payload.statusFinal ?? (prev as any)?.statusFinal, statusFinalOutro: payload.statusFinalOutro ?? (prev as any)?.statusFinalOutro } : prev);
         setStepObservations(updatedMap);
         setObsSaveSuccess(prev => ({ ...prev, [index]: true }));
         setTimeout(() => setObsSaveSuccess(prev => ({ ...prev, [index]: false })), 4000);
+        if (typeof window !== 'undefined') {
+          try {
+            const statusForEvent = String(payload.statusFinal || (caseData as any)?.status || '').trim() || 'Finalizado';
+            localStorage.setItem('acoes-civeis-status-update', JSON.stringify({ id, status: statusForEvent, t: Date.now() }));
+            window.dispatchEvent(new CustomEvent('acoes-civeis-status-updated', { detail: { id, status: statusForEvent } }));
+          } catch {}
+        }
       }
     } catch (error) {
       console.error("Erro ao salvar observações da etapa:", error);
@@ -1793,6 +1805,7 @@ export default function CaseDetailPage() {
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ statusFinal: val, statusFinalOutro: val === 'Outro' ? ((caseData as any)?.statusFinalOutro || '') : '' })
                           });
+                          await handleStatusChange("Finalizado");
                         } catch {}
                       }}
                     >
@@ -2387,6 +2400,7 @@ export default function CaseDetailPage() {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ statusFinal: val, statusFinalOutro: val === 'Outro' ? ((caseData as any)?.statusFinalOutro || '') : '' })
                       });
+                      await handleStatusChange("Finalizado");
                     } catch {}
                   }}
                 >
@@ -2465,17 +2479,18 @@ export default function CaseDetailPage() {
                   <Label>Status do Processo</Label>
                   <Select
                     value={String((caseData as any)?.statusFinal || '')}
-                    onValueChange={async (val) => {
-                      setCaseData(prev => prev ? { ...prev, statusFinal: val, statusFinalOutro: val === 'Outro' ? (prev as any)?.statusFinalOutro || '' : '' } : prev);
-                      try {
-                        await fetch(`/api/acoes-civeis/${id}`, {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ statusFinal: val, statusFinalOutro: val === 'Outro' ? ((caseData as any)?.statusFinalOutro || '') : '' })
-                        });
-                      } catch {}
-                    }}
-                  >
+                  onValueChange={async (val) => {
+                    setCaseData(prev => prev ? { ...prev, statusFinal: val, statusFinalOutro: val === 'Outro' ? (prev as any)?.statusFinalOutro || '' : '' } : prev);
+                    try {
+                      await fetch(`/api/acoes-civeis/${id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ statusFinal: val, statusFinalOutro: val === 'Outro' ? ((caseData as any)?.statusFinalOutro || '') : '' })
+                      });
+                      await handleStatusChange("Finalizado");
+                    } catch {}
+                  }}
+                >
                     <SelectTrigger className="h-9 w-full border-2 focus:border-cyan-500">
                       <SelectValue placeholder="Selecione o status" />
                     </SelectTrigger>

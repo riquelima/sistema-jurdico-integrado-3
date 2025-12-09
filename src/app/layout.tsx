@@ -66,6 +66,17 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className="antialiased force-light">
         <ErrorReporter />
+        <Script id="sw-unregister" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                registrations.forEach(function(registration) {
+                  registration.unregister();
+                });
+              });
+            }
+          `}
+        </Script>
         {/* Temporarily disabled VisualEditsMessenger to test preview issues
         <Script
           src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/scripts//route-messenger.js"

@@ -43,6 +43,8 @@ export async function GET(
         type: data.type,
         currentStep: data.current_step,
         status: data.status,
+        statusFinal: (data as any).status_final,
+        statusFinalOutro: (data as any).status_final_outro,
         notes: data.notes,
         ownerName: (data as any).owner_name,
         ownerCpf: (data as any).owner_cpf,
@@ -175,6 +177,8 @@ export async function PATCH(
     if (body.peticaoAnexada !== undefined) updateData.peticao_anexada = body.peticaoAnexada ?? null;
     if (body.processoAnexado !== undefined) updateData.processo_anexado = body.processoAnexado ?? null;
     if (body.documentosFinaisAnexados !== undefined) updateData.documentos_finais_anexados = body.documentosFinaisAnexados ?? null;
+    if (body.statusFinal !== undefined) updateData.status_final = body.statusFinal ?? null;
+    if (body.statusFinalOutro !== undefined) updateData.status_final_outro = body.statusFinalOutro ?? null;
     updateData.updated_at = new Date().toISOString();
 
     const { data, error } = await supabase
@@ -194,6 +198,8 @@ export async function PATCH(
       type: data.type,
       currentStep: data.current_step,
       status: data.status,
+      statusFinal: (data as any).status_final,
+      statusFinalOutro: (data as any).status_final_outro,
       notes: data.notes,
       nomeMae: data.nome_mae,
       nomePaiRegistral: data.nome_pai_registral,

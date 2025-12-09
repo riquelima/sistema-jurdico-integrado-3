@@ -11,6 +11,8 @@ function mapDbFieldsToFrontend(record: any) {
     type: record.type,
     currentStep: record.current_step,
     status: record.status,
+    statusFinal: (record as any).status_final,
+    statusFinalOutro: (record as any).status_final_outro,
     notes: record.notes,
     ownerName: (record as any).owner_name,
     ownerCpf: (record as any).owner_cpf,

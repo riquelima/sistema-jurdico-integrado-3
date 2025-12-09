@@ -53,7 +53,7 @@ export default function PerdaNacionalidadePage() {
   );
   const cases = Array.isArray(casesData) ? casesData : [];
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("Em andamento");
   const [caseAssignments, setCaseAssignments] = useState<Record<number, { responsibleName?: string; dueDate?: string }>>({});
   const lastAssignmentIdsRef = useRef<string>("");
   useEffect(() => {
@@ -76,10 +76,9 @@ export default function PerdaNacionalidadePage() {
     const statusVal = (c.status || "").toLowerCase();
     const filterVal = statusFilter.toLowerCase();
     const matchesStatus =
-      statusFilter === "all" ||
-      (filterVal === "finalizado"
+      filterVal === "finalizado"
         ? ["finalizado", "ratificado"].includes(statusVal)
-        : statusVal === filterVal);
+        : statusVal === filterVal;
     return matchesSearch && matchesStatus;
   });
 
@@ -208,8 +207,8 @@ export default function PerdaNacionalidadePage() {
           </Link>
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-stretch">
+          <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 h-full min-h-[140px]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-slate-400 text-sm font-medium">Total de Processos</p>
@@ -220,7 +219,7 @@ export default function PerdaNacionalidadePage() {
               </div>
             </div>
           </div>
-          <div className="bg-blue-900 rounded-lg p-4 border border-blue-700">
+          <div className="bg-blue-900 rounded-lg p-4 border border-blue-700 h-full min-h-[140px]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-300 text-sm font-medium">Em Andamento</p>
@@ -231,18 +230,7 @@ export default function PerdaNacionalidadePage() {
               </div>
             </div>
           </div>
-          <div className="bg-amber-900 rounded-lg p-4 border border-amber-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-amber-300 text-sm font-medium">Deferidos</p>
-                <p className="text-3xl font-bold text-amber-400 mt-1">{stats.deferido}</p>
-              </div>
-              <div className="p-3 bg-amber-800 rounded-lg">
-                <AlertCircle className="h-6 w-6 text-amber-400" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700">
+          <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700 h-full min-h-[140px]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-emerald-300 text-sm font-medium">Finalizados</p>
@@ -280,10 +268,7 @@ export default function PerdaNacionalidadePage() {
                 <SelectValue placeholder="Filtrar por status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                <SelectItem value="Deferido">Deferido</SelectItem>
-                <SelectItem value="Ratificado">Ratificado</SelectItem>
+                <SelectItem value="Em andamento">Em andamento</SelectItem>
                 <SelectItem value="Finalizado">Finalizado</SelectItem>
               </SelectContent>
             </Select>

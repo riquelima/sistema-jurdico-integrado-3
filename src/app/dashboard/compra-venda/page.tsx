@@ -219,8 +219,8 @@ export default function CompraVendaPage() {
           </Link>
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+          <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 h-full min-h-[140px]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-slate-400 text-sm font-medium">Total de Processos</p>
@@ -231,7 +231,7 @@ export default function CompraVendaPage() {
               </div>
             </div>
           </div>
-          <div className="bg-blue-900 rounded-lg p-4 border border-blue-700">
+          <div className="bg-blue-900 rounded-lg p-4 border border-blue-700 h-full min-h-[140px]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-300 text-sm font-medium">Em Andamento</p>
@@ -242,7 +242,7 @@ export default function CompraVendaPage() {
               </div>
             </div>
           </div>
-          <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700">
+          <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700 h-full min-h-[140px]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-emerald-300 text-sm font-medium">Finalizados</p>

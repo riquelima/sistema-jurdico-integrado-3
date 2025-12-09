@@ -271,18 +271,6 @@ export default function AcoesCiveisPage() {
     return steps[clampedIndex];
   };
 
-  const getStatusColor = (status: string) => {
-    const s = (status || "").toLowerCase();
-    switch (s) {
-      case "em andamento":
-        return "bg-blue-500 text-white hover:bg-blue-600";
-      case "finalizado":
-        return "bg-emerald-500 text-white hover:bg-emerald-600";
-      default:
-        return "bg-slate-500 text-white hover:bg-slate-600";
-    }
-  };
-
   const getStatusIcon = (status: string) => {
     const s = (status || "").toLowerCase();
     switch (s) {
@@ -290,6 +278,10 @@ export default function AcoesCiveisPage() {
         return <Clock className="h-4 w-4" />;
       case "finalizado":
         return <CheckCircle2 className="h-4 w-4" />;
+      case "deferido":
+        return <AlertCircle className="h-4 w-4" />;
+      case "indeferido":
+        return <AlertCircle className="h-4 w-4" />;
       default:
         return <FileText className="h-4 w-4" />;
     }
@@ -299,7 +291,39 @@ export default function AcoesCiveisPage() {
     const s = (status || "").toLowerCase();
     if (s === "em andamento") return "Em Andamento";
     if (s === "finalizado") return "Finalizado";
+    if (s === "deferido") return "Deferido";
+    if (s === "indeferido") return "Indeferido";
     return status;
+  };
+
+  const getStatusColor = (status: string) => {
+    const s = (status || "").toLowerCase();
+    switch (s) {
+      case "em andamento":
+        return "bg-blue-500 text-white hover:bg-blue-600";
+      case "finalizado":
+        return "bg-emerald-500 text-white hover:bg-emerald-600";
+      case "deferido":
+        return "bg-amber-500 text-white hover:bg-amber-600";
+      case "indeferido":
+        return "bg-red-600 text-white hover:bg-red-700";
+      case "outro":
+        return "bg-violet-500 text-white hover:bg-violet-600";
+      default:
+        return "bg-slate-500 text-white hover:bg-slate-600";
+    }
+  };
+
+  const computeDisplayStatus = (caseItem: any) => {
+    const sf = String(caseItem?.statusFinal || "").trim();
+    if (sf) {
+      if (sf.toLowerCase() === "outro") {
+        const outroText = String(caseItem?.statusFinalOutro || "").trim();
+        return outroText || "Outro";
+      }
+      return sf;
+    }
+    return String(caseItem?.status || "");
   };
 
   const handleDelete = async (id: number) => {
@@ -348,8 +372,8 @@ export default function AcoesCiveisPage() {
         </div>
 
         {/* Cards de estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 items-stretch">
+          <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 h-full min-h-[140px]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-slate-400 text-sm font-medium">Total de Processos</p>
@@ -361,7 +385,7 @@ export default function AcoesCiveisPage() {
             </div>
           </div>
 
-          <div className="bg-blue-900 rounded-lg p-4 border border-blue-700">
+          <div className="bg-blue-900 rounded-lg p-4 border border-blue-700 h-full min-h-[140px]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-300 text-sm font-medium">Em Andamento</p>
@@ -375,7 +399,7 @@ export default function AcoesCiveisPage() {
 
           
 
-          <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700">
+          <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700 h-full min-h-[140px]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-emerald-300 text-sm font-medium">Finalizados</p>
@@ -527,10 +551,16 @@ export default function AcoesCiveisPage() {
                         <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                           {caseItem.clientName}
                         </h3>
-                        <Badge className={`${getStatusColor(caseItem.status)} flex items-center gap-1.5 px-3 py-1 shadow-md`}>
-                          {getStatusIcon(caseItem.status)}
-                          {normalizeStatusLabel(caseItem.status)}
-                        </Badge>
+                        {(() => {
+                          const display = computeDisplayStatus(caseItem);
+                          const category = (caseItem?.statusFinal ? caseItem.statusFinal : caseItem.status) || "";
+                          return (
+                            <Badge className={`${getStatusColor(category)} flex items-center gap-1.5 px-3 py-1 shadow-md`}>
+                              {getStatusIcon(category)}
+                              {normalizeStatusLabel(display)}
+                            </Badge>
+                          );
+                        })()}
                       </div>
 
                       <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300">

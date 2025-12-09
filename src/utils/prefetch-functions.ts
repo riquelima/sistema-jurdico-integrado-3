@@ -79,8 +79,8 @@ export const prefetchVistos = async () => {
 export const prefetchDashboard = async () => {
   try {
     const [statsRes, notificationsRes, activitiesRes] = await Promise.all([
-      fetchWithRetry("/api/dashboard/stats"),
-      fetchWithRetry("/api/notifications/unread"),
+      fetchWithRetry("/api/processos/count"),
+      fetchWithRetry("/api/alerts?isRead=false&limit=10"),
       fetchWithRetry("/api/recent-activities")
     ]);
     return {
