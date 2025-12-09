@@ -1424,7 +1424,7 @@ export default function CaseDetailPage() {
                 </div>
                 <div>
                   <Label>Hora do Exame</Label>
-                  <Input type="time" className="bg-white" value={dnaExamTime} onChange={(e) => setDnaExamTime(e.target.value)} />
+                  <Input type="time" lang="pt-BR" step={60} className="bg-white" value={dnaExamTime} onChange={(e) => setDnaExamTime(e.target.value)} />
                 </div>
               <div>
                 <Label>Local do Exame</Label>
@@ -1780,6 +1780,53 @@ export default function CaseDetailPage() {
             return (
               <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
                 <h4 className="font-semibold text-slate-900">Processo Finalizado</h4>
+                <div className="grid gap-3">
+                  <div>
+                    <Label>Status do Processo</Label>
+                    <Select
+                      value={String((caseData as any)?.statusFinal || '')}
+                      onValueChange={async (val) => {
+                        setCaseData(prev => prev ? { ...prev, statusFinal: val, statusFinalOutro: val === 'Outro' ? (prev as any)?.statusFinalOutro || '' : '' } : prev);
+                        try {
+                          await fetch(`/api/acoes-civeis/${id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ statusFinal: val, statusFinalOutro: val === 'Outro' ? ((caseData as any)?.statusFinalOutro || '') : '' })
+                          });
+                        } catch {}
+                      }}
+                    >
+                      <SelectTrigger className="h-9 w-full border-2 focus:border-cyan-500">
+                        <SelectValue placeholder="Selecione o status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Deferido">Deferido</SelectItem>
+                        <SelectItem value="Indeferido">Indeferido</SelectItem>
+                        <SelectItem value="Outro">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {String((caseData as any)?.statusFinal || '') === 'Outro' && (
+                      <div className="mt-2">
+                        <Label htmlFor="status-final-outro-3">Descrever Status</Label>
+                        <Input
+                          id="status-final-outro-3"
+                          value={String((caseData as any)?.statusFinalOutro || '')}
+                          onChange={(e) => setCaseData(prev => prev ? { ...prev, statusFinalOutro: e.target.value } : prev)}
+                          onBlur={async (e) => {
+                            try {
+                              await fetch(`/api/acoes-civeis/${id}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ statusFinalOutro: e.target.value })
+                              });
+                            } catch {}
+                          }}
+                          placeholder="Digite o status"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="grid gap-3">
                   <div>
                     <Label>Documento Final</Label>
@@ -2245,6 +2292,53 @@ export default function CaseDetailPage() {
                 <h4 className="font-semibold text-slate-900">Processo Finalizado</h4>
                 <div className="grid gap-3">
                   <div>
+                    <Label>Status do Processo</Label>
+                    <Select
+                      value={String((caseData as any)?.statusFinal || '')}
+                      onValueChange={async (val) => {
+                        setCaseData(prev => prev ? { ...prev, statusFinal: val, statusFinalOutro: val === 'Outro' ? (prev as any)?.statusFinalOutro || '' : '' } : prev);
+                        try {
+                          await fetch(`/api/acoes-civeis/${id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ statusFinal: val, statusFinalOutro: val === 'Outro' ? ((caseData as any)?.statusFinalOutro || '') : '' })
+                          });
+                        } catch {}
+                      }}
+                    >
+                      <SelectTrigger className="h-9 w-full border-2 focus:border-cyan-500">
+                        <SelectValue placeholder="Selecione o status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Deferido">Deferido</SelectItem>
+                        <SelectItem value="Indeferido">Indeferido</SelectItem>
+                        <SelectItem value="Outro">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {String((caseData as any)?.statusFinal || '') === 'Outro' && (
+                      <div className="mt-2">
+                        <Label htmlFor="status-final-outro-6-usucapiao">Descrever Status</Label>
+                        <Input
+                          id="status-final-outro-6-usucapiao"
+                          value={String((caseData as any)?.statusFinalOutro || '')}
+                          onChange={(e) => setCaseData(prev => prev ? { ...prev, statusFinalOutro: e.target.value } : prev)}
+                          onBlur={async (e) => {
+                            try {
+                              await fetch(`/api/acoes-civeis/${id}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ statusFinalOutro: e.target.value })
+                              });
+                            } catch {}
+                          }}
+                          placeholder="Digite o status"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="grid gap-3">
+                  <div>
                     <Label>Documento Final</Label>
                     <Input
                       type="file"
@@ -2280,6 +2374,53 @@ export default function CaseDetailPage() {
         return (
           <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
             <h4 className="font-semibold text-slate-900">Processo Finalizado</h4>
+            <div className="grid gap-3">
+              <div>
+                <Label>Status do Processo</Label>
+                <Select
+                  value={String((caseData as any)?.statusFinal || '')}
+                  onValueChange={async (val) => {
+                    setCaseData(prev => prev ? { ...prev, statusFinal: val, statusFinalOutro: val === 'Outro' ? (prev as any)?.statusFinalOutro || '' : '' } : prev);
+                    try {
+                      await fetch(`/api/acoes-civeis/${id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ statusFinal: val, statusFinalOutro: val === 'Outro' ? ((caseData as any)?.statusFinalOutro || '') : '' })
+                      });
+                    } catch {}
+                  }}
+                >
+                  <SelectTrigger className="h-9 w-full border-2 focus:border-cyan-500">
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Deferido">Deferido</SelectItem>
+                    <SelectItem value="Indeferido">Indeferido</SelectItem>
+                    <SelectItem value="Outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+                {String((caseData as any)?.statusFinal || '') === 'Outro' && (
+                  <div className="mt-2">
+                    <Label htmlFor="status-final-outro-6">Descrever Status</Label>
+                    <Input
+                      id="status-final-outro-6"
+                      value={String((caseData as any)?.statusFinalOutro || '')}
+                      onChange={(e) => setCaseData(prev => prev ? { ...prev, statusFinalOutro: e.target.value } : prev)}
+                      onBlur={async (e) => {
+                        try {
+                          await fetch(`/api/acoes-civeis/${id}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ statusFinalOutro: e.target.value })
+                          });
+                        } catch {}
+                      }}
+                      placeholder="Digite o status"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
             <div className="grid gap-3">
               <div>
                 <Label>Documento Final</Label>
@@ -2319,6 +2460,53 @@ export default function CaseDetailPage() {
           return (
             <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
               <h4 className="font-semibold text-slate-900">Processo Finalizado</h4>
+              <div className="grid gap-3">
+                <div>
+                  <Label>Status do Processo</Label>
+                  <Select
+                    value={String((caseData as any)?.statusFinal || '')}
+                    onValueChange={async (val) => {
+                      setCaseData(prev => prev ? { ...prev, statusFinal: val, statusFinalOutro: val === 'Outro' ? (prev as any)?.statusFinalOutro || '' : '' } : prev);
+                      try {
+                        await fetch(`/api/acoes-civeis/${id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ statusFinal: val, statusFinalOutro: val === 'Outro' ? ((caseData as any)?.statusFinalOutro || '') : '' })
+                        });
+                      } catch {}
+                    }}
+                  >
+                    <SelectTrigger className="h-9 w-full border-2 focus:border-cyan-500">
+                      <SelectValue placeholder="Selecione o status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Deferido">Deferido</SelectItem>
+                      <SelectItem value="Indeferido">Indeferido</SelectItem>
+                      <SelectItem value="Outro">Outro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {String((caseData as any)?.statusFinal || '') === 'Outro' && (
+                    <div className="mt-2">
+                      <Label htmlFor="status-final-outro-7">Descrever Status</Label>
+                      <Input
+                        id="status-final-outro-7"
+                        value={String((caseData as any)?.statusFinalOutro || '')}
+                        onChange={(e) => setCaseData(prev => prev ? { ...prev, statusFinalOutro: e.target.value } : prev)}
+                        onBlur={async (e) => {
+                          try {
+                            await fetch(`/api/acoes-civeis/${id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ statusFinalOutro: e.target.value })
+                            });
+                          } catch {}
+                        }}
+                        placeholder="Digite o status"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
               <div className="grid gap-3">
                 <div>
                   <Label>Documento Final</Label>

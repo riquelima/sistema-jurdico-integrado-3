@@ -34,7 +34,7 @@ export async function GET(
     const { data: documents, error } = await supabaseAdmin
       .from('documents')
       .select('*')
-      .eq('module_type', moduleType)
+      .ilike('module_type', moduleType)
       .eq('record_id', caseIdNum)
       .order('uploaded_at', { ascending: false });
 

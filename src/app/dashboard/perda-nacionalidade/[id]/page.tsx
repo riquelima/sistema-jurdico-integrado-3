@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Save, Trash2, FileText, Download, X, Edit2 } from "lucide-react";
+import { ArrowLeft, Save, Trash2, FileText, Download, X, Edit2, Upload } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -91,6 +91,17 @@ export default function PerdaNacionalidadeDetailPage() {
       const response = await fetch(`/api/perda-nacionalidade?id=${params.id}`);
       if (response.ok) {
         const data = await response.json();
+        const cur = Number(data.currentStep ?? 0);
+        if (cur < 2) {
+          try {
+            await fetch(`/api/perda-nacionalidade?id=${params.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ currentStep: 2 })
+            });
+          } catch {}
+          data.currentStep = 2;
+        }
         setCaseData(data);
         setNotes(data.notes || "");
         setStatus(data.status || "");
@@ -182,50 +193,45 @@ export default function PerdaNacionalidadeDetailPage() {
     setUploading(true);
     if (field) setUploadingField(field);
 
-    const formData = new FormData();
-    Array.from(files).forEach((file) => {
-      formData.append("files", file);
-    });
-    // Use general upload route
-    const file = fileArray[0];
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('caseId', String(params.id));
-    fd.append('moduleType', 'perda_nacionalidade');
-    fd.append('fieldName', field || 'documentoAnexado');
-    fd.append('clientName', caseData?.clientName || 'Cliente');
-
     try {
-      const response = await fetch('/api/documents/upload', { method: 'POST', body: fd });
-      if (response.ok) {
-        const resp = await response.json();
-        const fileUrl = resp.fileUrl || resp.file_path || resp.filePath || resp.url;
-        if (field && fileUrl) {
-          try {
-            await fetch(`/api/perda-nacionalidade?id=${params.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ [field]: fileUrl }),
-            });
-            setCaseData((prev: any) => ({ ...(prev || {}), [field]: fileUrl }));
-            if (typeof step === 'number') {
-              setStepData((prev: any) => {
-                const next = {
-                  ...prev,
-                  [step]: { ...((prev || {})[step] || {}), [field]: fileUrl },
-                };
-                fetch(`/api/perda-nacionalidade?id=${params.id}`, {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ stepData: next }),
-                }).catch(() => {});
-                return next;
+      for (const file of fileArray) {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('caseId', String(params.id));
+        fd.append('moduleType', 'perda_nacionalidade');
+        fd.append('fieldName', field || 'documentoAnexado');
+        fd.append('clientName', caseData?.clientName || 'Cliente');
+        const response = await fetch('/api/documents/upload', { method: 'POST', body: fd });
+        if (response.ok) {
+          const resp = await response.json();
+          const fileUrl = resp.fileUrl || resp.file_path || resp.filePath || resp.url;
+          if (field && fileUrl) {
+            try {
+              await fetch(`/api/perda-nacionalidade?id=${params.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ [field]: fileUrl }),
               });
-            }
-          } catch {}
+              setCaseData((prev: any) => ({ ...(prev || {}), [field]: fileUrl }));
+              if (typeof step === 'number') {
+                setStepData((prev: any) => {
+                  const next = {
+                    ...prev,
+                    [step]: { ...((prev || {})[step] || {}), [field]: fileUrl },
+                  };
+                  fetch(`/api/perda-nacionalidade?id=${params.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ stepData: next }),
+                  }).catch(() => {});
+                  return next;
+                });
+              }
+            } catch {}
+          }
         }
-        await fetchDocuments();
       }
+      await fetchDocuments();
     } catch (error) {
       console.error("Erro ao fazer upload:", error);
     } finally {
@@ -411,22 +417,29 @@ export default function PerdaNacionalidadeDetailPage() {
 
     const renderFileUpload = (fieldName: string, label: string) => (
       <div className="space-y-2">
-        <Label>{label}</Label>
-        <div className="flex items-center gap-2">
-          <Input
+        <Label>Upload de Documentos</Label>
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+          <input
             type="file"
             multiple
+            id={`${fieldName}-${stepIndex}`}
+            className="hidden"
             onChange={(e) => e.target.files && handleFileUpload(e.target.files, stepIndex, fieldName)}
-            className="flex-1"
           />
-          {uploadingField === fieldName && (
-            <div className="text-sm text-muted-foreground">Enviando...</div>
-          )}
+          <Button
+            variant="outline"
+            onClick={() => document.getElementById(`${fieldName}-${stepIndex}`)?.click()}
+            disabled={uploadingField === fieldName}
+          >
+            {uploadingField === fieldName ? (
+              <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2" />
+            ) : (
+              <Upload className="w-4 h-4 mr-2" />
+            )}
+            Fazer Upload de Arquivos
+          </Button>
         </div>
         {renderDocLinks(fieldName)}
-        {currentStepData[fieldName] && (
-          <div className="text-sm text-green-600">✓ Arquivo enviado</div>
-        )}
       </div>
     );
 
@@ -584,7 +597,7 @@ export default function PerdaNacionalidadeDetailPage() {
       case 1:
         return (
           <div className="space-y-6">
-            <div className="space-y-4">
+            <div className="space-y-6">
               {renderFileUpload("procuracaoDoc", "Procuração")}
               {renderFileUpload("pedidoPerdaDoc", "Pedido de Perda de Nacionalidade")}
             </div>
@@ -613,7 +626,7 @@ export default function PerdaNacionalidadeDetailPage() {
       case 2:
         return (
           <div className="space-y-6">
-            <div className="space-y-4">
+            <div className="space-y-6">
               {renderFileUpload("procuracaoAssinadaDoc", "Procuração Assinada")}
               {renderFileUpload("pedidoAssinadoDoc", "Pedido Assinado")}
             </div>
@@ -651,7 +664,7 @@ export default function PerdaNacionalidadeDetailPage() {
       case 3:
         return (
           <div className="space-y-6">
-            <div className="space-y-4">
+            <div className="space-y-6">
               {renderFileUpload("protocoloDoc", "Protocolo no SEI")}
             </div>
             
@@ -697,7 +710,7 @@ export default function PerdaNacionalidadeDetailPage() {
       case 4:
         return (
           <div className="space-y-6">
-            <div className="space-y-4">
+            <div className="space-y-6">
               {renderFileUpload("comprovanteProtocoladoDoc", "Comprovante de Protocolo")}
               {renderFileUpload("extratoSeiDoc", "Extrato do SEI")}
             </div>
@@ -735,7 +748,7 @@ export default function PerdaNacionalidadeDetailPage() {
       case 5:
         return (
           <div className="space-y-6">
-            <div className="space-y-4">
+            <div className="space-y-6">
               {renderFileUpload("douDoc", "DOU (Diário Oficial da União)")}
             </div>
             
@@ -772,7 +785,7 @@ export default function PerdaNacionalidadeDetailPage() {
       case 6:
         return (
           <div className="space-y-6">
-            <div className="space-y-4">
+            <div className="space-y-6">
               {renderFileUpload("passaporteChinesDoc", "Passaporte Chinês")}
               {renderFileUpload("portariaDoc", "Portaria")}
             </div>
@@ -810,7 +823,7 @@ export default function PerdaNacionalidadeDetailPage() {
       case 7:
         return (
           <div className="space-y-6">
-            <div className="space-y-4">
+            <div className="space-y-6">
               {renderFileUpload("manifestoDoc", "Manifesto")}
             </div>
             
@@ -847,7 +860,7 @@ export default function PerdaNacionalidadeDetailPage() {
       case 8:
         return (
           <div className="space-y-6">
-            <div className="space-y-4">
+            <div className="space-y-6">
               {renderFileUpload("protocoloManifestoDoc", "Protocolo do Manifesto no SEI")}
             </div>
             
@@ -893,7 +906,7 @@ export default function PerdaNacionalidadeDetailPage() {
       case 9:
         return (
           <div className="space-y-6">
-            <div className="space-y-4">
+            <div className="space-y-6">
               {renderFileUpload("douRatificacaoDoc", "DOU (Diário Oficial da União)")}
             </div>
             
@@ -971,12 +984,12 @@ export default function PerdaNacionalidadeDetailPage() {
           <Skeleton className="h-8 w-64" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-6">
             {[1, 2, 3, 4].map((i) => (
               <Skeleton key={i} className="h-20 w-full" />
             ))}
           </div>
-          <div className="space-y-4">
+          <div className="space-y-6">
             <Skeleton className="h-32 w-full" />
             <Skeleton className="h-48 w-full" />
           </div>

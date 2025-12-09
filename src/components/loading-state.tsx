@@ -47,7 +47,7 @@ export function LoadingState({ count = 3, type = "card" }: LoadingStateProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm">
           <div className="flex items-start gap-4">

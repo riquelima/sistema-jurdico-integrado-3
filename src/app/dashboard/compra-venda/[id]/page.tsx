@@ -1133,7 +1133,7 @@ export default function CompraVendaDetailsPage() {
                 <CardTitle>Fluxo do Processo</CardTitle>
                 <div className="text-xs text-muted-foreground">Etapa {currentStep}: {currentStepTitle}</div>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 {WORKFLOW_STEPS.map((step) => (
                 <StepItem
                   key={step.id}

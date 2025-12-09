@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Globe, Eye, Plane, Briefcase, Building2, Clock, CheckCircle2, AlertCircle, FileText, CreditCard, User, Calendar, Trash2 } from "lucide-react";
+import { Plus, Search, Globe, Eye, Plane, Briefcase, Building2, Clock, CheckCircle2, AlertCircle, FileText, CreditCard, User, Calendar, Trash2, Circle, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingState } from "@/components/loading-state";
@@ -42,6 +42,10 @@ interface Visto {
   cpf?: string;
   rnm?: string;
   passaporte?: string;
+  statusFinal?: string;
+  statusFinalOutro?: string;
+  currentStep?: number;
+  country?: string;
 }
 
 export default function VistosPage() {
@@ -104,6 +108,15 @@ export default function VistosPage() {
                 currentIdx = Math.max(...arr.map((a: any) => (a.stepIndex ?? 0)));
               }
             }
+            // Buscar currentStep real do registro para sincronizar com o fluxo
+            try {
+              const caseRes = await fetch(`/api/vistos?id=${id}`);
+              if (caseRes.ok) {
+                const caseJson = await caseRes.json();
+                const serverCurrent = Number(caseJson.currentStep ?? caseJson.current_step ?? currentIdx ?? 0);
+                if (!Number.isNaN(serverCurrent)) currentIdx = serverCurrent;
+              }
+            } catch {}
             const currentAssignment = arr.find((a: any) => a.stepIndex === currentIdx) || null;
             return [id, { responsibleName: currentAssignment?.responsibleName, dueDate: currentAssignment?.dueDate, currentIndex: currentIdx }] as const;
           } catch {
@@ -167,40 +180,45 @@ export default function VistosPage() {
 
   const getVistoSteps = (type: string) => {
     const t = (type || "").toLowerCase();
-    const BASE_STEPS = [
-      "Cadastro de Documentos",
-      "Análise de Elegibilidade",
-      "Preparação da Documentação",
-      "Agendamento no Consulado",
-      "Entrevista Consular",
-      "Aguardar Resultado",
-      "Retirada do Visto",
-      "Processo Finalizado",
-    ];
-    const TURISMO_STEPS = [
-      "Cadastro de Documentos",
-      "Verificação de Requisitos",
-      "Preparação da Documentação",
-      "Agendamento no Consulado",
-      "Entrevista Consular",
-      "Aguardar Resultado",
-      "Retirada do Visto",
-      "Processo Finalizado",
-    ];
-    const ESTUDANTE_STEPS = [
-      "Cadastro de Documentos",
-      "Verificação de Aceitação Acadêmica",
-      "Preparação da Documentação",
-      "Comprovação Financeira",
-      "Agendamento no Consulado",
-      "Entrevista Consular",
-      "Aguardar Resultado",
-      "Retirada do Visto",
-      "Processo Finalizado",
-    ];
-    if (t.includes("turismo")) return TURISMO_STEPS;
-    if (t.includes("estudante")) return ESTUDANTE_STEPS;
-    return BASE_STEPS;
+    const WORKFLOWS_LIST = {
+      "Visto de Trabalho": [
+        "Cadastro de Documentos",
+        "Agendar no Consulado",
+        "Preencher Formulário",
+        "Preparar Documentação",
+        "Aguardar Aprovação",
+        "Processo Finalizado",
+      ],
+      "Visto de Turismo": [
+        "Cadastro de Documentos",
+        "Agendar no Consulado",
+        "Preencher Formulário",
+        "Preparar Documentação",
+        "Aguardar Aprovação",
+        "Processo Finalizado",
+      ],
+      "Visto de Estudante": [
+        "Cadastro de Documentos",
+        "Agendar no Consulado",
+        "Preencher Formulário",
+        "Preparar Documentação",
+        "Aguardar Aprovação",
+        "Processo Finalizado",
+      ],
+      "Visto de Reunião Familiar": [
+        "Cadastro de Documentos",
+        "Agendar no Consulado",
+        "Preencher Formulário",
+        "Preparar Documentação",
+        "Aguardar Aprovação",
+        "Processo Finalizado",
+      ],
+    } as const;
+
+    if (t.includes("turismo")) return WORKFLOWS_LIST["Visto de Turismo"];
+    if (t.includes("estudante")) return WORKFLOWS_LIST["Visto de Estudante"];
+    if (t.includes("reunião") || t.includes("reuniao")) return WORKFLOWS_LIST["Visto de Reunião Familiar"];
+    return WORKFLOWS_LIST["Visto de Trabalho"];
   };
 
   const getVistoStepTitle = (type: string, index: number) => {
@@ -249,7 +267,7 @@ export default function VistosPage() {
         </div>
 
         {/* Cards de estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
             <div className="flex items-center justify-between">
               <div>
@@ -316,11 +334,11 @@ export default function VistosPage() {
               <SelectContent>
                 <SelectItem value="all">Todos os tipos</SelectItem>
                 <SelectItem value="Turismo">Turismo</SelectItem>
-                <SelectItem value="Trabalho:Brasil">Trabalho:Brasil</SelectItem>
-                <SelectItem value="Trabalho:Residência Prévia">Trabalho:Residência Prévia</SelectItem>
-                <SelectItem value="Trabalho:Renovação 1 ano">Trabalho:Renovação 1 ano</SelectItem>
-                <SelectItem value="Trabalho:Indeterminado">Trabalho:Indeterminado</SelectItem>
-                <SelectItem value="Trabalho:Mudança de Empregador">Trabalho:Mudança de Empregador</SelectItem>
+                <SelectItem value="Trabalho:Brasil">Trabalho - Brasil</SelectItem>
+                <SelectItem value="Trabalho:Residência Prévia">Trabalho - Residência Prévia</SelectItem>
+                <SelectItem value="Trabalho:Renovação 1 ano">Trabalho - Renovação 1 ano</SelectItem>
+                <SelectItem value="Trabalho:Indeterminado">Trabalho - Indeterminado</SelectItem>
+                <SelectItem value="Trabalho:Mudança de Empregador">Trabalho - Mudança de Empregador</SelectItem>
                 <SelectItem value="Investidor">Investidor</SelectItem>
               </SelectContent>
             </Select>
@@ -429,13 +447,52 @@ export default function VistosPage() {
                       <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300">
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                          <span className="font-medium">Tipo de ação:</span>
-                          <span>{visto.type}</span>
+                          <span className="font-medium">Tipo de Visto:</span>
+                          <span>{(visto.type || "").replace(/:/g, " - ")}</span>
                         </div>
+                        {String(visto.type || "").toLowerCase().includes("turismo") && (
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                            <span className="font-medium">Destino:</span>
+                            <span>{String(visto.country || "—")}</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                           <span className="font-medium">Data de criação:</span>
                           <span>{new Date(visto.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Circle className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Status Processo:</span>
+                          <span>{(() => {
+                            const s = String(visto.statusFinal || "");
+                            if (!s) return "—";
+                            if (s === "Outro") return String(visto.statusFinalOutro || "Outro");
+                            return s;
+                          })()}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Fluxo atual:</span>
+                          <span>{getVistoStepTitle(
+                            visto.type,
+                            (visto.currentStep ?? vistosAssignments[String(visto.id)]?.currentIndex ?? 0)
+                          )}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Responsável:</span>
+                          <span>{vistosAssignments[String(visto.id)]?.responsibleName || "—"}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Prazo:</span>
+                          <span>{(() => {
+                            const iso = vistosAssignments[String(visto.id)]?.dueDate;
+                            if (!iso) return "—";
+                            try { const d = new Date(iso); return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("pt-BR"); } catch { return "—"; }
+                          })()}</span>
                         </div>
                       </div>
 

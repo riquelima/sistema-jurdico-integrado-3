@@ -10,6 +10,7 @@ function mapVistosDbFieldsToFrontend(record: any) {
     id: record.id,
     clientName: record.client_name,
     type: record.type,
+    country: record.country,
     cpf: record.cpf,
     cpfDoc: record.cpf_doc,
     rnm: record.rnm,
@@ -158,17 +159,18 @@ export async function GET(request: NextRequest) {
       .select('*');
 
     // Apply filters
-    if (search) {
-      const s = search.replace(/,/g, ' ');
-      query = query.or(
-        [
-          `client_name.ilike.%${s}%`,
-          `type.ilike.%${s}%`,
-          `cpf.ilike.%${s}%`,
-          `rnm.ilike.%${s}%`,
-          `passaporte.ilike.%${s}%`,
-          `comprovante_endereco.ilike.%${s}%`,
-          `cartao_cnpj.ilike.%${s}%`,
+  if (search) {
+    const s = search.replace(/,/g, ' ');
+    query = query.or(
+      [
+        `client_name.ilike.%${s}%`,
+        `type.ilike.%${s}%`,
+        `country.ilike.%${s}%`,
+        `cpf.ilike.%${s}%`,
+        `rnm.ilike.%${s}%`,
+        `passaporte.ilike.%${s}%`,
+        `comprovante_endereco.ilike.%${s}%`,
+        `cartao_cnpj.ilike.%${s}%`,
           `contrato_empresa.ilike.%${s}%`,
           `escritura_imoveis.ilike.%${s}%`,
           `reservas_passagens.ilike.%${s}%`,
@@ -234,6 +236,7 @@ export async function POST(request: NextRequest) {
     const insertData = {
       client_name: body.clientName.trim(),
       type: body.type.trim(),
+      country: body.country?.trim() || null,
       cpf: body.cpf?.trim() || null,
       cpf_doc: body.cpfDoc?.trim() || null,
       rnm: body.rnm?.trim() || null,
@@ -390,6 +393,10 @@ export async function PUT(request: NextRequest) {
 
     if (body.type !== undefined) {
       updateData.type = body.type.trim();
+    }
+
+    if (body.country !== undefined) {
+      updateData.country = body.country?.trim() || null;
     }
 
     if (body.cpf !== undefined) {

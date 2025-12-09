@@ -277,7 +277,53 @@ export async function POST(request: NextRequest) {
         'contaAguaFile': 'conta_agua_doc',
         'contaLuzFile': 'conta_luz_doc',
         'iptuFile': 'iptu_doc',
-        'contratoEngenheiroFile': 'contrato_engenheiro_doc'
+        'contratoEngenheiroFile': 'contrato_engenheiro_doc',
+        // Vistos
+        'cpfDoc': 'cpf_doc',
+        'rnmDoc': 'rnm_doc',
+        'passaporteDoc': 'passaporte_doc',
+        'comprovanteEnderecoDoc': 'comprovante_endereco_doc',
+        'declaracaoResidenciaDoc': 'declaracao_residencia_doc',
+        'foto3x4Doc': 'foto_3x4_doc',
+        'documentoChinesDoc': 'documento_chines_doc',
+        'antecedentesCriminaisDoc': 'antecedentes_criminais_doc',
+        'certidaoNascimentoFilhosDoc': 'certidao_nascimento_filhos_doc',
+        'cartaoCnpjDoc': 'cartao_cnpj_doc',
+        'contratoEmpresaDoc': 'contrato_empresa_doc',
+        'escrituraImoveisDoc': 'escritura_imoveis_doc',
+        'extratosBancariosDoc': 'extratos_bancarios_doc',
+        'impostoRendaDoc': 'imposto_renda_doc',
+        'reservasPassagensDoc': 'reservas_passagens_doc',
+        'reservasHotelDoc': 'reservas_hotel_doc',
+        'seguroViagemDoc': 'seguro_viagem_doc',
+        'roteiroViagemDoc': 'roteiro_viagem_doc',
+        'taxaDoc': 'taxa_doc',
+        'formularioConsuladoDoc': 'formulario_consulado_doc',
+        'comprovanteResidenciaPreviaDoc': 'comprovante_residencia_previa_doc',
+        'formularioRn02Doc': 'formulario_rn02_doc',
+        'comprovanteAtividadeDoc': 'comprovante_atividade_doc',
+        'certidaoNascimentoDoc': 'certidao_nascimento_doc',
+        'declaracaoCompreensaoDoc': 'declaracao_compreensao_doc',
+        'declaracoesEmpresaDoc': 'declaracoes_empresa_doc',
+        'procuracaoEmpresaDoc': 'procuracao_empresa_doc',
+        'formularioRn01Doc': 'formulario_rn01_doc',
+        'guiaPagaDoc': 'guia_paga_doc',
+        'publicacaoDouDoc': 'dou_doc',
+        'comprovanteInvestimentoDoc': 'comprovante_investimento_doc',
+        'planoInvestimentosDoc': 'plano_investimentos_doc',
+        'formularioRequerimentoDoc': 'formulario_requerimento_doc',
+        'protocoladoDoc': 'protocolado_doc',
+        'contratoTrabalhoDoc': 'contrato_trabalho_doc',
+        'folhaPagamentoDoc': 'folha_pagamento_doc',
+        'comprovanteVinculoAnteriorDoc': 'comprovante_vinculo_anterior_doc',
+        'declaracaoAntecedentesCriminaisDoc': 'declaracao_antecedentes_criminais_doc',
+        'diplomaDoc': 'diploma_doc',
+        'ctpsDoc': 'ctps_doc',
+        'contratoTrabalhoAnteriorDoc': 'contrato_trabalho_anterior_doc',
+        'contratoTrabalhoAtualDoc': 'contrato_trabalho_atual_doc',
+        'formularioProrrogacaoDoc': 'formulario_prorrogacao_doc',
+        'contratoTrabalhoIndeterminadoDoc': 'contrato_trabalho_indeterminado_doc',
+        'justificativaMudancaEmpregadorDoc': 'justificativa_mudanca_empregador_doc'
       };
       
       const dbFieldName = fieldNameMapping[fieldName] || fieldName.replace(/([A-Z])/g, '_$1').toLowerCase();
@@ -393,7 +439,7 @@ export async function GET(request: NextRequest) {
       const { data: filteredDocuments, error } = await supabase
         .from('documents')
         .select('*')
-        .eq('module_type', moduleType)
+        .ilike('module_type', moduleType)
         .eq('record_id', recordIdNum)
         .range(offset, offset + limit - 1);
 

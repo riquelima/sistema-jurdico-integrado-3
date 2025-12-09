@@ -61,44 +61,34 @@ import { NotesPanel } from "@/components/detail/NotesPanel";
 const WORKFLOWS = {
   "Visto de Trabalho": [
     "Cadastro de Documentos",
-    "Análise de Elegibilidade",
-    "Preparação da Documentação",
-    "Agendamento no Consulado",
-    "Entrevista Consular",
-    "Aguardar Resultado",
-    "Retirada do Visto",
+    "Agendar no Consulado",
+    "Preencher Formulário",
+    "Preparar Documentação",
+    "Aguardar Aprovação",
     "Processo Finalizado"
   ],
   "Visto de Turismo": [
     "Cadastro de Documentos",
-    "Verificação de Requisitos",
-    "Preparação da Documentação",
-    "Agendamento no Consulado",
-    "Entrevista Consular",
-    "Aguardar Resultado",
-    "Retirada do Visto",
+    "Agendar no Consulado",
+    "Preencher Formulário",
+    "Preparar Documentação",
+    "Aguardar Aprovação",
     "Processo Finalizado"
   ],
   "Visto de Estudante": [
     "Cadastro de Documentos",
-    "Verificação de Aceitação Acadêmica",
-    "Preparação da Documentação",
-    "Comprovação Financeira",
-    "Agendamento no Consulado",
-    "Entrevista Consular",
-    "Aguardar Resultado",
-    "Retirada do Visto",
+    "Agendar no Consulado",
+    "Preencher Formulário",
+    "Preparar Documentação",
+    "Aguardar Aprovação",
     "Processo Finalizado"
   ],
   "Visto de Reunião Familiar": [
     "Cadastro de Documentos",
-    "Verificação de Vínculo Familiar",
-    "Preparação da Documentação",
-    "Comprovação de Relacionamento",
-    "Agendamento no Consulado",
-    "Entrevista Consular",
-    "Aguardar Resultado",
-    "Retirada do Visto",
+    "Agendar no Consulado",
+    "Preencher Formulário",
+    "Preparar Documentação",
+    "Aguardar Aprovação",
     "Processo Finalizado"
   ]
 } as const;
@@ -149,7 +139,7 @@ export default function VistoDetailsPage() {
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
-  const showWorkflow = false;
+  const showWorkflow = true;
   const [expandedSteps, setExpandedSteps] = useState<{ [key: number]: boolean }>({});
   const [uploadingFiles, setUploadingFiles] = useState<{ [key: string]: boolean }>({});
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
@@ -164,6 +154,7 @@ export default function VistoDetailsPage() {
   // Estados para uploads de arquivos específicos
   const [fileUploads, setFileUploads] = useState<{ [key: string]: File | null }>({});
   const [assignments, setAssignments] = useState<Record<number, { responsibleName?: string; dueDate?: string }>>({});
+  const [saveMessages, setSaveMessages] = useState<{ [key: number]: string }>({});
 
   useEffect(() => {
     if (params.id) {
@@ -192,7 +183,12 @@ export default function VistoDetailsPage() {
       if (res.ok) {
         const record = await res.json();
         setVisto(record);
-        const flowType = (record.type || "Visto de Trabalho") as VistoType;
+        const rawTypeStr = String(record.type || "");
+        const lowerType = rawTypeStr.toLowerCase();
+        let flowType: VistoType = "Visto de Trabalho";
+        if (lowerType.includes("turismo")) flowType = "Visto de Turismo";
+        else if (lowerType.includes("estudante")) flowType = "Visto de Estudante";
+        else if (lowerType.includes("reuni") && lowerType.includes("familiar")) flowType = "Visto de Reunião Familiar";
         const steps: StepData[] = (WORKFLOWS[flowType] || WORKFLOWS["Visto de Trabalho"]).map((title: string, index: number) => ({
           id: index,
           title,
@@ -200,6 +196,12 @@ export default function VistoDetailsPage() {
           completed: false,
           notes: "",
         }));
+        const recordCurrentStep = Number(record.currentStep ?? 0);
+        const initialCurrentStep = recordCurrentStep < 1 ? 1 : recordCurrentStep;
+        // marcar como concluídas as etapas anteriores ao currentStep
+        for (let i = 0; i < steps.length; i++) {
+          steps[i].completed = i < initialCurrentStep;
+        }
         const data: CaseData = {
           id: String(record.id),
           title: `Visto ${record.id}`,
@@ -210,9 +212,23 @@ export default function VistoDetailsPage() {
           clientName: record.clientName || record.client_name,
           description: `Processo de ${flowType}`,
           steps,
+          // usar currentStep para refletir etapa atual (0-based para Vistos)
+          // garante que "Cadastro de Documentos" (0) fica concluída por padrão
+          // ao abrir os detalhes quando o caso é novo
+          // nota: o componente StatusPanel já adiciona +1 para exibição
+          currentStep: initialCurrentStep,
         };
         setCaseData(data);
         setStatus(data.status);
+        if (recordCurrentStep < 1) {
+          try {
+            await fetch(`/api/vistos?id=${params.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ currentStep: 1 })
+            });
+          } catch {}
+        }
         // Parse aggregated notes into step map if present
         const initialNotes: { [key: number]: string } = {};
         if (record.notes) {
@@ -238,7 +254,7 @@ export default function VistoDetailsPage() {
 
   const fetchDocuments = async () => {
     try {
-      const res = await fetch(`/api/documents?moduleType=vistos&recordId=${params.id}`);
+      const res = await fetch(`/api/documents/${params.id}?moduleType=vistos`);
       if (res.ok) {
         const docs = await res.json();
         setDocuments(docs || []);
@@ -295,20 +311,26 @@ export default function VistoDetailsPage() {
   const handleFileUpload = async (files: FileList | File[] | null, stepId?: number) => {
     const arr = !files ? [] : Array.isArray(files) ? files : Array.from(files);
     if (!arr.length) return;
-    const file = arr[0];
     const uploadKey = stepId !== undefined ? `step-${stepId}` : 'general';
     setUploadingFiles(prev => ({ ...prev, [uploadKey]: true }));
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('caseId', String(params.id));
-      fd.append('moduleType', 'vistos');
-      fd.append('fieldName', 'documentoAnexado');
-      fd.append('clientName', caseData?.clientName || 'Cliente');
-      const res = await fetch('/api/documents/upload', { method: 'POST', body: fd });
-      if (res.ok) {
-        await fetchDocuments();
+      for (const file of arr) {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('caseId', String(params.id));
+        fd.append('moduleType', 'vistos');
+        fd.append('fieldName', 'documentoAnexado');
+        fd.append('clientName', caseData?.clientName || 'Cliente');
+        const res = await fetch('/api/documents/upload', { method: 'POST', body: fd });
+        if (res.ok) {
+          const payload = await res.json();
+          const newDoc = payload?.document;
+          if (newDoc) {
+            setDocuments(prev => [newDoc, ...prev]);
+          }
+        }
       }
+      await fetchDocuments();
     } catch (error) {
       console.error("Erro ao fazer upload:", error);
     } finally {
@@ -328,6 +350,11 @@ export default function VistoDetailsPage() {
       fd.append('clientName', caseData?.clientName || 'Cliente');
       const res = await fetch('/api/documents/upload', { method: 'POST', body: fd });
       if (res.ok) {
+        const payload = await res.json();
+        const newDoc = payload?.document;
+        if (newDoc) {
+          setDocuments(prev => [newDoc, ...prev]);
+        }
         await fetchDocuments();
         setFileUploads(prev => ({ ...prev, [uploadKey]: null }));
       }
@@ -357,6 +384,37 @@ export default function VistoDetailsPage() {
     );
   };
 
+  const UploadDocBlock = ({ inputId, disabledKey, onSelect }: { inputId: string; disabledKey: string; onSelect: (f: File) => void }) => (
+    <div className="space-y-3">
+      <Label>Upload de Documentos</Label>
+      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+        <input
+          type="file"
+          id={inputId}
+          className="hidden"
+          multiple
+          onChange={(e) => {
+            const list = Array.from(e.target.files || []);
+            list.forEach((f) => onSelect(f));
+          }}
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => document.getElementById(inputId)?.click()}
+          disabled={uploadingFiles[disabledKey]}
+        >
+          {uploadingFiles[disabledKey] ? (
+            <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2" />
+          ) : (
+            <Upload className="w-4 h-4 mr-2" />
+          )}
+          Fazer Upload de Arquivos
+        </Button>
+      </div>
+    </div>
+  );
+
   const toggleStepExpansion = (stepId: number) => {
     setExpandedSteps(prev => ({
       ...prev,
@@ -366,30 +424,56 @@ export default function VistoDetailsPage() {
 
   const handleStepCompletion = (stepId: number) => {
     if (!caseData) return;
-    
     setCaseData(prev => {
       if (!prev) return prev;
-      
-      return {
-        ...prev,
-        steps: prev.steps.map(step => 
-          step.id === stepId 
-            ? { 
-                ...step, 
-                completed: !step.completed,
-                completedAt: !step.completed ? new Date().toISOString() : undefined
-              }
-            : step
-        )
-      };
+      const updatedSteps = prev.steps.map(step => 
+        step.id === stepId 
+          ? { 
+              ...step, 
+              completed: !step.completed,
+              completedAt: !step.completed ? new Date().toISOString() : undefined
+            }
+          : step
+      );
+      const newCurrent = Math.min(updatedSteps.filter(s => s.completed).length, updatedSteps.length - 1);
+      // persistir currentStep
+      (async () => {
+        try {
+          await fetch(`/api/vistos?id=${params.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentStep: newCurrent })
+          });
+          // atualizar índice atual em assignments para sincronizar com a lista
+          try {
+            await fetch(`/api/step-assignments`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ moduleType: 'vistos', recordId: params.id as string, currentIndex: newCurrent })
+            });
+          } catch {}
+        } catch (e) {
+          console.error('Erro ao persistir currentStep:', e);
+        }
+      })();
+      return { ...prev, steps: updatedSteps, currentStep: newCurrent };
     });
   };
 
   const saveStepData = async (stepId: number, data: any) => {
-    setStepData(prev => ({
-      ...prev,
-      [stepId]: { ...prev[stepId], ...data }
-    }));
+    const next = { ...stepData, [stepId]: { ...(stepData[stepId] || {}), ...data } };
+    setStepData(next);
+    // persistir todo o stepData após merge para manter alterações após recarga
+    try {
+      const res = await fetch(`/api/vistos?id=${params.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stepData: next })
+      });
+      if (res.ok) setSaveMessages(prev => ({ ...prev, [stepId]: 'Salvo' }));
+    } catch (e) {
+      console.error('Erro ao salvar stepData:', e);
+    }
     const typeKey = (caseData?.type || 'Visto de Trabalho') as VistoType;
     const stepTitle = (WORKFLOWS[typeKey] || [])[stepId] || `Etapa ${stepId + 1}`;
     const entries = Object.entries(data || {})
@@ -407,6 +491,21 @@ export default function VistoDetailsPage() {
         console.error('Erro ao persistir dados da etapa:', e);
       }
     }
+    // Persistir campos de statusFinal no registro para uso em listas
+    try {
+      const payload: any = {};
+      if (Object.prototype.hasOwnProperty.call(data, 'statusFinal')) payload.statusFinal = data.statusFinal;
+      if (Object.prototype.hasOwnProperty.call(data, 'statusFinalOutro')) payload.statusFinalOutro = data.statusFinalOutro;
+      if (Object.keys(payload).length) {
+        await fetch(`/api/vistos?id=${params.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
+    } catch (e) {
+      console.error('Erro ao atualizar statusFinal do registro:', e);
+    }
   };
 
   const saveStepNotes = async (stepId: number) => {
@@ -415,11 +514,12 @@ export default function VistoDetailsPage() {
     const text = notes[stepId] || '';
     const block = `\n[${stepTitle}]\n${text.trim()}\n`;
     try {
-      await fetch(`/api/vistos?id=${params.id}`, {
+      const res = await fetch(`/api/vistos?id=${params.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes: `${block}` })
       });
+      if (res.ok) setSaveMessages(prev => ({ ...prev, [stepId]: 'Salvo' }));
     } catch (error) {
       console.error('Erro ao salvar notas da etapa:', error);
     }
@@ -435,6 +535,19 @@ export default function VistoDetailsPage() {
       });
     } catch (e) {
       console.error('Erro ao atualizar status:', e);
+    }
+  };
+
+  const handleVistoFieldChange = async (field: string, value: string) => {
+    setVisto((prev: any) => ({ ...(prev || {}), [field]: value }));
+    try {
+      await fetch(`/api/vistos?id=${params.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: value })
+      });
+    } catch (e) {
+      console.error('Erro ao atualizar campo do visto:', e);
     }
   };
 
@@ -473,6 +586,21 @@ export default function VistoDetailsPage() {
   const renderStepContent = (step: StepData) => {
     if (!caseData) return null;
 
+    if (step.id === 0 || step.title?.toLowerCase().includes('cadastro')) {
+      switch (caseData.type) {
+        case "Visto de Trabalho":
+          return renderVistoTrabalhoStepContent(step);
+        case "Visto de Turismo":
+          return renderVistoTurismoStepContent(step);
+        case "Visto de Estudante":
+          return renderVistoEstudanteStepContent(step);
+        case "Visto de Reunião Familiar":
+          return renderVistoReuniaoFamiliarStepContent(step);
+        default:
+          return renderDefaultStepContent(step);
+      }
+    }
+
     switch (caseData.type) {
       case "Visto de Trabalho":
         return renderVistoTrabalhoStepContent(step);
@@ -493,180 +621,421 @@ export default function VistoDetailsPage() {
 
     switch (stepId) {
       case 0: // Cadastro de Documentos
+        const renderField = (label: string, fieldKey?: string, docKey?: string) => (
+          <div className="space-y-2">
+            <Label htmlFor={`${(fieldKey || docKey || '').replace(/Doc$/, '')}-${stepId}`}>{label}</Label>
+            {fieldKey ? (
+              <Input
+                id={`${fieldKey}-${stepId}`}
+                value={String((visto || {})[fieldKey] || '')}
+                onChange={(e) => handleVistoFieldChange(fieldKey, e.target.value)}
+                placeholder={"Status ou informações do documento"}
+              />
+            ) : null}
+            {docKey ? (
+              <div className="flex items-center gap-2">
+                <input type="file" id={`${docKey}-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, docKey, stepId); }} />
+                <Button variant="outline" size="sm" onClick={() => document.getElementById(`${docKey}-${stepId}`)?.click()} disabled={uploadingFiles[`${docKey}-${stepId}`]}>
+                  {uploadingFiles[`${docKey}-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                  Upload
+                </Button>
+              </div>
+            ) : null}
+            {docKey ? renderDocLinks(docKey) : null}
+          </div>
+        );
+        const rawTypeStr = String(visto?.type || caseData?.type || '');
+        const t = rawTypeStr.toLowerCase();
+        const showBrasil = t.includes('trabalho') && t.includes('brasil');
+        const showResidenciaPrevia = t.includes('trabalho') && (t.includes('resid') || t.includes('prévia') || t.includes('previ'));
+        const showInvestidor = t.includes('invest');
+        const showTrabalhistas = t.includes('trabalhistas');
+        const showFormacao = t.includes('forma');
+        const showRenovacao = t.includes('renov') || t.includes('1 ano');
+        const showIndeterminado = t.includes('indeterminado');
+        const showMudancaEmpregador = t.includes('mudan') && t.includes('empregador');
+
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor={`passaporte-${stepId}`}>Número do Passaporte</Label>
-                <Input
-                  id={`passaporte-${stepId}`}
-                  value={currentStepData.passaporte || ""}
-                  onChange={(e) => saveStepData(stepId, { passaporte: e.target.value })}
-                  placeholder="Digite o número do passaporte"
-                />
-              </div>
-              <div>
-                <Label htmlFor={`nome-completo-${stepId}`}>Nome Completo</Label>
-                <Input
-                  id={`nome-completo-${stepId}`}
-                  value={currentStepData.nomeCompleto || ""}
-                  onChange={(e) => saveStepData(stepId, { nomeCompleto: e.target.value })}
-                  placeholder="Nome completo do requerente"
-                />
-              </div>
-              <div>
-                <Label htmlFor={`cpf-${stepId}`}>CPF</Label>
-                <Input
-                  id={`cpf-${stepId}`}
-                  value={currentStepData.cpf || ""}
-                  onChange={(e) => saveStepData(stepId, { cpf: e.target.value })}
-                  placeholder="000.000.000-00"
-                />
-              </div>
-              <div>
-                <Label htmlFor={`empresa-${stepId}`}>Empresa Contratante</Label>
-                <Input
-                  id={`empresa-${stepId}`}
-                  value={currentStepData.empresa || ""}
-                  onChange={(e) => saveStepData(stepId, { empresa: e.target.value })}
-                  placeholder="Nome da empresa"
-                />
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h4 className="font-semibold text-lg">Documentos Pessoais</h4>
+              <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                <div className="space-y-2">
+                  <Label htmlFor={`country-${stepId}`}>País do Visto</Label>
+                  <Select
+                    value={String(visto?.country || "")}
+                    onValueChange={(val) => handleVistoFieldChange('country', val)}
+                  >
+                    <SelectTrigger id={`country-${stepId}`} className="h-9 w-full border-2 focus:border-cyan-500">
+                      <SelectValue placeholder="Selecione o país" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Brasil">Brasil</SelectItem>
+                      <SelectItem value="China">China</SelectItem>
+                      <SelectItem value="Estados Unidos">Estados Unidos</SelectItem>
+                      <SelectItem value="Canadá">Canadá</SelectItem>
+                      <SelectItem value="Reino Unido">Reino Unido</SelectItem>
+                      <SelectItem value="Portugal">Portugal</SelectItem>
+                      <SelectItem value="França">França</SelectItem>
+                      <SelectItem value="Alemanha">Alemanha</SelectItem>
+                      <SelectItem value="Itália">Itália</SelectItem>
+                      <SelectItem value="Espanha">Espanha</SelectItem>
+                      <SelectItem value="Austrália">Austrália</SelectItem>
+                      <SelectItem value="Japão">Japão</SelectItem>
+                      <SelectItem value="Irlanda">Irlanda</SelectItem>
+                      <SelectItem value="Holanda">Holanda</SelectItem>
+                      <SelectItem value="Suíça">Suíça</SelectItem>
+                      <SelectItem value="Suécia">Suécia</SelectItem>
+                      <SelectItem value="Noruega">Noruega</SelectItem>
+                      <SelectItem value="Dinamarca">Dinamarca</SelectItem>
+                      <SelectItem value="Bélgica">Bélgica</SelectItem>
+                      <SelectItem value="Áustria">Áustria</SelectItem>
+                      <SelectItem value="Outro">Outro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`cpf-${stepId}`}>CPF</Label>
+                  <Input
+                    id={`cpf-${stepId}`}
+                    value={visto?.cpf || ""}
+                    onChange={(e) => handleVistoFieldChange('cpf', e.target.value)}
+                    placeholder="000.000.000-00"
+                  />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`cpfDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'cpfDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`cpfDoc-${stepId}`)?.click()} disabled={uploadingFiles[`cpfDoc-${stepId}`]}>
+                      {uploadingFiles[`cpfDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload CPF
+                    </Button>
+                  </div>
+                  {renderDocLinks('cpfDoc')}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`rnm-${stepId}`}>RNM</Label>
+                  <Input id={`rnm-${stepId}`} value={visto?.rnm || ""} onChange={(e) => handleVistoFieldChange('rnm', e.target.value)} placeholder="Número RNM" />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`rnmDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'rnmDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`rnmDoc-${stepId}`)?.click()} disabled={uploadingFiles[`rnmDoc-${stepId}`]}>
+                      {uploadingFiles[`rnmDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload RNM
+                    </Button>
+                  </div>
+                  {renderDocLinks('rnmDoc')}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`passaporte-${stepId}`}>Passaporte</Label>
+                  <Input id={`passaporte-${stepId}`} value={visto?.passaporte || ""} onChange={(e) => handleVistoFieldChange('passaporte', e.target.value)} placeholder="Número do passaporte" />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`passaporteDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'passaporteDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`passaporteDoc-${stepId}`)?.click()} disabled={uploadingFiles[`passaporteDoc-${stepId}`]}>
+                      {uploadingFiles[`passaporteDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload Passaporte
+                    </Button>
+                  </div>
+                  {renderDocLinks('passaporteDoc')}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`comprovanteEndereco-${stepId}`}>Comprovante de Endereço</Label>
+                  <Input id={`comprovanteEndereco-${stepId}`} value={visto?.comprovanteEndereco || ""} onChange={(e) => handleVistoFieldChange('comprovanteEndereco', e.target.value)} placeholder="Informe endereço / declaração" />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`comprovanteEnderecoDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'comprovanteEnderecoDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`comprovanteEnderecoDoc-${stepId}`)?.click()} disabled={uploadingFiles[`comprovanteEnderecoDoc-${stepId}`]}>
+                      {uploadingFiles[`comprovanteEnderecoDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload Endereço
+                    </Button>
+                  </div>
+                  {renderDocLinks('comprovanteEnderecoDoc')}
+                  <div className="mt-2">
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`declaracaoResidenciaDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'declaracaoResidenciaDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`declaracaoResidenciaDoc-${stepId}`)?.click()} disabled={uploadingFiles[`declaracaoResidenciaDoc-${stepId}`]}>
+                        {uploadingFiles[`declaracaoResidenciaDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload Declaração
+                      </Button>
+                    </div>
+                    {renderDocLinks('declaracaoResidenciaDoc')}
+                  </div>
+                </div>
+                {renderField('Foto digital 3x4', undefined, 'foto3x4Doc')}
+                <div className="space-y-2">
+                  <Label htmlFor={`documentoChines-${stepId}`}>Documento Chinês (quando aplicável)</Label>
+                  <Input id={`documentoChines-${stepId}`} value={visto?.documentoChines || ""} onChange={(e) => handleVistoFieldChange('documentoChines', e.target.value)} placeholder="Descrição do documento" />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`documentoChinesDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'documentoChinesDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`documentoChinesDoc-${stepId}`)?.click()} disabled={uploadingFiles[`documentoChinesDoc-${stepId}`]}>
+                      {uploadingFiles[`documentoChinesDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload Documento Chinês
+                    </Button>
+                  </div>
+                  {renderDocLinks('documentoChinesDoc')}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`antecedentesCriminais-${stepId}`}>Antecedentes Criminais</Label>
+                  <Input id={`antecedentesCriminais-${stepId}`} value={visto?.antecedentesCriminais || ""} onChange={(e) => handleVistoFieldChange('antecedentesCriminais', e.target.value)} placeholder="Número/Status" />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`antecedentesCriminaisDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'antecedentesCriminaisDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`antecedentesCriminaisDoc-${stepId}`)?.click()} disabled={uploadingFiles[`antecedentesCriminaisDoc-${stepId}`]}>
+                      {uploadingFiles[`antecedentesCriminaisDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload Antecedentes
+                    </Button>
+                  </div>
+                  {renderDocLinks('antecedentesCriminaisDoc')}
+                </div>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <h4 className="font-medium">Documentos Necessários:</h4>
-              
-              {[
-                { key: 'passaporte-doc', label: 'Passaporte' },
-                { key: 'foto', label: 'Foto 3x4' },
-                { key: 'certidao-nascimento', label: 'Certidão de Nascimento' },
-                { key: 'comprovante-endereco', label: 'Comprovante de Endereço' },
-                { key: 'carta-empresa', label: 'Carta da Empresa' },
-                { key: 'contrato-trabalho', label: 'Contrato de Trabalho' }
-              ].map(({ key, label }) => (
-                <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
-                  <span className="font-medium">{label}</span>
+            <div className="space-y-4">
+              <h4 className="font-semibold text-lg">Comprovação Financeira PF</h4>
+              <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                <div className="space-y-2">
+                  <Label htmlFor={`certidaoNascimentoFilhos-${stepId}`}>Filhos (Certidão de Nascimento)</Label>
+                  <Input id={`certidaoNascimentoFilhos-${stepId}`} value={visto?.certidaoNascimentoFilhos || ""} onChange={(e) => handleVistoFieldChange('certidaoNascimentoFilhos', e.target.value)} placeholder="Informações" />
                   <div className="flex items-center gap-2">
-                    <input
-                      type="file"
-                      id={`${key}-${stepId}`}
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          handleSpecificFileUpload(file, key, stepId);
-                        }
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => document.getElementById(`${key}-${stepId}`)?.click()}
-                      disabled={uploadingFiles[`${key}-${stepId}`]}
-                    >
-                      {uploadingFiles[`${key}-${stepId}`] ? (
-                        <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
-                      ) : (
-                        <Upload className="w-4 h-4" />
-                      )}
-                      Upload
+                    <input type="file" id={`certidaoNascimentoFilhosDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'certidaoNascimentoFilhosDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`certidaoNascimentoFilhosDoc-${stepId}`)?.click()} disabled={uploadingFiles[`certidaoNascimentoFilhosDoc-${stepId}`]}>
+                      {uploadingFiles[`certidaoNascimentoFilhosDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload Certidão
                     </Button>
                   </div>
-                  {renderDocLinks(key)}
+                  {renderDocLinks('certidaoNascimentoFilhosDoc')}
                 </div>
-              ))}
+                <div className="space-y-2">
+                  <Label htmlFor={`cartaoCnpj-${stepId}`}>Empresa: Cartão CNPJ</Label>
+                  <Input id={`cartaoCnpj-${stepId}`} value={visto?.cartaoCnpj || ""} onChange={(e) => handleVistoFieldChange('cartaoCnpj', e.target.value)} placeholder="CNPJ" />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`cartaoCnpjDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'cartaoCnpjDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`cartaoCnpjDoc-${stepId}`)?.click()} disabled={uploadingFiles[`cartaoCnpjDoc-${stepId}`]}>
+                      {uploadingFiles[`cartaoCnpjDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload CNPJ
+                    </Button>
+                  </div>
+                  {renderDocLinks('cartaoCnpjDoc')}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`contratoEmpresa-${stepId}`}>Contrato Social</Label>
+                  <Input id={`contratoEmpresa-${stepId}`} value={visto?.contratoEmpresa || ""} onChange={(e) => handleVistoFieldChange('contratoEmpresa', e.target.value)} placeholder="Contrato Social" />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`contratoEmpresaDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'contratoEmpresaDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`contratoEmpresaDoc-${stepId}`)?.click()} disabled={uploadingFiles[`contratoEmpresaDoc-${stepId}`]}>
+                      {uploadingFiles[`contratoEmpresaDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload Contrato
+                    </Button>
+                  </div>
+                  {renderDocLinks('contratoEmpresaDoc')}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`escrituraImoveis-${stepId}`}>Imóveis (Escritura/Matrícula)</Label>
+                  <Input id={`escrituraImoveis-${stepId}`} value={visto?.escrituraImoveis || ""} onChange={(e) => handleVistoFieldChange('escrituraImoveis', e.target.value)} placeholder="Imóveis" />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`escrituraImoveisDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'escrituraImoveisDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`escrituraImoveisDoc-${stepId}`)?.click()} disabled={uploadingFiles[`escrituraImoveisDoc-${stepId}`]}>
+                      {uploadingFiles[`escrituraImoveisDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload Escritura
+                    </Button>
+                  </div>
+                  {renderDocLinks('escrituraImoveisDoc')}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`extratosBancarios-${stepId}`}>Últimos 3 extratos bancários</Label>
+                  <Input id={`extratosBancarios-${stepId}`} value={visto?.extratosBancarios || ""} onChange={(e) => handleVistoFieldChange('extratosBancarios', e.target.value)} placeholder="Extratos" />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`extratosBancariosDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'extratosBancariosDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`extratosBancariosDoc-${stepId}`)?.click()} disabled={uploadingFiles[`extratosBancariosDoc-${stepId}`]}>
+                      {uploadingFiles[`extratosBancariosDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload Extratos
+                    </Button>
+                  </div>
+                  {renderDocLinks('extratosBancariosDoc')}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`impostoRenda-${stepId}`}>Imposto de Renda</Label>
+                  <Input id={`impostoRenda-${stepId}`} value={visto?.impostoRenda || ""} onChange={(e) => handleVistoFieldChange('impostoRenda', e.target.value)} placeholder="IR" />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`impostoRendaDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'impostoRendaDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`impostoRendaDoc-${stepId}`)?.click()} disabled={uploadingFiles[`impostoRendaDoc-${stepId}`]}>
+                      {uploadingFiles[`impostoRendaDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload IR
+                    </Button>
+                  </div>
+                  {renderDocLinks('impostoRendaDoc')}
+                </div>
+              </div>
             </div>
+
+            <div className="space-y-4">
+              <h4 className="font-semibold text-lg">Outros Documentos</h4>
+              <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                <div className="space-y-2">
+                  <Label htmlFor={`reservasPassagens-${stepId}`}>Reservas de Passagens</Label>
+                  <Input id={`reservasPassagens-${stepId}`} value={visto?.reservasPassagens || ""} onChange={(e) => handleVistoFieldChange('reservasPassagens', e.target.value)} placeholder="Detalhes" />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`reservasPassagensDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'reservasPassagensDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`reservasPassagensDoc-${stepId}`)?.click()} disabled={uploadingFiles[`reservasPassagensDoc-${stepId}`]}>
+                      {uploadingFiles[`reservasPassagensDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload Passagens
+                    </Button>
+                  </div>
+                  {renderDocLinks('reservasPassagensDoc')}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`reservasHotel-${stepId}`}>Reservas de Hotel</Label>
+                  <Input id={`reservasHotel-${stepId}`} value={visto?.reservasHotel || ""} onChange={(e) => handleVistoFieldChange('reservasHotel', e.target.value)} placeholder="Detalhes" />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`reservasHotelDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'reservasHotelDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`reservasHotelDoc-${stepId}`)?.click()} disabled={uploadingFiles[`reservasHotelDoc-${stepId}`]}>
+                      {uploadingFiles[`reservasHotelDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload Hotel
+                    </Button>
+                  </div>
+                  {renderDocLinks('reservasHotelDoc')}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`seguroViagem-${stepId}`}>Seguro Viagem</Label>
+                  <Input id={`seguroViagem-${stepId}`} value={visto?.seguroViagem || ""} onChange={(e) => handleVistoFieldChange('seguroViagem', e.target.value)} placeholder="Detalhes" />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`seguroViagemDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'seguroViagemDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`seguroViagemDoc-${stepId}`)?.click()} disabled={uploadingFiles[`seguroViagemDoc-${stepId}`]}>
+                      {uploadingFiles[`seguroViagemDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload Seguro
+                    </Button>
+                  </div>
+                  {renderDocLinks('seguroViagemDoc')}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`roteiroViagem-${stepId}`}>Roteiro de Viagem Detalhado</Label>
+                  <Input id={`roteiroViagem-${stepId}`} value={visto?.roteiroViagem || ""} onChange={(e) => handleVistoFieldChange('roteiroViagem', e.target.value)} placeholder="Detalhes" />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`roteiroViagemDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'roteiroViagemDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`roteiroViagemDoc-${stepId}`)?.click()} disabled={uploadingFiles[`roteiroViagemDoc-${stepId}`]}>
+                      {uploadingFiles[`roteiroViagemDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload Roteiro
+                    </Button>
+                  </div>
+                  {renderDocLinks('roteiroViagemDoc')}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`taxa-${stepId}`}>Taxa Consular</Label>
+                  <Input id={`taxa-${stepId}`} value={visto?.taxa || ""} onChange={(e) => handleVistoFieldChange('taxa', e.target.value)} placeholder="Valor/Status" />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`taxaDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'taxaDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`taxaDoc-${stepId}`)?.click()} disabled={uploadingFiles[`taxaDoc-${stepId}`]}>
+                      {uploadingFiles[`taxaDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload Taxa
+                    </Button>
+                  </div>
+                  {renderDocLinks('taxaDoc')}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`formularioConsulado-${stepId}`}>Formulário do Consulado preenchido</Label>
+                  <Input id={`formularioConsulado-${stepId}`} value={visto?.formularioConsulado || ""} onChange={(e) => handleVistoFieldChange('formularioConsulado', e.target.value)} placeholder="Detalhes" />
+                  <div className="flex items-center gap-2">
+                    <input type="file" id={`formularioConsuladoDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'formularioConsuladoDoc', stepId); }} />
+                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`formularioConsuladoDoc-${stepId}`)?.click()} disabled={uploadingFiles[`formularioConsuladoDoc-${stepId}`]}>
+                      {uploadingFiles[`formularioConsuladoDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                      Upload Formulário
+                    </Button>
+                  </div>
+                  {renderDocLinks('formularioConsuladoDoc')}
+                </div>
+              </div>
+            </div>
+
+            {showBrasil ? (
+              <div className="space-y-4">
+                <h4 className="font-semibold text-lg">Trabalho (Brasil)</h4>
+                <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                  {renderField('Certidão de Nascimento', 'certidaoNascimento', 'certidaoNascimentoDoc')}
+                  {renderField('Declaração de Compreensão', 'declaracaoCompreensao', 'declaracaoCompreensaoDoc')}
+                  {renderField('Declarações da Empresa', 'declaracoesEmpresa', 'declaracoesEmpresaDoc')}
+                  {renderField('Procuração da Empresa', 'procuracaoEmpresa', 'procuracaoEmpresaDoc')}
+                  {renderField('Formulário RN01', 'formularioRn01', 'formularioRn01Doc')}
+                  {renderField('Guia Paga', 'guiaPaga', 'guiaPagaDoc')}
+                  {renderField('Publicação DOU', 'publicacaoDou', 'publicacaoDouDoc')}
+                </div>
+              </div>
+            ) : null}
+
+            {showResidenciaPrevia ? (
+              <div className="space-y-4">
+                <h4 className="font-semibold text-lg">Residência Prévia</h4>
+                <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                  {renderField('Formulário RN02', 'formularioRn02', 'formularioRn02Doc')}
+                  {renderField('Comprovante Residência Prévia', 'comprovanteResidenciaPrevia', 'comprovanteResidenciaPreviaDoc')}
+                  {renderField('Comprovante de Atividade', 'comprovanteAtividade', 'comprovanteAtividadeDoc')}
+                </div>
+              </div>
+            ) : null}
+
+            {showInvestidor ? (
+              <div className="space-y-4">
+                <h4 className="font-semibold text-lg">Investidor</h4>
+                <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                  {renderField('Comprovante de Investimento', 'comprovanteInvestimento', 'comprovanteInvestimentoDoc')}
+                  {renderField('Plano de Investimentos', 'planoInvestimentos', 'planoInvestimentosDoc')}
+                  {renderField('Formulário de Requerimento', 'formularioRequerimento', 'formularioRequerimentoDoc')}
+                  {renderField('Protocolado', 'protocolado', 'protocoladoDoc')}
+                </div>
+              </div>
+            ) : null}
+
+            {(showTrabalhistas || showMudancaEmpregador) ? (
+              <div className="space-y-4">
+                <h4 className="font-semibold text-lg">Trabalhistas</h4>
+                <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                  {renderField('Contrato de Trabalho', 'contratoTrabalho', 'contratoTrabalhoDoc')}
+                  {renderField('Folha de Pagamento', 'folhaPagamento', 'folhaPagamentoDoc')}
+                  {renderField('Comprovante de Vínculo Anterior', 'comprovanteVinculoAnterior', 'comprovanteVinculoAnteriorDoc')}
+                  {renderField('Justificativa Mudança de Empregador', 'justificativaMudancaEmpregador', 'justificativaMudancaEmpregadorDoc')}
+                  {renderField('Declaração de Antecedentes Criminais', 'declaracaoAntecedentesCriminais', 'declaracaoAntecedentesCriminaisDoc')}
+                </div>
+              </div>
+            ) : null}
+
+            {showFormacao ? (
+              <div className="space-y-4">
+                <h4 className="font-semibold text-lg">Formação</h4>
+                <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                  {renderField('Diploma', 'diploma', 'diplomaDoc')}
+                </div>
+              </div>
+            ) : null}
+
+            {showRenovacao ? (
+              <div className="space-y-4">
+                <h4 className="font-semibold text-lg">Renovação 1 ano</h4>
+                <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                  {renderField('CTPS', 'ctps', 'ctpsDoc')}
+                  {renderField('Contrato de Trabalho Anterior', 'contratoTrabalhoAnterior', 'contratoTrabalhoAnteriorDoc')}
+                  {renderField('Contrato de Trabalho Atual', 'contratoTrabalhoAtual', 'contratoTrabalhoAtualDoc')}
+                  {renderField('Formulário de Prorrogação', 'formularioProrrogacao', 'formularioProrrogacaoDoc')}
+                </div>
+              </div>
+            ) : null}
+
+            {showIndeterminado ? (
+              <div className="space-y-4">
+                <h4 className="font-semibold text-lg">Indeterminado</h4>
+                <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                  {renderField('Contrato de Trabalho Indeterminado', 'contratoTrabalhoIndeterminado', 'contratoTrabalhoIndeterminadoDoc')}
+                </div>
+              </div>
+            ) : null}
 
             <Button onClick={() => saveStepData(stepId, currentStepData)} className="w-full">
               <Save className="w-4 h-4 mr-2" />
-              Salvar Dados
+              Salvar Anotações da Etapa
             </Button>
+            {saveMessages[stepId] ? (
+              <div className="text-green-600 text-sm mt-2">{saveMessages[stepId]}</div>
+            ) : null}
           </div>
         );
 
-      case 1: // Análise de Elegibilidade
+
+      case 3: // Preparação da Documentação
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <Label htmlFor={`elegibilidade-${stepId}`}>Status de Elegibilidade</Label>
-                <Select
-                  value={currentStepData.elegibilidade || ""}
-                  onValueChange={(value) => saveStepData(stepId, { elegibilidade: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="elegivel">Elegível</SelectItem>
-                    <SelectItem value="nao-elegivel">Não Elegível</SelectItem>
-                    <SelectItem value="pendente">Pendente de Análise</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor={`observacoes-elegibilidade-${stepId}`}>Observações da Análise</Label>
-                <Textarea
-                  id={`observacoes-elegibilidade-${stepId}`}
-                  value={currentStepData.observacoesElegibilidade || ""}
-                  onChange={(e) => saveStepData(stepId, { observacoesElegibilidade: e.target.value })}
-                  placeholder="Observações sobre a elegibilidade do candidato"
-                  rows={4}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="font-medium">Documentos de Análise:</h4>
-              
-              {[
-                { key: 'relatorio-elegibilidade', label: 'Relatório de Elegibilidade' },
-                { key: 'documentos-adicionais', label: 'Documentos Adicionais' }
-              ].map(({ key, label }) => (
-                <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
-                  <span className="font-medium">{label}</span>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="file"
-                      id={`${key}-${stepId}`}
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          handleSpecificFileUpload(file, key, stepId);
-                        }
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => document.getElementById(`${key}-${stepId}`)?.click()}
-                      disabled={uploadingFiles[`${key}-${stepId}`]}
-                    >
-                      {uploadingFiles[`${key}-${stepId}`] ? (
-                        <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
-                      ) : (
-                        <Upload className="w-4 h-4" />
-                      )}
-                      Upload
-                    </Button>
-                  </div>
-                  {renderDocLinks(key)}
-                </div>
-              ))}
-            </div>
-
-            <Button onClick={() => saveStepData(stepId, currentStepData)} className="w-full">
-              <Save className="w-4 h-4 mr-2" />
-              Salvar Análise
-            </Button>
-          </div>
-        );
-
-      case 2: // Preparação da Documentação
-        return (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <Label htmlFor={`status-preparacao-${stepId}`}>Status da Preparação</Label>
@@ -727,17 +1096,20 @@ export default function VistoDetailsPage() {
               ))}
             </div>
 
-            <Button onClick={() => saveStepData(stepId, currentStepData)} className="w-full">
-              <Save className="w-4 h-4 mr-2" />
-              Salvar Preparação
-            </Button>
-          </div>
-        );
+          <Button onClick={() => saveStepData(stepId, currentStepData)} className="w-full">
+            <Save className="w-4 h-4 mr-2" />
+            Salvar Preparação
+          </Button>
+          {saveMessages[stepId] ? (
+            <div className="text-green-600 text-sm mt-2">{saveMessages[stepId]}</div>
+          ) : null}
+        </div>
+      );
 
-      case 3: // Agendamento no Consulado
+      case 1: // Agendar no Consulado
         return (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label htmlFor={`data-agendamento-${stepId}`}>Data do Agendamento</Label>
                 <Input
@@ -748,72 +1120,70 @@ export default function VistoDetailsPage() {
                 />
               </div>
               <div>
-                <Label htmlFor={`horario-agendamento-${stepId}`}>Horário</Label>
-                <Input
-                  id={`horario-agendamento-${stepId}`}
-                  type="time"
-                  value={currentStepData.horarioAgendamento || ""}
-                  onChange={(e) => saveStepData(stepId, { horarioAgendamento: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor={`consulado-${stepId}`}>Consulado</Label>
-                <Input
-                  id={`consulado-${stepId}`}
-                  value={currentStepData.consulado || ""}
-                  onChange={(e) => saveStepData(stepId, { consulado: e.target.value })}
-                  placeholder="Nome do consulado"
-                />
-              </div>
-              <div>
-                <Label htmlFor={`numero-agendamento-${stepId}`}>Número do Agendamento</Label>
-                <Input
-                  id={`numero-agendamento-${stepId}`}
-                  value={currentStepData.numeroAgendamento || ""}
-                  onChange={(e) => saveStepData(stepId, { numeroAgendamento: e.target.value })}
-                  placeholder="Número de confirmação"
-                />
+                <Label htmlFor={`horario-agendamento-${stepId}`}>Hora do Agendamento</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Select
+                    value={(String(currentStepData.horarioAgendamento || '').split(':')[0] || undefined) as undefined | string}
+                    onValueChange={(h) =>
+                      saveStepData(stepId, {
+                        horarioAgendamento: `${h}:${String(currentStepData.horarioAgendamento || '').split(':')[1] || '00'}`,
+                      })
+                    }
+                  >
+                    <SelectTrigger id={`horario-agendamento-${stepId}`} className="h-9 w-full border-2 focus:border-cyan-500">
+                      <SelectValue placeholder="Hora" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map((h) => (
+                        <SelectItem key={h} value={h}>{h}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={(String(currentStepData.horarioAgendamento || '').split(':')[1] || undefined) as undefined | string}
+                    onValueChange={(m) =>
+                      saveStepData(stepId, {
+                        horarioAgendamento: `${String(currentStepData.horarioAgendamento || '').split(':')[0] || '00'}:${m}`,
+                      })
+                    }
+                  >
+                    <SelectTrigger className="h-9 w-full border-2 focus:border-cyan-500">
+                      <SelectValue placeholder="Minuto" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((m) => (
+                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <h4 className="font-medium">Comprovantes:</h4>
-              
+            <div className="space-y-6">
               {[
-                { key: 'comprovante-agendamento', label: 'Comprovante de Agendamento' },
-                { key: 'instrucoes-consulado', label: 'Instruções do Consulado' }
-              ].map(({ key, label }) => (
-                <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
-                  <span className="font-medium">{label}</span>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="file"
-                      id={`${key}-${stepId}`}
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          handleSpecificFileUpload(file, key, stepId);
-                        }
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => document.getElementById(`${key}-${stepId}`)?.click()}
-                      disabled={uploadingFiles[`${key}-${stepId}`]}
-                    >
-                      {uploadingFiles[`${key}-${stepId}`] ? (
-                        <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
-                      ) : (
-                        <Upload className="w-4 h-4" />
-                      )}
-                      Upload
-                    </Button>
-                  </div>
+                { key: 'comprovante-agendamento' }
+              ].map(({ key }) => (
+                <div key={key} className="space-y-2">
+                  <UploadDocBlock
+                    inputId={`${key}-${stepId}`}
+                    disabledKey={`${key}-${stepId}`}
+                    onSelect={(f) => handleSpecificFileUpload(f, key, stepId)}
+                  />
                   {renderDocLinks(key)}
                 </div>
               ))}
+            </div>
+
+            <div>
+              <Label htmlFor={`observacoes-agendamento-${stepId}`}>Observações</Label>
+              <Textarea
+                id={`observacoes-agendamento-${stepId}`}
+                value={currentStepData.observacoesAgendamento || ""}
+                onChange={(e) => saveStepData(stepId, { observacoesAgendamento: e.target.value })}
+                placeholder="Adicione observações para esta etapa..."
+                rows={3}
+              />
             </div>
 
             <Button onClick={() => saveStepData(stepId, currentStepData)} className="w-full">
@@ -823,244 +1193,13 @@ export default function VistoDetailsPage() {
           </div>
         );
 
-      case 4: // Entrevista Consular
-        return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor={`data-entrevista-${stepId}`}>Data da Entrevista</Label>
-                <Input
-                  id={`data-entrevista-${stepId}`}
-                  type="date"
-                  value={currentStepData.dataEntrevista || ""}
-                  onChange={(e) => saveStepData(stepId, { dataEntrevista: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor={`resultado-entrevista-${stepId}`}>Resultado da Entrevista</Label>
-                <Select
-                  value={currentStepData.resultadoEntrevista || ""}
-                  onValueChange={(value) => saveStepData(stepId, { resultadoEntrevista: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o resultado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="aprovado">Aprovado</SelectItem>
-                    <SelectItem value="negado">Negado</SelectItem>
-                    <SelectItem value="pendente">Pendente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+      
 
-            <div>
-              <Label htmlFor={`observacoes-entrevista-${stepId}`}>Observações da Entrevista</Label>
-              <Textarea
-                id={`observacoes-entrevista-${stepId}`}
-                value={currentStepData.observacoesEntrevista || ""}
-                onChange={(e) => saveStepData(stepId, { observacoesEntrevista: e.target.value })}
-                placeholder="Observações sobre a entrevista"
-                rows={4}
-              />
-            </div>
+      
 
-            <div className="space-y-3">
-              <h4 className="font-medium">Documentos da Entrevista:</h4>
-              
-              {[
-                { key: 'protocolo-entrevista', label: 'Protocolo da Entrevista' },
-                { key: 'documentos-adicionais-entrevista', label: 'Documentos Adicionais Solicitados' }
-              ].map(({ key, label }) => (
-                <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
-                  <span className="font-medium">{label}</span>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="file"
-                      id={`${key}-${stepId}`}
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          handleSpecificFileUpload(file, key, stepId);
-                        }
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => document.getElementById(`${key}-${stepId}`)?.click()}
-                      disabled={uploadingFiles[`${key}-${stepId}`]}
-                    >
-                      {uploadingFiles[`${key}-${stepId}`] ? (
-                        <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
-                      ) : (
-                        <Upload className="w-4 h-4" />
-                      )}
-                      Upload
-                    </Button>
-                  </div>
-                  {renderDocLinks(key)}
-                </div>
-              ))}
-            </div>
+      
 
-            <Button onClick={() => saveStepData(stepId, currentStepData)} className="w-full">
-              <Save className="w-4 h-4 mr-2" />
-              Salvar Entrevista
-            </Button>
-          </div>
-        );
-
-      case 5: // Aguardar Resultado
-        return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor={`data-resultado-${stepId}`}>Data do Resultado</Label>
-                <Input
-                  id={`data-resultado-${stepId}`}
-                  type="date"
-                  value={currentStepData.dataResultado || ""}
-                  onChange={(e) => saveStepData(stepId, { dataResultado: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor={`status-resultado-${stepId}`}>Status do Resultado</Label>
-                <Select
-                  value={currentStepData.statusResultado || ""}
-                  onValueChange={(value) => saveStepData(stepId, { statusResultado: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="aprovado">Aprovado</SelectItem>
-                    <SelectItem value="negado">Negado</SelectItem>
-                    <SelectItem value="aguardando">Aguardando</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="font-medium">Documentos do Resultado:</h4>
-              
-              {[
-                { key: 'resultado-oficial', label: 'Resultado Oficial' },
-                { key: 'instrucoes-retirada', label: 'Instruções para Retirada' }
-              ].map(({ key, label }) => (
-                <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
-                  <span className="font-medium">{label}</span>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="file"
-                      id={`${key}-${stepId}`}
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          handleSpecificFileUpload(file, key, stepId);
-                        }
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => document.getElementById(`${key}-${stepId}`)?.click()}
-                      disabled={uploadingFiles[`${key}-${stepId}`]}
-                    >
-                      {uploadingFiles[`${key}-${stepId}`] ? (
-                        <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
-                      ) : (
-                        <Upload className="w-4 h-4" />
-                      )}
-                      Upload
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <Button onClick={() => saveStepData(stepId, currentStepData)} className="w-full">
-              <Save className="w-4 h-4 mr-2" />
-              Salvar Resultado
-            </Button>
-          </div>
-        );
-
-      case 6: // Retirada do Visto
-        return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor={`data-retirada-${stepId}`}>Data da Retirada</Label>
-                <Input
-                  id={`data-retirada-${stepId}`}
-                  type="date"
-                  value={currentStepData.dataRetirada || ""}
-                  onChange={(e) => saveStepData(stepId, { dataRetirada: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor={`numero-visto-${stepId}`}>Número do Visto</Label>
-                <Input
-                  id={`numero-visto-${stepId}`}
-                  value={currentStepData.numeroVisto || ""}
-                  onChange={(e) => saveStepData(stepId, { numeroVisto: e.target.value })}
-                  placeholder="Número do visto emitido"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="font-medium">Documentos da Retirada:</h4>
-              
-              {[
-                { key: 'visto-emitido', label: 'Visto Emitido' },
-                { key: 'passaporte-visto', label: 'Passaporte com Visto' },
-                { key: 'comprovante-retirada', label: 'Comprovante de Retirada' }
-              ].map(({ key, label }) => (
-                <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
-                  <span className="font-medium">{label}</span>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="file"
-                      id={`${key}-${stepId}`}
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          handleSpecificFileUpload(file, key, stepId);
-                        }
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => document.getElementById(`${key}-${stepId}`)?.click()}
-                      disabled={uploadingFiles[`${key}-${stepId}`]}
-                    >
-                      {uploadingFiles[`${key}-${stepId}`] ? (
-                        <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
-                      ) : (
-                        <Upload className="w-4 h-4" />
-                      )}
-                      Upload
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <Button onClick={() => saveStepData(stepId, currentStepData)} className="w-full">
-              <Save className="w-4 h-4 mr-2" />
-              Salvar Retirada
-            </Button>
-          </div>
-        );
-
-      case 7: // Processo Finalizado
+      case 5: // Processo Finalizado
         return (
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1072,6 +1211,38 @@ export default function VistoDetailsPage() {
                   value={currentStepData.dataFinalizacao || ""}
                   onChange={(e) => saveStepData(stepId, { dataFinalizacao: e.target.value })}
                 />
+              </div>
+              <div>
+                <Label>Status do Processo</Label>
+                <Select
+                  value={currentStepData.statusFinal || ""}
+                  onValueChange={(val) => {
+                    const isOutro = val === "Outro";
+                    saveStepData(stepId, { statusFinal: val, statusFinalOutro: isOutro ? (currentStepData.statusFinalOutro || "") : "" })
+                  }}
+                >
+                  <SelectTrigger className="h-9 w-full border-2 focus:border-cyan-500">
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {((caseData?.type || "").toLowerCase().includes("turismo")
+                      ? ["Aprovado", "Negado", "Outro"]
+                      : ["Deferido", "Indeferido", "Outro"]).map((s) => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {String(currentStepData.statusFinal || "") === "Outro" && (
+                  <div className="mt-2">
+                    <Label htmlFor={`status-final-outro-${stepId}`}>Descrever Status</Label>
+                    <Input
+                      id={`status-final-outro-${stepId}`}
+                      value={currentStepData.statusFinalOutro || ""}
+                      onChange={(e) => saveStepData(stepId, { statusFinalOutro: e.target.value })}
+                      placeholder="Digite o status"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1086,41 +1257,18 @@ export default function VistoDetailsPage() {
               />
             </div>
 
-            <div className="space-y-3">
-              <h4 className="font-medium">Documentos Finais:</h4>
-              
+            <div className="space-y-4">
               {[
-                { key: 'processo-finalizado', label: 'Documentos do Processo Finalizado' },
-                { key: 'relatorio-final', label: 'Relatório Final' }
-              ].map(({ key, label }) => (
-                <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
-                  <span className="font-medium">{label}</span>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="file"
-                      id={`${key}-${stepId}`}
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          handleSpecificFileUpload(file, key, stepId);
-                        }
-                      }}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => document.getElementById(`${key}-${stepId}`)?.click()}
-                      disabled={uploadingFiles[`${key}-${stepId}`]}
-                    >
-                      {uploadingFiles[`${key}-${stepId}`] ? (
-                        <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
-                      ) : (
-                        <Upload className="w-4 h-4" />
-                      )}
-                      Upload
-                    </Button>
-                  </div>
+                { key: 'processo-finalizado' },
+                { key: 'relatorio-final' }
+              ].map(({ key }) => (
+                <div key={key} className="space-y-2">
+                  <UploadDocBlock
+                    inputId={`${key}-${stepId}`}
+                    disabledKey={`${key}-${stepId}`}
+                    onSelect={(f) => handleSpecificFileUpload(f, key, stepId)}
+                  />
+                  {renderDocLinks(key)}
                 </div>
               ))}
             </div>
@@ -1138,25 +1286,156 @@ export default function VistoDetailsPage() {
   };
 
   const renderVistoTurismoStepContent = (step: StepData) => {
-    // Similar structure to Visto de Trabalho but with tourism-specific fields
+    if (step.id === 0 || step.id === 1) return renderVistoTrabalhoStepContent(step);
     return renderDefaultStepContent(step);
   };
 
   const renderVistoEstudanteStepContent = (step: StepData) => {
-    // Similar structure to Visto de Trabalho but with student-specific fields
+    if (step.id === 0 || step.id === 1) return renderVistoTrabalhoStepContent(step);
     return renderDefaultStepContent(step);
   };
 
   const renderVistoReuniaoFamiliarStepContent = (step: StepData) => {
-    // Similar structure to Visto de Trabalho but with family reunion-specific fields
+    if (step.id === 0 || step.id === 1) return renderVistoTrabalhoStepContent(step);
     return renderDefaultStepContent(step);
   };
 
   const renderDefaultStepContent = (step: StepData) => {
     const stepId = step.id;
-    
+    const title = (step.title || "").toLowerCase();
+    const currentStepData = stepData[stepId] || {};
+
+    // Preencher Formulário
+    if (title.includes("preencher") && title.includes("formul")) {
+      return (
+        <div className="space-y-4">
+          <UploadDocBlock
+            inputId={`formulario-visto-${stepId}`}
+            disabledKey={`formulario-visto-${stepId}`}
+            onSelect={(f) => handleSpecificFileUpload(f, 'formulario-visto', stepId)}
+          />
+          {renderDocLinks('formulario-visto')}
+          <div>
+            <Label htmlFor={`observacoes-${stepId}`}>Observações</Label>
+            <Textarea
+              id={`observacoes-${stepId}`}
+              value={notes[stepId] || ""}
+              onChange={(e) => setNotes(prev => ({ ...prev, [stepId]: e.target.value }))}
+              placeholder="Adicione observações para esta etapa..."
+              rows={3}
+            />
+          </div>
+          <Button onClick={() => saveStepNotes(stepId)} className="w-full">
+            <Save className="w-4 h-4 mr-2" />
+            Salvar Observações
+          </Button>
+          {saveMessages[stepId] ? (
+            <div className="text-green-600 text-sm mt-2">{saveMessages[stepId]}</div>
+          ) : null}
+        </div>
+      );
+    }
+
+    // Preparar Documentação
+    if (title.includes("preparar") && title.includes("documenta")) {
+      return (
+        <div className="space-y-4">
+          {[
+            { key: 'documentacao-original' },
+            { key: 'documentacao-copia' },
+          ].map(({ key }) => (
+            <div key={key} className="space-y-2">
+              <UploadDocBlock
+                inputId={`${key}-${stepId}`}
+                disabledKey={`${key}-${stepId}`}
+                onSelect={(f) => handleSpecificFileUpload(f, key, stepId)}
+              />
+              {renderDocLinks(key)}
+            </div>
+          ))}
+          <div>
+            <Label htmlFor={`observacoes-${stepId}`}>Observações</Label>
+            <Textarea
+              id={`observacoes-${stepId}`}
+              value={notes[stepId] || ""}
+              onChange={(e) => setNotes(prev => ({ ...prev, [stepId]: e.target.value }))}
+              placeholder="Adicione observações para esta etapa..."
+              rows={3}
+            />
+          </div>
+          <Button onClick={() => saveStepNotes(stepId)} className="w-full">
+            <Save className="w-4 h-4 mr-2" />
+            Salvar Observações
+          </Button>
+          {saveMessages[stepId] ? (
+            <div className="text-green-600 text-sm mt-2">{saveMessages[stepId]}</div>
+          ) : null}
+        </div>
+      );
+    }
+
+    // Aguardar Aprovação
+    if (title.includes("aguardar") && title.includes("aprova")) {
+      return (
+        <div className="space-y-4">
+          <UploadDocBlock
+            inputId={`comprovante-aprovacao-${stepId}`}
+            disabledKey={`comprovante-aprovacao-${stepId}`}
+            onSelect={(f) => handleSpecificFileUpload(f, 'comprovante-aprovacao', stepId)}
+          />
+          {renderDocLinks('comprovante-aprovacao')}
+          <div>
+            <Label htmlFor={`observacoes-${stepId}`}>Observações</Label>
+            <Textarea
+              id={`observacoes-${stepId}`}
+              value={notes[stepId] || ""}
+              onChange={(e) => setNotes(prev => ({ ...prev, [stepId]: e.target.value }))}
+              placeholder="Adicione observações para esta etapa..."
+              rows={3}
+            />
+          </div>
+          <Button onClick={() => saveStepNotes(stepId)} className="w-full">
+            <Save className="w-4 h-4 mr-2" />
+            Salvar Observações
+          </Button>
+        </div>
+      );
+    }
+
+    // Fallback genérico
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Label>Status do Processo</Label>
+          <Select
+            value={String(currentStepData.statusFinal || "")}
+            onValueChange={(val) => {
+              const isOutro = val === "Outro";
+              saveStepData(stepId, { statusFinal: val, statusFinalOutro: isOutro ? (currentStepData.statusFinalOutro || "") : "" });
+            }}
+          >
+            <SelectTrigger className="h-9 w-full border-2 focus:border-cyan-500">
+              <SelectValue placeholder="Selecione o status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Deferido">Deferido</SelectItem>
+              <SelectItem value="Indeferido">Indeferido</SelectItem>
+              <SelectItem value="Outro">Outro</SelectItem>
+            </SelectContent>
+          </Select>
+          {String(currentStepData.statusFinal || "") === "Outro" && (
+            <div className="mt-2">
+              <Label htmlFor={`status-final-outro-${stepId}`}>Descrever Status</Label>
+              <Input
+                id={`status-final-outro-${stepId}`}
+                value={String(currentStepData.statusFinalOutro || "")}
+                onChange={(e) => saveStepData(stepId, { statusFinalOutro: e.target.value })}
+                placeholder="Digite o status"
+              />
+            </div>
+          )}
+        </div>
+
         <div>
           <Label htmlFor={`observacoes-${stepId}`}>Observações</Label>
           <Textarea
@@ -1167,36 +1446,39 @@ export default function VistoDetailsPage() {
             rows={3}
           />
         </div>
-        
-        <div className="space-y-2">
-          <Label>Upload de Documentos</Label>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-            <input
-              type="file"
-              id={`file-upload-${stepId}`}
-              className="hidden"
-              multiple
-              onChange={(e) => handleFileUpload(e.target.files, stepId)}
-            />
-            <Button
-              variant="outline"
-              onClick={() => document.getElementById(`file-upload-${stepId}`)?.click()}
-              disabled={uploadingFiles[`step-${stepId}`]}
-            >
-              {uploadingFiles[`step-${stepId}`] ? (
-                <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2" />
-              ) : (
-                <Upload className="w-4 h-4 mr-2" />
-              )}
-              Fazer Upload de Arquivos
-            </Button>
+          <div className="space-y-2">
+            <Label>Upload de Documentos</Label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <input
+                type="file"
+                id={`file-upload-${stepId}`}
+                className="hidden"
+                multiple
+                onChange={(e) => handleFileUpload(e.target.files, stepId)}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => document.getElementById(`file-upload-${stepId}`)?.click()}
+                disabled={uploadingFiles[`step-${stepId}`]}
+              >
+                {uploadingFiles[`step-${stepId}`] ? (
+                  <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mr-2" />
+                ) : (
+                  <Upload className="w-4 h-4 mr-2" />
+                )}
+                Fazer Upload de Arquivos
+              </Button>
+            </div>
+            {renderDocLinks('documentoAnexado')}
           </div>
-        </div>
-
         <Button onClick={() => saveStepNotes(stepId)} className="w-full">
           <Save className="w-4 h-4 mr-2" />
           Salvar Observações
         </Button>
+        {saveMessages[stepId] ? (
+          <div className="text-green-600 text-sm mt-2">{saveMessages[stepId]}</div>
+        ) : null}
       </div>
     );
   };
@@ -1251,8 +1533,8 @@ export default function VistoDetailsPage() {
 
   const getCurrentStepIndex = () => {
     if (!caseData) return 0;
-    const completedSteps = caseData.steps.filter(step => step.completed).length;
-    return Math.min(completedSteps, caseData.steps.length - 1);
+    const idx = Number(caseData.currentStep ?? 0);
+    return Math.min(Math.max(idx, 0), caseData.steps.length - 1);
   };
 
   const currentStepIndex = getCurrentStepIndex();
@@ -1261,8 +1543,8 @@ export default function VistoDetailsPage() {
     <div className="w-full p-6 space-y-6">
       <DetailLayout
         backHref="/dashboard/vistos"
-        title={caseData.title}
-        subtitle={caseData.clientName}
+        title={caseData.clientName}
+        subtitle={(visto?.type || caseData.type || '').replace(/:/g, ' - ')}
         onDelete={handleDeleteCase}
         left={
           <div className="space-y-6">
@@ -1271,7 +1553,7 @@ export default function VistoDetailsPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="w-5 h-5" />
-                    Fluxo de Trabalho - {caseData.type}
+                    Fluxo do Processo
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1286,6 +1568,7 @@ export default function VistoDetailsPage() {
                       expanded={expandedSteps[step.id] || false}
                       onToggle={() => toggleStepExpansion(step.id)}
                       onMarkComplete={() => handleStepCompletion(step.id)}
+                      onMarkIncomplete={() => handleStepCompletion(step.id)}
                       assignment={assignments[index]}
                       onSaveAssignment={(a) => handleSaveAssignment(index, a.responsibleName, a.dueDate)}
                     >
@@ -1295,177 +1578,6 @@ export default function VistoDetailsPage() {
                 </CardContent>
               </Card>
             )}
-
-            <Card className="border-2 border-border shadow-md overflow-hidden">
-              <CardHeader
-                className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
-                onClick={() => toggleSection("documentosPessoais")}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">1</span>
-                    <CardTitle className="text-lg font-semibold">Documentos Pessoais</CardTitle>
-                  </div>
-                  {expandedSections.documentosPessoais ? (
-                    <ChevronUp className="h-5 w-5 text-primary" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                  )}
-                </div>
-              </CardHeader>
-              {expandedSections.documentosPessoais && (
-                <CardContent className="pt-6 pb-6 bg-card">
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="cpf">CPF</Label>
-                      <Input id="cpf" value={visto?.cpf || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("cpfDoc")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="rnm">RNM</Label>
-                      <Input id="rnm" value={visto?.rnm || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("rnmDoc")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="passaporte">Passaporte</Label>
-                      <Input id="passaporte" value={visto?.passaporte || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("passaporteDoc")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="comprovanteEndereco">Comprovante de Endereço / Declaração</Label>
-                      <Input id="comprovanteEndereco" value={visto?.comprovanteEndereco || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("comprovanteEnderecoDoc")}
-                      {renderDocLinks("declaracaoResidenciaDoc")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="foto3x4">Foto digital 3x4</Label>
-                      <Input id="foto3x4" value={""} disabled placeholder="—" className="h-11 border-2" />
-                      {renderDocLinks("foto3x4Doc")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="documentoChines">Documento Chinês (quando aplicável)</Label>
-                      <Input id="documentoChines" value={visto?.documentoChines || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("documentoChinesDoc")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="antecedentesCriminais">Antecedentes Criminais</Label>
-                      <Input id="antecedentesCriminais" value={visto?.antecedentesCriminais || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("antecedentesCriminaisDoc")}
-                    </div>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-
-            <Card className="border-2 border-border shadow-md overflow-hidden">
-              <CardHeader
-                className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
-                onClick={() => toggleSection("comprovacaoFinanceira")}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">2</span>
-                    <CardTitle className="text-lg font-semibold">Comprovação Financeira PF</CardTitle>
-                  </div>
-                  {expandedSections.comprovacaoFinanceira ? (
-                    <ChevronUp className="h-5 w-5 text-primary" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                  )}
-                </div>
-              </CardHeader>
-              {expandedSections.comprovacaoFinanceira && (
-                <CardContent className="pt-6 pb-6 bg-card">
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="certidaoNascimentoFilhos">Filhos (Certidão de Nascimento)</Label>
-                      <Input id="certidaoNascimentoFilhos" value={visto?.certidaoNascimentoFilhos || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("certidaoNascimentoFilhosDoc")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cartaoCnpj">Empresa: Cartão CNPJ</Label>
-                      <Input id="cartaoCnpj" value={visto?.cartaoCnpj || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("cartaoCnpjDoc")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="contratoEmpresa">Contrato Social</Label>
-                      <Input id="contratoEmpresa" value={visto?.contratoEmpresa || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("contratoEmpresaDoc")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="escrituraImoveis">Imóveis (Escritura/Matrícula)</Label>
-                      <Input id="escrituraImoveis" value={visto?.escrituraImoveis || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("escrituraImoveisDoc")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="extratosBancarios">Últimos 3 extratos bancários</Label>
-                      <Input id="extratosBancarios" value={visto?.extratosBancarios || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("extratosBancariosDoc")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="impostoRenda">Imposto de Renda</Label>
-                      <Input id="impostoRenda" value={visto?.impostoRenda || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("impostoRendaDoc")}
-                    </div>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-
-            <Card className="border-2 border-border shadow-md overflow-hidden">
-              <CardHeader
-                className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
-                onClick={() => toggleSection("outrosDocumentos")}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">3</span>
-                    <CardTitle className="text-lg font-semibold">Outros Documentos</CardTitle>
-                  </div>
-                  {expandedSections.outrosDocumentos ? (
-                    <ChevronUp className="h-5 w-5 text-primary" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                  )}
-                </div>
-              </CardHeader>
-              {expandedSections.outrosDocumentos && (
-                <CardContent className="pt-6 pb-6 bg-card">
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="reservasPassagens">Reservas de Passagens</Label>
-                      <Input id="reservasPassagens" value={visto?.reservasPassagens || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("reservasPassagensDoc")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="reservasHotel">Reservas de Hotel</Label>
-                      <Input id="reservasHotel" value={visto?.reservasHotel || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("reservasHotelDoc")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="seguroViagem">Seguro Viagem</Label>
-                      <Input id="seguroViagem" value={visto?.seguroViagem || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("seguroViagemDoc")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="roteiroViagem">Roteiro de Viagem Detalhado</Label>
-                      <Input id="roteiroViagem" value={visto?.roteiroViagem || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("roteiroViagemDoc")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="taxa">Taxa Consular</Label>
-                      <Input id="taxa" value={visto?.taxa || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("taxaDoc")}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="formularioConsulado">Formulário do Consulado preenchido</Label>
-                      <Input id="formularioConsulado" value={visto?.formularioConsulado || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
-                      {renderDocLinks("formularioConsuladoDoc")}
-                    </div>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
           </div>
         }
         right={
@@ -1473,8 +1585,9 @@ export default function VistoDetailsPage() {
             <StatusPanel
               status={status}
               onStatusChange={handleStatusChange}
-              currentStep={1}
-              totalSteps={1}
+              currentStep={currentStepIndex + 1}
+              totalSteps={caseData.steps.length}
+              currentStepTitle={caseData.steps[currentStepIndex]?.title}
               createdAt={caseData.createdAt}
               updatedAt={caseData.updatedAt}
             />

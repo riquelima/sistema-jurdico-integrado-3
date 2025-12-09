@@ -866,7 +866,7 @@ export default function AcoesCriminaisPage() {
       subtitle={caseData.type}
       onDelete={handleDelete}
       left={
-        <div className="space-y-4">
+        <div className="space-y-6">
           {workflow.map((step, index) => (
             <StepItem
               key={index}

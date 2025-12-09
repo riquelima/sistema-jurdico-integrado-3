@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,6 +56,7 @@ export default function NovoVistoPage() {
   const [formData, setFormData] = useState({
     clientName: "",
     type: "Turismo",
+    country: "",
     cpf: "",
     cpfDoc: "",
     rnm: "",
@@ -143,6 +144,16 @@ export default function NovoVistoPage() {
     protocoladoDoc: "",
   });
   const [uploadingDocs, setUploadingDocs] = useState<Record<string, boolean>>({});
+  const [extraUploads, setExtraUploads] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    const inputs = document.querySelectorAll('input[type="file"]');
+    inputs.forEach((el) => {
+      try {
+        el.setAttribute('multiple', '');
+      } catch {}
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,27 +194,49 @@ export default function NovoVistoPage() {
     e: React.ChangeEvent<HTMLInputElement>,
     field: string
   ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
 
     setUploadingDocs((prev) => ({ ...prev, [field]: true }));
 
     try {
-      const formDataUpload = new FormData();
-      formDataUpload.append("file", file);
+      const uploadedUrls: string[] = [];
+      for (const file of files) {
+        const formDataUpload = new FormData();
+        formDataUpload.append("file", file);
 
-      const response = await fetch("/api/documents/upload", {
-        method: "POST",
-        body: formDataUpload,
-      });
+        const response = await fetch("/api/documents/upload", {
+          method: "POST",
+          body: formDataUpload,
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        handleChange(field, data.fileUrl);
-      } else {
-        const errorData = await response.json();
-        console.error("Upload error:", errorData);
-        alert(errorData.error || "Erro ao enviar documento");
+        if (response.ok) {
+          const data = await response.json();
+          uploadedUrls.push(data.fileUrl);
+        } else {
+          const errorData = await response.json();
+          console.error("Upload error:", errorData);
+          alert(errorData.error || "Erro ao enviar documento");
+        }
+      }
+
+      if (uploadedUrls.length) {
+        const currentPrimary = (formData as any)[field] as string | undefined;
+        if (!currentPrimary) {
+          handleChange(field, uploadedUrls[0]);
+          const rest = uploadedUrls.slice(1);
+          if (rest.length) {
+            setExtraUploads((prev) => ({
+              ...prev,
+              [field]: [...(prev[field] || []), ...rest],
+            }));
+          }
+        } else {
+          setExtraUploads((prev) => ({
+            ...prev,
+            [field]: [...(prev[field] || []), ...uploadedUrls],
+          }));
+        }
       }
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -215,6 +248,16 @@ export default function NovoVistoPage() {
 
   const removeDocument = (field: string) => {
     handleChange(field, "");
+  };
+
+  const removeDocumentAt = (field: string, url: string) => {
+    if ((formData as any)[field] === url) {
+      handleChange(field, "");
+    }
+    setExtraUploads((prev) => ({
+      ...prev,
+      [field]: (prev[field] || []).filter((u) => u !== url),
+    }));
   };
 
   const convertTemporaryUploads = async (caseId: number) => {
@@ -270,9 +313,13 @@ export default function NovoVistoPage() {
 
     const documentsToConvert: { fieldName: string; fileUrl: string }[] = [];
     for (const field of documentFields) {
-      const fileUrl = (formData as any)[field];
-      if (fileUrl) {
-        documentsToConvert.push({ fieldName: field, fileUrl });
+      const urls = new Set<string>();
+      const single = (formData as any)[field] as string | undefined;
+      if (single) urls.add(single);
+      const extras = extraUploads[field] || [];
+      for (const u of extras) urls.add(u);
+      for (const u of urls) {
+        documentsToConvert.push({ fieldName: field, fileUrl: u });
       }
     }
 
@@ -332,7 +379,7 @@ export default function NovoVistoPage() {
           </CardHeader>
           <CardContent className="space-y-8 p-8">
             {/* Informações Básicas */}
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 grid-cols-3">
               <div className="space-y-3">
                 <Label htmlFor="clientName" className="text-base font-medium text-foreground">
                   Nome do Cliente <span className="text-primary">*</span>
@@ -342,9 +389,48 @@ export default function NovoVistoPage() {
                   value={formData.clientName}
                   onChange={(e) => handleChange("clientName", e.target.value)}
                   required
-                  className="h-12 border-2 focus:border-primary transition-colors"
+                  className="h-9 border-2 focus:border-primary transition-colors"
                   placeholder="Digite o nome completo do cliente"
                 />
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="country" className="text-base font-medium text-foreground">
+                  País do Visto <span className="text-primary">*</span>
+                </Label>
+                <Select
+                  value={formData.country}
+                  onValueChange={(value) => handleChange("country", value)}
+                >
+                  <SelectTrigger className="h-12 w-full border-2 focus:border-cyan-500">
+                    <SelectValue placeholder="Selecione o país" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel className="font-bold text-slate-900 dark:text-slate-100">Países</SelectLabel>
+                      <SelectItem value="Brasil">Brasil</SelectItem>
+                      <SelectItem value="China">China</SelectItem>
+                      <SelectItem value="Estados Unidos">Estados Unidos</SelectItem>
+                      <SelectItem value="Canadá">Canadá</SelectItem>
+                      <SelectItem value="Reino Unido">Reino Unido</SelectItem>
+                      <SelectItem value="Portugal">Portugal</SelectItem>
+                      <SelectItem value="França">França</SelectItem>
+                      <SelectItem value="Alemanha">Alemanha</SelectItem>
+                      <SelectItem value="Itália">Itália</SelectItem>
+                      <SelectItem value="Espanha">Espanha</SelectItem>
+                      <SelectItem value="Austrália">Austrália</SelectItem>
+                      <SelectItem value="Japão">Japão</SelectItem>
+                      <SelectItem value="Irlanda">Irlanda</SelectItem>
+                      <SelectItem value="Holanda">Holanda</SelectItem>
+                      <SelectItem value="Suíça">Suíça</SelectItem>
+                      <SelectItem value="Suécia">Suécia</SelectItem>
+                      <SelectItem value="Noruega">Noruega</SelectItem>
+                      <SelectItem value="Dinamarca">Dinamarca</SelectItem>
+                      <SelectItem value="Bélgica">Bélgica</SelectItem>
+                      <SelectItem value="Áustria">Áustria</SelectItem>
+                      <SelectItem value="Outro">Outro</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-3">
                 <Label htmlFor="type" className="text-base font-medium text-foreground">
@@ -354,7 +440,7 @@ export default function NovoVistoPage() {
                   value={formData.type}
                   onValueChange={(value) => handleChange("type", value)}
                 >
-                <SelectTrigger className="h-12 border-2 focus:border-cyan-500">
+                <SelectTrigger className="h-12 w-full border-2 focus:border-cyan-500">
                   <SelectValue />
                 </SelectTrigger>
                   <SelectContent>
@@ -364,11 +450,11 @@ export default function NovoVistoPage() {
                     </SelectGroup>
                     <SelectGroup>
                       <SelectLabel className="font-bold text-slate-900 dark:text-slate-100">Visto de Trabalho</SelectLabel>
-                      <SelectItem value="Trabalho:Brasil">Brasil</SelectItem>
-                      <SelectItem value="Trabalho:Residência Prévia">Residência Prévia</SelectItem>
-                      <SelectItem value="Trabalho:Renovação 1 ano">Renovação 1 ano</SelectItem>
-                      <SelectItem value="Trabalho:Indeterminado">Indeterminado</SelectItem>
-                      <SelectItem value="Trabalho:Mudança de Empregador">Mudança de Empregador</SelectItem>
+                      <SelectItem value="Trabalho:Brasil">Trabalho - Brasil</SelectItem>
+                      <SelectItem value="Trabalho:Residência Prévia">Trabalho - Residência Prévia</SelectItem>
+                      <SelectItem value="Trabalho:Renovação 1 ano">Trabalho - Renovação 1 ano</SelectItem>
+                      <SelectItem value="Trabalho:Indeterminado">Trabalho - Indeterminado</SelectItem>
+                      <SelectItem value="Trabalho:Mudança de Empregador">Trabalho - Mudança de Empregador</SelectItem>
                     </SelectGroup>
                     <SelectGroup>
                       <SelectLabel className="font-bold text-slate-900 dark:text-slate-100">Visto de Investidor</SelectLabel>
@@ -414,25 +500,21 @@ export default function NovoVistoPage() {
                           className="h-11 border-2 focus:border-cyan-500"
                           />
                           <div className="flex items-center gap-2">
-                            {!formData.cpfDoc ? (
-                              <>
-                                <input
-                                  type="file"
-                                  id="cpfDocInput"
-                                  className="hidden"
-                                  onChange={(e) => handleDocumentUpload(e, "cpfDoc")}
-                                  disabled={uploadingDocs.cpfDoc}
-                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                />
-                                <Label
-                                  htmlFor="cpfDocInput"
-                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
-                                >
-                                  <Upload className="h-4 w-4" />
-                                  {uploadingDocs.cpfDoc ? "Enviando..." : "Upload Documento"}
-                                </Label>
-                              </>
-                            ) : null}
+                            <input
+                              type="file"
+                              id="cpfDocInput"
+                              className="hidden"
+                              onChange={(e) => handleDocumentUpload(e, "cpfDoc")}
+                              disabled={uploadingDocs.cpfDoc}
+                              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                            />
+                            <Label
+                              htmlFor="cpfDocInput"
+                              className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                            >
+                              <Upload className="h-4 w-4" />
+                              {uploadingDocs.cpfDoc ? "Enviando..." : "Upload Documento"}
+                            </Label>
                           </div>
                           {formData.cpfDoc && (
                             <DocumentPreview
@@ -440,6 +522,9 @@ export default function NovoVistoPage() {
                               onRemove={() => removeDocument("cpfDoc")}
                             />
                           )}
+                          {(extraUploads.cpfDoc || []).map((u, i) => (
+                            <DocumentPreview key={`cpfDoc-${i}`} fileUrl={u} onRemove={() => removeDocumentAt("cpfDoc", u)} />
+                          ))}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="rnm" className="text-sm font-medium">RNM</Label>
@@ -451,25 +536,21 @@ export default function NovoVistoPage() {
                           className="h-11 border-2 focus:border-cyan-500"
                           />
                           <div className="flex items-center gap-2">
-                            {!formData.rnmDoc ? (
-                              <>
-                                <input
-                                  type="file"
-                                  id="rnmDocInput"
-                                  className="hidden"
-                                  onChange={(e) => handleDocumentUpload(e, "rnmDoc")}
-                                  disabled={uploadingDocs.rnmDoc}
-                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                />
-                                <Label
-                                  htmlFor="rnmDocInput"
-                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
-                                >
-                                  <Upload className="h-4 w-4" />
-                                  {uploadingDocs.rnmDoc ? "Enviando..." : "Upload Documento"}
-                                </Label>
-                              </>
-                            ) : null}
+                            <input
+                              type="file"
+                              id="rnmDocInput"
+                              className="hidden"
+                              onChange={(e) => handleDocumentUpload(e, "rnmDoc")}
+                              disabled={uploadingDocs.rnmDoc}
+                              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                            />
+                            <Label
+                              htmlFor="rnmDocInput"
+                              className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                            >
+                              <Upload className="h-4 w-4" />
+                              {uploadingDocs.rnmDoc ? "Enviando..." : "Upload Documento"}
+                            </Label>
                           </div>
                           {formData.rnmDoc && (
                             <DocumentPreview
@@ -477,6 +558,9 @@ export default function NovoVistoPage() {
                               onRemove={() => removeDocument("rnmDoc")}
                             />
                           )}
+                          {(extraUploads.rnmDoc || []).map((u, i) => (
+                            <DocumentPreview key={`rnmDoc-${i}`} fileUrl={u} onRemove={() => removeDocumentAt("rnmDoc", u)} />
+                          ))}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="passaporte" className="text-sm font-medium">Passaporte</Label>
@@ -488,25 +572,21 @@ export default function NovoVistoPage() {
                           className="h-11 border-2 focus:border-cyan-500"
                           />
                           <div className="flex items-center gap-2">
-                            {!formData.passaporteDoc ? (
-                              <>
-                                <input
-                                  type="file"
-                                  id="passaporteDocInput"
-                                  className="hidden"
-                                  onChange={(e) => handleDocumentUpload(e, "passaporteDoc")}
-                                  disabled={uploadingDocs.passaporteDoc}
-                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                />
-                                <Label
-                                  htmlFor="passaporteDocInput"
-                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
-                                >
-                                  <Upload className="h-4 w-4" />
-                                  {uploadingDocs.passaporteDoc ? "Enviando..." : "Upload Documento"}
-                                </Label>
-                              </>
-                            ) : null}
+                            <input
+                              type="file"
+                              id="passaporteDocInput"
+                              className="hidden"
+                              onChange={(e) => handleDocumentUpload(e, "passaporteDoc")}
+                              disabled={uploadingDocs.passaporteDoc}
+                              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                            />
+                            <Label
+                              htmlFor="passaporteDocInput"
+                              className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                            >
+                              <Upload className="h-4 w-4" />
+                              {uploadingDocs.passaporteDoc ? "Enviando..." : "Upload Documento"}
+                            </Label>
                           </div>
                           {formData.passaporteDoc && (
                             <DocumentPreview
@@ -514,6 +594,9 @@ export default function NovoVistoPage() {
                               onRemove={() => removeDocument("passaporteDoc")}
                             />
                           )}
+                          {(extraUploads.passaporteDoc || []).map((u, i) => (
+                            <DocumentPreview key={`passaporteDoc-${i}`} fileUrl={u} onRemove={() => removeDocumentAt("passaporteDoc", u)} />
+                          ))}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="comprovanteEndereco" className="text-sm font-medium">
@@ -529,25 +612,21 @@ export default function NovoVistoPage() {
                           className="h-11 border-2 focus:border-cyan-500"
                           />
                           <div className="flex items-center gap-2">
-                            {!formData.comprovanteEnderecoDoc ? (
-                              <>
-                                <input
-                                  type="file"
-                                  id="comprovanteEnderecoDocInput"
-                                  className="hidden"
-                                  onChange={(e) => handleDocumentUpload(e, "comprovanteEnderecoDoc")}
-                                  disabled={uploadingDocs.comprovanteEnderecoDoc}
-                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                />
-                                <Label
-                                  htmlFor="comprovanteEnderecoDocInput"
-                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
-                                >
-                                  <Upload className="h-4 w-4" />
-                                  {uploadingDocs.comprovanteEnderecoDoc ? "Enviando..." : "Upload Documento"}
-                                </Label>
-                              </>
-                            ) : null}
+                            <input
+                              type="file"
+                              id="comprovanteEnderecoDocInput"
+                              className="hidden"
+                              onChange={(e) => handleDocumentUpload(e, "comprovanteEnderecoDoc")}
+                              disabled={uploadingDocs.comprovanteEnderecoDoc}
+                              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                            />
+                            <Label
+                              htmlFor="comprovanteEnderecoDocInput"
+                              className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                            >
+                              <Upload className="h-4 w-4" />
+                              {uploadingDocs.comprovanteEnderecoDoc ? "Enviando..." : "Upload Documento"}
+                            </Label>
                           </div>
                           {formData.comprovanteEnderecoDoc && (
                             <DocumentPreview
@@ -555,6 +634,9 @@ export default function NovoVistoPage() {
                               onRemove={() => removeDocument("comprovanteEnderecoDoc")}
                             />
                           )}
+                          {(extraUploads.comprovanteEnderecoDoc || []).map((u, i) => (
+                            <DocumentPreview key={`comprovanteEnderecoDoc-${i}`} fileUrl={u} onRemove={() => removeDocumentAt("comprovanteEnderecoDoc", u)} />
+                          ))}
                           <div className="flex items-center gap-2 pt-2">
                             <Checkbox
                               id="comprovanteNaoNoNome"
@@ -574,25 +656,21 @@ export default function NovoVistoPage() {
                               Declaração de Residência
                             </Label>
                             <div className="flex items-center gap-2">
-                              {!formData.declaracaoResidenciaDoc ? (
-                                <>
-                                  <input
-                                    type="file"
-                                    id="declaracaoResidenciaDocInput"
-                                    className="hidden"
-                                    onChange={(e) => handleDocumentUpload(e, "declaracaoResidenciaDoc")}
-                                    disabled={uploadingDocs.declaracaoResidenciaDoc}
-                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                  />
-                                  <Label
-                                    htmlFor="declaracaoResidenciaDocInput"
-                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
-                                  >
-                                    <Upload className="h-4 w-4" />
-                                    {uploadingDocs.declaracaoResidenciaDoc ? "Enviando..." : "Upload Documento"}
-                                  </Label>
-                                </>
-                              ) : null}
+                              <input
+                                type="file"
+                                id="declaracaoResidenciaDocInput"
+                                className="hidden"
+                                onChange={(e) => handleDocumentUpload(e, "declaracaoResidenciaDoc")}
+                                disabled={uploadingDocs.declaracaoResidenciaDoc}
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                              />
+                              <Label
+                                htmlFor="declaracaoResidenciaDocInput"
+                                className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                              >
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.declaracaoResidenciaDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
                             </div>
                             {formData.declaracaoResidenciaDoc && (
                               <DocumentPreview
@@ -600,30 +678,29 @@ export default function NovoVistoPage() {
                                 onRemove={() => removeDocument("declaracaoResidenciaDoc")}
                               />
                             )}
+                            {(extraUploads.declaracaoResidenciaDoc || []).map((u, i) => (
+                              <DocumentPreview key={`declaracaoResidenciaDoc-${i}`} fileUrl={u} onRemove={() => removeDocumentAt("declaracaoResidenciaDoc", u)} />
+                            ))}
                           </div>
                         )}
                         <div className="space-y-2">
                           <Label htmlFor="foto3x4DocInput" className="text-sm font-medium">Foto digital 3x4</Label>
                           <div className="flex items-center gap-2">
-                            {!formData.foto3x4Doc ? (
-                              <>
-                                <input
-                                  type="file"
-                                  id="foto3x4DocInput"
-                                  className="hidden"
-                                  onChange={(e) => handleDocumentUpload(e, "foto3x4Doc")}
-                                  disabled={uploadingDocs.foto3x4Doc}
-                                  accept=".pdf,.jpg,.jpeg,.png"
-                                />
-                                <Label
-                                  htmlFor="foto3x4DocInput"
-                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
-                                >
-                                  <Upload className="h-4 w-4" />
-                                  {uploadingDocs.foto3x4Doc ? "Enviando..." : "Upload Foto"}
-                                </Label>
-                              </>
-                            ) : null}
+                            <input
+                              type="file"
+                              id="foto3x4DocInput"
+                              className="hidden"
+                              onChange={(e) => handleDocumentUpload(e, "foto3x4Doc")}
+                              disabled={uploadingDocs.foto3x4Doc}
+                              accept=".pdf,.jpg,.jpeg,.png"
+                            />
+                            <Label
+                              htmlFor="foto3x4DocInput"
+                              className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadowsm hover:bg-slate-100"
+                            >
+                              <Upload className="h-4 w-4" />
+                              {uploadingDocs.foto3x4Doc ? "Enviando..." : "Upload Foto"}
+                            </Label>
                           </div>
                           {formData.foto3x4Doc && (
                             <DocumentPreview
@@ -631,6 +708,9 @@ export default function NovoVistoPage() {
                               onRemove={() => removeDocument("foto3x4Doc")}
                             />
                           )}
+                          {(extraUploads.foto3x4Doc || []).map((u, i) => (
+                            <DocumentPreview key={`foto3x4Doc-${i}`} fileUrl={u} onRemove={() => removeDocumentAt("foto3x4Doc", u)} />
+                          ))}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="documentoChines" className="text-sm font-medium">Documento Chinês (quando aplicável)</Label>
@@ -642,25 +722,21 @@ export default function NovoVistoPage() {
                             className="h-11 border-2 focus:border-cyan-500"
                           />
                           <div className="flex items-center gap-2">
-                            {!formData.documentoChinesDoc ? (
-                              <>
-                                <input
-                                  type="file"
-                                  id="documentoChinesDocInput"
-                                  className="hidden"
-                                  onChange={(e) => handleDocumentUpload(e, "documentoChinesDoc")}
-                                  disabled={uploadingDocs.documentoChinesDoc}
-                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                />
-                                <Label
-                                  htmlFor="documentoChinesDocInput"
-                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
-                                >
-                                  <Upload className="h-4 w-4" />
-                                  {uploadingDocs.documentoChinesDoc ? "Enviando..." : "Upload Documento"}
-                                </Label>
-                              </>
-                            ) : null}
+                            <input
+                              type="file"
+                              id="documentoChinesDocInput"
+                              className="hidden"
+                              onChange={(e) => handleDocumentUpload(e, "documentoChinesDoc")}
+                              disabled={uploadingDocs.documentoChinesDoc}
+                              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                            />
+                            <Label
+                              htmlFor="documentoChinesDocInput"
+                              className="inline-flex items-center justifycenter gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                            >
+                              <Upload className="h-4 w-4" />
+                              {uploadingDocs.documentoChinesDoc ? "Enviando..." : "Upload Documento"}
+                            </Label>
                           </div>
                           {formData.documentoChinesDoc && (
                             <DocumentPreview
@@ -668,6 +744,9 @@ export default function NovoVistoPage() {
                               onRemove={() => removeDocument("documentoChinesDoc")}
                             />
                           )}
+                          {(extraUploads.documentoChinesDoc || []).map((u, i) => (
+                            <DocumentPreview key={`documentoChinesDoc-${i}`} fileUrl={u} onRemove={() => removeDocumentAt("documentoChinesDoc", u)} />
+                          ))}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="antecedentesCriminais" className="text-sm font-medium">Antecedentes Criminais</Label>
@@ -679,25 +758,21 @@ export default function NovoVistoPage() {
                             className="h-11 border-2 focus:border-cyan-500"
                           />
                           <div className="flex items-center gap-2">
-                            {!formData.antecedentesCriminaisDoc ? (
-                              <>
-                                <input
-                                  type="file"
-                                  id="antecedentesCriminaisDocInput"
-                                  className="hidden"
-                                  onChange={(e) => handleDocumentUpload(e, "antecedentesCriminaisDoc")}
-                                  disabled={uploadingDocs.antecedentesCriminaisDoc}
-                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                />
-                                <Label
-                                  htmlFor="antecedentesCriminaisDocInput"
-                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
-                                >
-                                  <Upload className="h-4 w-4" />
-                                  {uploadingDocs.antecedentesCriminaisDoc ? "Enviando..." : "Upload Documento"}
-                                </Label>
-                              </>
-                            ) : null}
+                            <input
+                              type="file"
+                              id="antecedentesCriminaisDocInput"
+                              className="hidden"
+                              onChange={(e) => handleDocumentUpload(e, "antecedentesCriminaisDoc")}
+                              disabled={uploadingDocs.antecedentesCriminaisDoc}
+                              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                            />
+                            <Label
+                              htmlFor="antecedentesCriminaisDocInput"
+                              className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                            >
+                              <Upload className="h-4 w-4" />
+                              {uploadingDocs.antecedentesCriminaisDoc ? "Enviando..." : "Upload Documento"}
+                            </Label>
                           </div>
                           {formData.antecedentesCriminaisDoc && (
                             <DocumentPreview
@@ -705,6 +780,9 @@ export default function NovoVistoPage() {
                               onRemove={() => removeDocument("antecedentesCriminaisDoc")}
                             />
                           )}
+                          {(extraUploads.antecedentesCriminaisDoc || []).map((u, i) => (
+                            <DocumentPreview key={`antecedentesCriminaisDoc-${i}`} fileUrl={u} onRemove={() => removeDocumentAt("antecedentesCriminaisDoc", u)} />
+                          ))}
                         </div>
                       </div>
                     </CardContent>

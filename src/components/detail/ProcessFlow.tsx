@@ -96,7 +96,7 @@ export function ProcessFlow({
         <CardTitle>Fluxo do Processo</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-1">
+        <div className="space-y-4">
           {steps.map((stepTitle, index) => (
             <StepItem
               key={index}

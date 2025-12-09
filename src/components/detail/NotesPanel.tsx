@@ -17,7 +17,7 @@ export function NotesPanel({ notes, onChange, onSave }: NotesPanelProps) {
       <CardHeader>
         <CardTitle>Observações</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         <Textarea rows={6} placeholder="Adicione observações..." value={notes} onChange={(e) => onChange(e.target.value)} />
         <Button className="bg-slate-900 text-white shadow-md hover:bg-slate-800 hover:shadow-lg transform hover:scale-105 active:scale-95 w-full" onClick={onSave}>
           <Save className="h-4 w-4 mr-2" />
