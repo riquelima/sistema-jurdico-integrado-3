@@ -315,33 +315,26 @@ export default function DashboardLayout({
 
       {/* Main Content Area */}
       <div className="lg:pl-80">
-        {/* Desktop Header */}
-        <header className="hidden lg:block sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
-          <div className="grid grid-cols-3 items-center px-6 py-4">
-            <div className="flex items-center gap-4">
-              {pathname === "/dashboard" && (
+        {pathname === "/dashboard" && (
+          <header className="hidden lg:block sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
+            <div className="grid grid-cols-3 items-center px-6 py-4">
+              <div className="flex items-center gap-4">
                 <h1 className="text-2xl font-bold gradient-text">
                   {menuItems.find(item => item.href === pathname)?.title || "Dashboard"}
                 </h1>
-              )}
-            </div>
-            <div className="flex justify-center">
-              {pathname === "/dashboard" && (
+              </div>
+              <div className="flex justify-center">
                 <Badge variant="outline" className="border-blue-200 text-blue-700">
                   <Calendar className="w-3 h-3 mr-1" />
                   {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </Badge>
-              )}
+              </div>
+              <div className="flex items-center gap-3 justify-end">
+                <NotificationBell />
+              </div>
             </div>
-            <div className="flex items-center gap-3 justify-end">
-              {pathname === "/dashboard" && (
-                <>
-                  <NotificationBell />
-                </>
-              )}
-            </div>
-          </div>
-        </header>
+          </header>
+        )}
 
         {/* Mobile Header */}
         <header className="lg:hidden sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
