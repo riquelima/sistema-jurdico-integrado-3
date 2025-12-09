@@ -9,13 +9,16 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Save, ChevronDown, ChevronUp, Upload } from "lucide-react";
 import Link from "next/link";
 import { DocumentPreview } from "@/components/ui/document-preview";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function NovoVistoPage() {
   const router = useRouter();
@@ -24,6 +27,31 @@ export default function NovoVistoPage() {
     documentosPessoais: true,
     comprovacaoFinanceira: true,
     outrosDocumentos: true,
+    identificacaoTrabalhoBrasil: true,
+    empresaTrabalhoBrasil: true,
+    trabalhistasTrabalhoBrasil: true,
+    historicoSegurancaTrabalhoBrasil: true,
+    formacaoTrabalhoBrasil: true,
+    identificacaoResidenciaPrevia: true,
+    residenciaAnteriorResidenciaPrevia: true,
+    empresaResidenciaPrevia: true,
+    trabalhistasResidenciaPrevia: true,
+    formacaoResidenciaPrevia: true,
+    identificacaoRenovacaoAno: true,
+    empresaRenovacaoAno: true,
+    vinculoRenovacaoAno: true,
+    segurancaRenovacaoAno: true,
+    identificacaoIndeterminado: true,
+    empresaIndeterminado: true,
+    vinculoIndeterminado: true,
+    segurancaIndeterminado: true,
+    identificacaoMudanca: true,
+    empresaMudanca: true,
+    vinculoMudanca: true,
+    justificativaMudanca: true,
+    formacaoMudanca: true,
+    identificacaoInvestidor: true,
+    empresaInvestidor: true,
   });
   const [formData, setFormData] = useState({
     clientName: "",
@@ -36,14 +64,63 @@ export default function NovoVistoPage() {
     passaporteDoc: "",
     comprovanteEndereco: "",
     comprovanteEnderecoDoc: "",
+    comprovanteNaoNoNome: false,
+    declaracaoResidenciaDoc: "",
+    foto3x4Doc: "",
+    documentoChines: "",
+    documentoChinesDoc: "",
+    antecedentesCriminais: "",
+    antecedentesCriminaisDoc: "",
+    // Campos específicos de Visto de Trabalho - Brasil
+    certidaoNascimento: "",
+    certidaoNascimentoDoc: "",
+    declaracaoCompreensao: "",
+    declaracaoCompreensaoDoc: "",
     certidaoNascimentoFilhos: "",
     certidaoNascimentoFilhosDoc: "",
     cartaoCnpj: "",
     cartaoCnpjDoc: "",
     contratoEmpresa: "",
     contratoEmpresaDoc: "",
+    declaracoesEmpresa: "",
+    declaracoesEmpresaDoc: "",
+    procuracaoEmpresa: "",
+    procuracaoEmpresaDoc: "",
+    formularioRn01: "",
+    formularioRn01Doc: "",
+    guiaPaga: "",
+    guiaPagaDoc: "",
+    publicacaoDou: "",
+    publicacaoDouDoc: "",
+    contratoTrabalho: "",
+    contratoTrabalhoDoc: "",
+    folhaPagamento: "",
+    folhaPagamentoDoc: "",
+    comprovanteVinculoAnterior: "",
+    comprovanteVinculoAnteriorDoc: "",
+    declaracaoAntecedentesCriminais: "",
+    declaracaoAntecedentesCriminaisDoc: "",
+    diploma: "",
+    diplomaDoc: "",
+    // Renovação 1 ano
+    ctps: "",
+    ctpsDoc: "",
+    contratoTrabalhoAnterior: "",
+    contratoTrabalhoAnteriorDoc: "",
+    contratoTrabalhoAtual: "",
+    contratoTrabalhoAtualDoc: "",
+    formularioProrrogacao: "",
+    formularioProrrogacaoDoc: "",
+    contratoTrabalhoIndeterminado: "",
+    contratoTrabalhoIndeterminadoDoc: "",
+    justificativaMudancaEmpregador: "",
+    justificativaMudancaEmpregadorDoc: "",
     escrituraImoveis: "",
     escrituraImoveisDoc: "",
+    extratosBancarios: "",
+    extratosBancariosDoc: "",
+    impostoRenda: "",
+    impostoRendaDoc: "",
     reservasPassagens: "",
     reservasPassagensDoc: "",
     reservasHotel: "",
@@ -54,6 +131,16 @@ export default function NovoVistoPage() {
     roteiroViagemDoc: "",
     taxa: "",
     taxaDoc: "",
+    formularioConsulado: "",
+    formularioConsuladoDoc: "",
+    comprovanteInvestimento: "",
+    comprovanteInvestimentoDoc: "",
+    planoInvestimentos: "",
+    planoInvestimentosDoc: "",
+    formularioRequerimento: "",
+    formularioRequerimentoDoc: "",
+    protocolado: "",
+    protocoladoDoc: "",
   });
   const [uploadingDocs, setUploadingDocs] = useState<Record<string, boolean>>({});
 
@@ -136,15 +223,49 @@ export default function NovoVistoPage() {
       "rnmDoc",
       "passaporteDoc",
       "comprovanteEnderecoDoc",
+      "declaracaoResidenciaDoc",
+      "foto3x4Doc",
+      "documentoChinesDoc",
+      "antecedentesCriminaisDoc",
+      // Visto de Trabalho - Brasil
+      "certidaoNascimentoDoc",
+      "declaracaoCompreensaoDoc",
       "certidaoNascimentoFilhosDoc",
       "cartaoCnpjDoc",
       "contratoEmpresaDoc",
+      "declaracoesEmpresaDoc",
+      "procuracaoEmpresaDoc",
+      "formularioRn01Doc",
+      "guiaPagaDoc",
+      "publicacaoDouDoc",
+      "formularioRn02Doc",
+      "comprovanteResidenciaPreviaDoc",
+      "comprovanteAtividadeDoc",
       "escrituraImoveisDoc",
+      "extratosBancariosDoc",
+      "impostoRendaDoc",
       "reservasPassagensDoc",
       "reservasHotelDoc",
       "seguroViagemDoc",
       "roteiroViagemDoc",
       "taxaDoc",
+      "formularioConsuladoDoc",
+      "contratoTrabalhoDoc",
+      "folhaPagamentoDoc",
+      "comprovanteVinculoAnteriorDoc",
+      "declaracaoAntecedentesCriminaisDoc",
+      "diplomaDoc",
+      // Renovação 1 ano
+      "ctpsDoc",
+      "contratoTrabalhoAnteriorDoc",
+      "contratoTrabalhoAtualDoc",
+      "formularioProrrogacaoDoc",
+      "contratoTrabalhoIndeterminadoDoc",
+      "justificativaMudancaEmpregadorDoc",
+      "comprovanteInvestimentoDoc",
+      "planoInvestimentosDoc",
+      "formularioRequerimentoDoc",
+      "protocoladoDoc",
     ];
 
     const documentsToConvert: { fieldName: string; fileUrl: string }[] = [];
@@ -196,7 +317,7 @@ export default function NovoVistoPage() {
         <div>
           <h1 className="text-4xl font-semibold text-foreground tracking-tight">Novo Visto</h1>
           <p className="text-muted-foreground mt-1 text-base">
-            Cadastre um novo processo de visto com elegância e organização
+            Gerencie processos de vistos internacionais
           </p>
         </div>
       </div>
@@ -237,9 +358,22 @@ export default function NovoVistoPage() {
                   <SelectValue />
                 </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Turismo">Turismo</SelectItem>
-                    <SelectItem value="Trabalho">Trabalho</SelectItem>
-                    <SelectItem value="Investidor">Investidor</SelectItem>
+                    <SelectGroup>
+                      <SelectLabel className="font-bold text-slate-900 dark:text-slate-100">Visto de Turismo</SelectLabel>
+                      <SelectItem value="Turismo">Turismo</SelectItem>
+                    </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel className="font-bold text-slate-900 dark:text-slate-100">Visto de Trabalho</SelectLabel>
+                      <SelectItem value="Trabalho:Brasil">Brasil</SelectItem>
+                      <SelectItem value="Trabalho:Residência Prévia">Residência Prévia</SelectItem>
+                      <SelectItem value="Trabalho:Renovação 1 ano">Renovação 1 ano</SelectItem>
+                      <SelectItem value="Trabalho:Indeterminado">Indeterminado</SelectItem>
+                      <SelectItem value="Trabalho:Mudança de Empregador">Mudança de Empregador</SelectItem>
+                    </SelectGroup>
+                    <SelectGroup>
+                      <SelectLabel className="font-bold text-slate-900 dark:text-slate-100">Visto de Investidor</SelectLabel>
+                      <SelectItem value="Investidor">Investidor</SelectItem>
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>
@@ -249,10 +383,10 @@ export default function NovoVistoPage() {
               <div className="space-y-6 mt-8">
                 {/* 1 - Documentos Pessoais */}
                 <Card className="border-2 border-border shadow-md overflow-hidden">
-                  <CardHeader
-                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
-                    onClick={() => toggleSection("documentosPessoais")}
-                  >
+                <CardHeader
+                  className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                  onClick={() => toggleSection("documentosPessoais")}
+                >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">
@@ -421,6 +555,156 @@ export default function NovoVistoPage() {
                               onRemove={() => removeDocument("comprovanteEnderecoDoc")}
                             />
                           )}
+                          <div className="flex items-center gap-2 pt-2">
+                            <Checkbox
+                              id="comprovanteNaoNoNome"
+                              checked={!!formData.comprovanteNaoNoNome}
+                              onCheckedChange={(checked) =>
+                                setFormData((prev) => ({ ...prev, comprovanteNaoNoNome: !!checked }))
+                              }
+                            />
+                            <Label htmlFor="comprovanteNaoNoNome" className="text-sm">
+                              Comprovante não está no nome do solicitante
+                            </Label>
+                          </div>
+                        </div>
+                        {(formData.comprovanteNaoNoNome || !formData.comprovanteEnderecoDoc) && (
+                          <div className="space-y-2">
+                            <Label htmlFor="declaracaoResidenciaDocInput" className="text-sm font-medium">
+                              Declaração de Residência
+                            </Label>
+                            <div className="flex items-center gap-2">
+                              {!formData.declaracaoResidenciaDoc ? (
+                                <>
+                                  <input
+                                    type="file"
+                                    id="declaracaoResidenciaDocInput"
+                                    className="hidden"
+                                    onChange={(e) => handleDocumentUpload(e, "declaracaoResidenciaDoc")}
+                                    disabled={uploadingDocs.declaracaoResidenciaDoc}
+                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                  />
+                                  <Label
+                                    htmlFor="declaracaoResidenciaDocInput"
+                                    className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                  >
+                                    <Upload className="h-4 w-4" />
+                                    {uploadingDocs.declaracaoResidenciaDoc ? "Enviando..." : "Upload Documento"}
+                                  </Label>
+                                </>
+                              ) : null}
+                            </div>
+                            {formData.declaracaoResidenciaDoc && (
+                              <DocumentPreview
+                                fileUrl={formData.declaracaoResidenciaDoc}
+                                onRemove={() => removeDocument("declaracaoResidenciaDoc")}
+                              />
+                            )}
+                          </div>
+                        )}
+                        <div className="space-y-2">
+                          <Label htmlFor="foto3x4DocInput" className="text-sm font-medium">Foto digital 3x4</Label>
+                          <div className="flex items-center gap-2">
+                            {!formData.foto3x4Doc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="foto3x4DocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "foto3x4Doc")}
+                                  disabled={uploadingDocs.foto3x4Doc}
+                                  accept=".pdf,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="foto3x4DocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.foto3x4Doc ? "Enviando..." : "Upload Foto"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.foto3x4Doc && (
+                            <DocumentPreview
+                              fileUrl={formData.foto3x4Doc}
+                              onRemove={() => removeDocument("foto3x4Doc")}
+                            />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="documentoChines" className="text-sm font-medium">Documento Chinês (quando aplicável)</Label>
+                          <Input
+                            id="documentoChines"
+                            value={formData.documentoChines}
+                            onChange={(e) => handleChange("documentoChines", e.target.value)}
+                            placeholder="Status ou informações do documento"
+                            className="h-11 border-2 focus:border-cyan-500"
+                          />
+                          <div className="flex items-center gap-2">
+                            {!formData.documentoChinesDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="documentoChinesDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "documentoChinesDoc")}
+                                  disabled={uploadingDocs.documentoChinesDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="documentoChinesDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.documentoChinesDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.documentoChinesDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.documentoChinesDoc}
+                              onRemove={() => removeDocument("documentoChinesDoc")}
+                            />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="antecedentesCriminais" className="text-sm font-medium">Antecedentes Criminais</Label>
+                          <Input
+                            id="antecedentesCriminais"
+                            value={formData.antecedentesCriminais}
+                            onChange={(e) => handleChange("antecedentesCriminais", e.target.value)}
+                            placeholder="Status ou informações do documento"
+                            className="h-11 border-2 focus:border-cyan-500"
+                          />
+                          <div className="flex items-center gap-2">
+                            {!formData.antecedentesCriminaisDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="antecedentesCriminaisDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "antecedentesCriminaisDoc")}
+                                  disabled={uploadingDocs.antecedentesCriminaisDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="antecedentesCriminaisDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.antecedentesCriminaisDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.antecedentesCriminaisDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.antecedentesCriminaisDoc}
+                              onRemove={() => removeDocument("antecedentesCriminaisDoc")}
+                            />
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -493,7 +777,7 @@ export default function NovoVistoPage() {
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="cartaoCnpj" className="text-sm font-medium">
-                            Empresa (Cartão CNPJ / Contrato)
+                            Empresa: Cartão CNPJ
                           </Label>
                           <Input
                             id="cartaoCnpj"
@@ -529,6 +813,47 @@ export default function NovoVistoPage() {
                             <DocumentPreview
                               fileUrl={formData.cartaoCnpjDoc}
                               onRemove={() => removeDocument("cartaoCnpjDoc")}
+                            />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="contratoEmpresa" className="text-sm font-medium">
+                            Contrato Social
+                          </Label>
+                          <Input
+                            id="contratoEmpresa"
+                            value={formData.contratoEmpresa}
+                            onChange={(e) =>
+                              handleChange("contratoEmpresa", e.target.value)
+                            }
+                            placeholder="Status ou informações do documento"
+                            className="h-11 border-2 focus:border-primary"
+                          />
+                          <div className="flex items-center gap-2">
+                            {!formData.contratoEmpresaDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="contratoEmpresaDocInput_pf"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "contratoEmpresaDoc")}
+                                  disabled={uploadingDocs.contratoEmpresaDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="contratoEmpresaDocInput_pf"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.contratoEmpresaDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.contratoEmpresaDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.contratoEmpresaDoc}
+                              onRemove={() => removeDocument("contratoEmpresaDoc")}
                             />
                           )}
                         </div>
@@ -570,6 +895,88 @@ export default function NovoVistoPage() {
                             <DocumentPreview
                               fileUrl={formData.escrituraImoveisDoc}
                               onRemove={() => removeDocument("escrituraImoveisDoc")}
+                            />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="extratosBancarios" className="text-sm font-medium">
+                            Últimos 3 extratos bancários
+                          </Label>
+                          <Input
+                            id="extratosBancarios"
+                            value={formData.extratosBancarios}
+                            onChange={(e) =>
+                              handleChange("extratosBancarios", e.target.value)
+                            }
+                            placeholder="Status ou informações do documento"
+                            className="h-11 border-2 focus:border-primary"
+                          />
+                          <div className="flex items-center gap-2">
+                            {!formData.extratosBancariosDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="extratosBancariosDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "extratosBancariosDoc")}
+                                  disabled={uploadingDocs.extratosBancariosDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="extratosBancariosDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.extratosBancariosDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.extratosBancariosDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.extratosBancariosDoc}
+                              onRemove={() => removeDocument("extratosBancariosDoc")}
+                            />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="impostoRenda" className="text-sm font-medium">
+                            Imposto de Renda
+                          </Label>
+                          <Input
+                            id="impostoRenda"
+                            value={formData.impostoRenda}
+                            onChange={(e) =>
+                              handleChange("impostoRenda", e.target.value)
+                            }
+                            placeholder="Status ou informações do documento"
+                            className="h-11 border-2 focus:border-primary"
+                          />
+                          <div className="flex items-center gap-2">
+                            {!formData.impostoRendaDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="impostoRendaDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "impostoRendaDoc")}
+                                  disabled={uploadingDocs.impostoRendaDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="impostoRendaDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.impostoRendaDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.impostoRendaDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.impostoRendaDoc}
+                              onRemove={() => removeDocument("impostoRendaDoc")}
                             />
                           )}
                         </div>
@@ -766,7 +1173,7 @@ export default function NovoVistoPage() {
                           )}
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="taxa" className="text-sm font-medium">Taxa</Label>
+                          <Label htmlFor="taxa" className="text-sm font-medium">Taxa Consular</Label>
                           <Input
                             id="taxa"
                             value={formData.taxa}
@@ -802,6 +1209,45 @@ export default function NovoVistoPage() {
                             />
                           )}
                         </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="formularioConsulado" className="text-sm font-medium">
+                            Formulário do Consulado preenchido
+                          </Label>
+                          <Input
+                            id="formularioConsulado"
+                            value={formData.formularioConsulado}
+                            onChange={(e) => handleChange("formularioConsulado", e.target.value)}
+                            placeholder="Status ou informações do documento"
+                            className="h-11 border-2 focus:border-primary"
+                          />
+                          <div className="flex items-center gap-2">
+                            {!formData.formularioConsuladoDoc ? (
+                              <>
+                                <input
+                                  type="file"
+                                  id="formularioConsuladoDocInput"
+                                  className="hidden"
+                                  onChange={(e) => handleDocumentUpload(e, "formularioConsuladoDoc")}
+                                  disabled={uploadingDocs.formularioConsuladoDoc}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                />
+                                <Label
+                                  htmlFor="formularioConsuladoDocInput"
+                                  className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.formularioConsuladoDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.formularioConsuladoDoc && (
+                            <DocumentPreview
+                              fileUrl={formData.formularioConsuladoDoc}
+                              onRemove={() => removeDocument("formularioConsuladoDoc")}
+                            />
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   )}
@@ -809,160 +1255,1977 @@ export default function NovoVistoPage() {
               </div>
             )}
 
-            {(formData.type === "Trabalho" || formData.type === "Investidor") && (
-              <div className="space-y-6 mt-8">
-                <div className="flex items-center gap-3 pb-4 border-b-2 border-primary/20">
-                  <span className="w-1 h-6 bg-primary rounded-full"></span>
-                  <h3 className="text-xl font-semibold">Documentos Empresariais</h3>
-                </div>
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="cartaoCnpj" className="text-sm font-medium">Cartão CNPJ</Label>
-                    <Input
-                      id="cartaoCnpj"
-                      value={formData.cartaoCnpj}
-                      onChange={(e) =>
-                        handleChange("cartaoCnpj", e.target.value)
-                      }
-                      placeholder="Status ou informações do documento"
-                      className="h-11 border-2 focus:border-primary"
-                    />
-                    <div className="flex items-center gap-2">
-                      {!formData.cartaoCnpjDoc ? (
-                        <>
-                          <input
-                            type="file"
-                            id="cartaoCnpjDocInput2"
-                            className="hidden"
-                            onChange={(e) => handleDocumentUpload(e, "cartaoCnpjDoc")}
-                            disabled={uploadingDocs.cartaoCnpjDoc}
-                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                          />
-                          <Label
-                            htmlFor="cartaoCnpjDocInput2"
-                            className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
-                          >
-                            <Upload className="h-4 w-4" />
-                            {uploadingDocs.cartaoCnpjDoc ? "Enviando..." : "Upload Documento"}
-                          </Label>
-                        </>
-                      ) : null}
+            {formData.type === "Trabalho:Brasil" && (
+              <div className="space-y-8 mt-8">
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("identificacaoTrabalhoBrasil")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">1</span>
+                        <CardTitle className="text-lg font-semibold">Identificação</CardTitle>
+                      </div>
+                      {expandedSections.identificacaoTrabalhoBrasil ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
                     </div>
-                    {formData.cartaoCnpjDoc && (
-                      <DocumentPreview
-                        fileUrl={formData.cartaoCnpjDoc}
-                        onRemove={() => removeDocument("cartaoCnpjDoc")}
-                      />
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="contratoEmpresa" className="text-sm font-medium">
-                      Contrato da Empresa
-                    </Label>
-                    <Input
-                      id="contratoEmpresa"
-                      value={formData.contratoEmpresa}
-                      onChange={(e) =>
-                        handleChange("contratoEmpresa", e.target.value)
-                      }
-                      placeholder="Status ou informações do documento"
-                      className="h-11 border-2 focus:border-primary"
-                    />
-                    <div className="flex items-center gap-2">
-                      {!formData.contratoEmpresaDoc ? (
-                        <>
-                          <input
-                            type="file"
-                            id="contratoEmpresaDocInput"
-                            className="hidden"
-                            onChange={(e) => handleDocumentUpload(e, "contratoEmpresaDoc")}
-                            disabled={uploadingDocs.contratoEmpresaDoc}
-                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                          />
-                          <Label
-                            htmlFor="contratoEmpresaDocInput"
-                            className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
-                          >
-                            <Upload className="h-4 w-4" />
-                            {uploadingDocs.contratoEmpresaDoc ? "Enviando..." : "Upload Documento"}
-                          </Label>
-                        </>
-                      ) : null}
+                  </CardHeader>
+                  {expandedSections.identificacaoTrabalhoBrasil && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="passaporte" className="text-sm font-medium">Passaporte</Label>
+                        <Input
+                          id="passaporte"
+                          value={formData.passaporte}
+                          onChange={(e) => handleChange("passaporte", e.target.value)}
+                          placeholder="Status ou informações do documento"
+                          className="h-11 border-2 focus:border-primary"
+                        />
+                        <div className="flex items-center gap-2">
+                          {!formData.passaporteDoc ? (
+                            <>
+                              <input
+                                type="file"
+                                id="passaporteDocInput_trabalho"
+                                className="hidden"
+                                onChange={(e) => handleDocumentUpload(e, "passaporteDoc")}
+                                disabled={uploadingDocs.passaporteDoc}
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                              />
+                              <Label htmlFor="passaporteDocInput_trabalho" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.passaporteDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.passaporteDoc && (
+                          <DocumentPreview fileUrl={formData.passaporteDoc} onRemove={() => removeDocument("passaporteDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="certidaoNascimento" className="text-sm font-medium">Certidão de Nascimento</Label>
+                        <Input
+                          id="certidaoNascimento"
+                          value={formData.certidaoNascimento}
+                          onChange={(e) => handleChange("certidaoNascimento", e.target.value)}
+                          placeholder="Status ou informações do documento"
+                          className="h-11 border-2 focus:border-primary"
+                        />
+                        <div className="flex items-center gap-2">
+                          {!formData.certidaoNascimentoDoc ? (
+                            <>
+                              <input type="file" id="certidaoNascimentoDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "certidaoNascimentoDoc")} disabled={uploadingDocs.certidaoNascimentoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="certidaoNascimentoDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.certidaoNascimentoDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.certidaoNascimentoDoc && (
+                          <DocumentPreview fileUrl={formData.certidaoNascimentoDoc} onRemove={() => removeDocument("certidaoNascimentoDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="declaracaoCompreensao" className="text-sm font-medium">Declaração de Compreensão</Label>
+                        <Input id="declaracaoCompreensao" value={formData.declaracaoCompreensao} onChange={(e) => handleChange("declaracaoCompreensao", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.declaracaoCompreensaoDoc ? (
+                            <>
+                              <input type="file" id="declaracaoCompreensaoDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "declaracaoCompreensaoDoc")} disabled={uploadingDocs.declaracaoCompreensaoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="declaracaoCompreensaoDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.declaracaoCompreensaoDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.declaracaoCompreensaoDoc && (
+                          <DocumentPreview fileUrl={formData.declaracaoCompreensaoDoc} onRemove={() => removeDocument("declaracaoCompreensaoDoc")} />
+                        )}
+                      </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("empresaTrabalhoBrasil")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">2</span>
+                        <CardTitle className="text-lg font-semibold">Documentos da Empresa</CardTitle>
+                      </div>
+                      {expandedSections.empresaTrabalhoBrasil ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
                     </div>
-                    {formData.contratoEmpresaDoc && (
-                      <DocumentPreview
-                        fileUrl={formData.contratoEmpresaDoc}
-                        onRemove={() => removeDocument("contratoEmpresaDoc")}
-                      />
-                    )}
+                  </CardHeader>
+                  {expandedSections.empresaTrabalhoBrasil && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="contratoEmpresa" className="text-sm font-medium">Contrato Social</Label>
+                        <Input id="contratoEmpresa" value={formData.contratoEmpresa} onChange={(e) => handleChange("contratoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.contratoEmpresaDoc ? (
+                            <>
+                              <input type="file" id="contratoEmpresaDocInput_trabalho" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoEmpresaDoc")} disabled={uploadingDocs.contratoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="contratoEmpresaDocInput_trabalho" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.contratoEmpresaDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.contratoEmpresaDoc && (
+                          <DocumentPreview fileUrl={formData.contratoEmpresaDoc} onRemove={() => removeDocument("contratoEmpresaDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="cartaoCnpj" className="text-sm font-medium">CNPJ</Label>
+                        <Input id="cartaoCnpj" value={formData.cartaoCnpj} onChange={(e) => handleChange("cartaoCnpj", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.cartaoCnpjDoc ? (
+                            <>
+                              <input type="file" id="cartaoCnpjDocInput_trabalho" className="hidden" onChange={(e) => handleDocumentUpload(e, "cartaoCnpjDoc")} disabled={uploadingDocs.cartaoCnpjDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="cartaoCnpjDocInput_trabalho" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.cartaoCnpjDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.cartaoCnpjDoc && (
+                          <DocumentPreview fileUrl={formData.cartaoCnpjDoc} onRemove={() => removeDocument("cartaoCnpjDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="declaracoesEmpresa" className="text-sm font-medium">Declarações da Empresa</Label>
+                        <Input id="declaracoesEmpresa" value={formData.declaracoesEmpresa} onChange={(e) => handleChange("declaracoesEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.declaracoesEmpresaDoc ? (
+                            <>
+                              <input type="file" id="declaracoesEmpresaDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "declaracoesEmpresaDoc")} disabled={uploadingDocs.declaracoesEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="declaracoesEmpresaDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.declaracoesEmpresaDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.declaracoesEmpresaDoc && (
+                          <DocumentPreview fileUrl={formData.declaracoesEmpresaDoc} onRemove={() => removeDocument("declaracoesEmpresaDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="procuracaoEmpresa" className="text-sm font-medium">Procuração da empresa</Label>
+                        <Input id="procuracaoEmpresa" value={formData.procuracaoEmpresa} onChange={(e) => handleChange("procuracaoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.procuracaoEmpresaDoc ? (
+                            <>
+                              <input type="file" id="procuracaoEmpresaDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "procuracaoEmpresaDoc")} disabled={uploadingDocs.procuracaoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="procuracaoEmpresaDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.procuracaoEmpresaDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.procuracaoEmpresaDoc && (
+                          <DocumentPreview fileUrl={formData.procuracaoEmpresaDoc} onRemove={() => removeDocument("procuracaoEmpresaDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="formularioRn01" className="text-sm font-medium">Formulário RN 01</Label>
+                        <Input id="formularioRn01" value={formData.formularioRn01} onChange={(e) => handleChange("formularioRn01", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.formularioRn01Doc ? (
+                            <>
+                              <input type="file" id="formularioRn01DocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "formularioRn01Doc")} disabled={uploadingDocs.formularioRn01Doc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="formularioRn01DocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.formularioRn01Doc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.formularioRn01Doc && (
+                          <DocumentPreview fileUrl={formData.formularioRn01Doc} onRemove={() => removeDocument("formularioRn01Doc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="guiaPaga" className="text-sm font-medium">Guia paga</Label>
+                        <Input id="guiaPaga" value={formData.guiaPaga} onChange={(e) => handleChange("guiaPaga", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.guiaPagaDoc ? (
+                            <>
+                              <input type="file" id="guiaPagaDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "guiaPagaDoc")} disabled={uploadingDocs.guiaPagaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="guiaPagaDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.guiaPagaDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.guiaPagaDoc && (
+                          <DocumentPreview fileUrl={formData.guiaPagaDoc} onRemove={() => removeDocument("guiaPagaDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="publicacaoDou" className="text-sm font-medium">Publicação no DOU</Label>
+                        <Input id="publicacaoDou" value={formData.publicacaoDou} onChange={(e) => handleChange("publicacaoDou", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.publicacaoDouDoc ? (
+                            <>
+                              <input type="file" id="publicacaoDouDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "publicacaoDouDoc")} disabled={uploadingDocs.publicacaoDouDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="publicacaoDouDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.publicacaoDouDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.publicacaoDouDoc && (
+                          <DocumentPreview fileUrl={formData.publicacaoDouDoc} onRemove={() => removeDocument("publicacaoDouDoc")} />
+                        )}
+                      </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("trabalhistasTrabalhoBrasil")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">3</span>
+                        <CardTitle className="text-lg font-semibold">Documentos Trabalhistas</CardTitle>
+                      </div>
+                      {expandedSections.trabalhistasTrabalhoBrasil ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.trabalhistasTrabalhoBrasil && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="contratoTrabalho" className="text-sm font-medium">Contrato de trabalho</Label>
+                        <Input id="contratoTrabalho" value={formData.contratoTrabalho} onChange={(e) => handleChange("contratoTrabalho", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.contratoTrabalhoDoc ? (
+                            <>
+                              <input type="file" id="contratoTrabalhoDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoTrabalhoDoc")} disabled={uploadingDocs.contratoTrabalhoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="contratoTrabalhoDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.contratoTrabalhoDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.contratoTrabalhoDoc && (
+                          <DocumentPreview fileUrl={formData.contratoTrabalhoDoc} onRemove={() => removeDocument("contratoTrabalhoDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="folhaPagamento" className="text-sm font-medium">Folha de pagamento (últimas)</Label>
+                        <Input id="folhaPagamento" value={formData.folhaPagamento} onChange={(e) => handleChange("folhaPagamento", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.folhaPagamentoDoc ? (
+                            <>
+                              <input type="file" id="folhaPagamentoDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "folhaPagamentoDoc")} disabled={uploadingDocs.folhaPagamentoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="folhaPagamentoDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.folhaPagamentoDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.folhaPagamentoDoc && (
+                          <DocumentPreview fileUrl={formData.folhaPagamentoDoc} onRemove={() => removeDocument("folhaPagamentoDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="comprovanteVinculoAnterior" className="text-sm font-medium">Comprovante de vínculo anterior (se houver)</Label>
+                        <Input id="comprovanteVinculoAnterior" value={formData.comprovanteVinculoAnterior} onChange={(e) => handleChange("comprovanteVinculoAnterior", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.comprovanteVinculoAnteriorDoc ? (
+                            <>
+                              <input type="file" id="comprovanteVinculoAnteriorDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "comprovanteVinculoAnteriorDoc")} disabled={uploadingDocs.comprovanteVinculoAnteriorDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="comprovanteVinculoAnteriorDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.comprovanteVinculoAnteriorDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.comprovanteVinculoAnteriorDoc && (
+                          <DocumentPreview fileUrl={formData.comprovanteVinculoAnteriorDoc} onRemove={() => removeDocument("comprovanteVinculoAnteriorDoc")} />
+                        )}
+                      </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("historicoSegurancaTrabalhoBrasil")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">4</span>
+                        <CardTitle className="text-lg font-semibold">Histórico e Segurança</CardTitle>
+                      </div>
+                      {expandedSections.historicoSegurancaTrabalhoBrasil ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.historicoSegurancaTrabalhoBrasil && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="antecedentesCriminais" className="text-sm font-medium">Antecedentes Criminais</Label>
+                        <Input id="antecedentesCriminais" value={formData.antecedentesCriminais} onChange={(e) => handleChange("antecedentesCriminais", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.antecedentesCriminaisDoc ? (
+                            <>
+                              <input type="file" id="antecedentesCriminaisDocInput_trabalho" className="hidden" onChange={(e) => handleDocumentUpload(e, "antecedentesCriminaisDoc")} disabled={uploadingDocs.antecedentesCriminaisDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="antecedentesCriminaisDocInput_trabalho" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.antecedentesCriminaisDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.antecedentesCriminaisDoc && (
+                          <DocumentPreview fileUrl={formData.antecedentesCriminaisDoc} onRemove={() => removeDocument("antecedentesCriminaisDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="declaracaoAntecedentesCriminais" className="text-sm font-medium">Declaração de Antecedentes Criminais</Label>
+                        <Input id="declaracaoAntecedentesCriminais" value={formData.declaracaoAntecedentesCriminais} onChange={(e) => handleChange("declaracaoAntecedentesCriminais", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.declaracaoAntecedentesCriminaisDoc ? (
+                            <>
+                              <input type="file" id="declaracaoAntecedentesCriminaisDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "declaracaoAntecedentesCriminaisDoc")} disabled={uploadingDocs.declaracaoAntecedentesCriminaisDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="declaracaoAntecedentesCriminaisDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.declaracaoAntecedentesCriminaisDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.declaracaoAntecedentesCriminaisDoc && (
+                          <DocumentPreview fileUrl={formData.declaracaoAntecedentesCriminaisDoc} onRemove={() => removeDocument("declaracaoAntecedentesCriminaisDoc")} />
+                        )}
+                      </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("formacaoTrabalhoBrasil")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">5</span>
+                        <CardTitle className="text-lg font-semibold">Formação Acadêmica</CardTitle>
+                      </div>
+                      {expandedSections.formacaoTrabalhoBrasil ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.formacaoTrabalhoBrasil && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="diploma" className="text-sm font-medium">Diploma</Label>
+                        <Input id="diploma" value={formData.diploma} onChange={(e) => handleChange("diploma", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.diplomaDoc ? (
+                            <>
+                              <input type="file" id="diplomaDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "diplomaDoc")} disabled={uploadingDocs.diplomaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="diplomaDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.diplomaDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.diplomaDoc && (
+                          <DocumentPreview fileUrl={formData.diplomaDoc} onRemove={() => removeDocument("diplomaDoc")} />
+                        )}
+                      </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+              </div>
+            )}
+            {formData.type === "Trabalho:Residência Prévia" && (
+              <div className="space-y-8 mt-8">
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("identificacaoResidenciaPrevia")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">1</span>
+                        <CardTitle className="text-lg font-semibold">Identificação</CardTitle>
+                      </div>
+                      {expandedSections.identificacaoResidenciaPrevia ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.identificacaoResidenciaPrevia && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="passaporte" className="text-sm font-medium">Passaporte</Label>
+                        <Input id="passaporte" value={formData.passaporte} onChange={(e) => handleChange("passaporte", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.passaporteDoc ? (
+                            <>
+                              <input type="file" id="passaporteDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "passaporteDoc")} disabled={uploadingDocs.passaporteDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="passaporteDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.passaporteDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.passaporteDoc && (
+                          <DocumentPreview fileUrl={formData.passaporteDoc} onRemove={() => removeDocument("passaporteDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="declaracaoCompreensao" className="text-sm font-medium">Declaração de Compreensão</Label>
+                        <Input id="declaracaoCompreensao" value={formData.declaracaoCompreensao} onChange={(e) => handleChange("declaracaoCompreensao", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.declaracaoCompreensaoDoc ? (
+                            <>
+                              <input type="file" id="declaracaoCompreensaoDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "declaracaoCompreensaoDoc")} disabled={uploadingDocs.declaracaoCompreensaoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="declaracaoCompreensaoDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.declaracaoCompreensaoDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.declaracaoCompreensaoDoc && (
+                          <DocumentPreview fileUrl={formData.declaracaoCompreensaoDoc} onRemove={() => removeDocument("declaracaoCompreensaoDoc")} />
+                        )}
+                      </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("residenciaAnteriorResidenciaPrevia")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">2</span>
+                        <CardTitle className="text-lg font-semibold">Residência Anterior</CardTitle>
+                      </div>
+                      {expandedSections.residenciaAnteriorResidenciaPrevia ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.residenciaAnteriorResidenciaPrevia && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="comprovanteResidenciaPrevia" className="text-sm font-medium">Comprovante de residência prévia no Brasil</Label>
+                        <Input id="comprovanteResidenciaPrevia" value={formData.comprovanteResidenciaPrevia || ""} onChange={(e) => handleChange("comprovanteResidenciaPrevia", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.comprovanteResidenciaPreviaDoc ? (
+                            <>
+                              <input type="file" id="comprovanteResidenciaPreviaDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "comprovanteResidenciaPreviaDoc")} disabled={uploadingDocs.comprovanteResidenciaPreviaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="comprovanteResidenciaPreviaDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.comprovanteResidenciaPreviaDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.comprovanteResidenciaPreviaDoc && (
+                          <DocumentPreview fileUrl={formData.comprovanteResidenciaPreviaDoc} onRemove={() => removeDocument("comprovanteResidenciaPreviaDoc")} />
+                        )}
+                      </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("empresaResidenciaPrevia")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">3</span>
+                        <CardTitle className="text-lg font-semibold">Documentos da Empresa</CardTitle>
+                      </div>
+                      {expandedSections.empresaResidenciaPrevia ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.empresaResidenciaPrevia && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="contratoEmpresa" className="text-sm font-medium">Contrato Social</Label>
+                        <Input id="contratoEmpresa" value={formData.contratoEmpresa} onChange={(e) => handleChange("contratoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.contratoEmpresaDoc ? (
+                            <>
+                              <input type="file" id="contratoEmpresaDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoEmpresaDoc")} disabled={uploadingDocs.contratoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="contratoEmpresaDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.contratoEmpresaDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.contratoEmpresaDoc && (
+                          <DocumentPreview fileUrl={formData.contratoEmpresaDoc} onRemove={() => removeDocument("contratoEmpresaDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="cartaoCnpj" className="text-sm font-medium">CNPJ</Label>
+                        <Input id="cartaoCnpj" value={formData.cartaoCnpj} onChange={(e) => handleChange("cartaoCnpj", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.cartaoCnpjDoc ? (
+                            <>
+                              <input type="file" id="cartaoCnpjDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "cartaoCnpjDoc")} disabled={uploadingDocs.cartaoCnpjDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="cartaoCnpjDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.cartaoCnpjDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.cartaoCnpjDoc && (
+                          <DocumentPreview fileUrl={formData.cartaoCnpjDoc} onRemove={() => removeDocument("cartaoCnpjDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="declaracoesEmpresa" className="text-sm font-medium">Declarações da Empresa</Label>
+                        <Input id="declaracoesEmpresa" value={formData.declaracoesEmpresa} onChange={(e) => handleChange("declaracoesEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.declaracoesEmpresaDoc ? (
+                            <>
+                              <input type="file" id="declaracoesEmpresaDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "declaracoesEmpresaDoc")} disabled={uploadingDocs.declaracoesEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="declaracoesEmpresaDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.declaracoesEmpresaDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.declaracoesEmpresaDoc && (
+                          <DocumentPreview fileUrl={formData.declaracoesEmpresaDoc} onRemove={() => removeDocument("declaracoesEmpresaDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="procuracaoEmpresa" className="text-sm font-medium">Procuração da Empresa</Label>
+                        <Input id="procuracaoEmpresa" value={formData.procuracaoEmpresa} onChange={(e) => handleChange("procuracaoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.procuracaoEmpresaDoc ? (
+                            <>
+                              <input type="file" id="procuracaoEmpresaDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "procuracaoEmpresaDoc")} disabled={uploadingDocs.procuracaoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="procuracaoEmpresaDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.procuracaoEmpresaDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.procuracaoEmpresaDoc && (
+                          <DocumentPreview fileUrl={formData.procuracaoEmpresaDoc} onRemove={() => removeDocument("procuracaoEmpresaDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="formularioRn02" className="text-sm font-medium">Formulário RN 02</Label>
+                        <Input id="formularioRn02" value={formData.formularioRn02 || ""} onChange={(e) => handleChange("formularioRn02", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.formularioRn02Doc ? (
+                            <>
+                              <input type="file" id="formularioRn02DocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "formularioRn02Doc")} disabled={uploadingDocs.formularioRn02Doc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="formularioRn02DocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.formularioRn02Doc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.formularioRn02Doc && (
+                          <DocumentPreview fileUrl={formData.formularioRn02Doc} onRemove={() => removeDocument("formularioRn02Doc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="guiaPaga" className="text-sm font-medium">Guia paga</Label>
+                        <Input id="guiaPaga" value={formData.guiaPaga || ""} onChange={(e) => handleChange("guiaPaga", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.guiaPagaDoc ? (
+                            <>
+                              <input type="file" id="guiaPagaDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "guiaPagaDoc")} disabled={uploadingDocs.guiaPagaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="guiaPagaDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.guiaPagaDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.guiaPagaDoc && (
+                          <DocumentPreview fileUrl={formData.guiaPagaDoc} onRemove={() => removeDocument("guiaPagaDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="publicacaoDou" className="text-sm font-medium">Publicação no DOU</Label>
+                        <Input id="publicacaoDou" value={formData.publicacaoDou || ""} onChange={(e) => handleChange("publicacaoDou", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.publicacaoDouDoc ? (
+                            <>
+                              <input type="file" id="publicacaoDouDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "publicacaoDouDoc")} disabled={uploadingDocs.publicacaoDouDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="publicacaoDouDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.publicacaoDouDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.publicacaoDouDoc && (
+                          <DocumentPreview fileUrl={formData.publicacaoDouDoc} onRemove={() => removeDocument("publicacaoDouDoc")} />
+                        )}
+                      </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("trabalhistasResidenciaPrevia")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">4</span>
+                        <CardTitle className="text-lg font-semibold">Documentos Trabalhistas</CardTitle>
+                      </div>
+                      {expandedSections.trabalhistasResidenciaPrevia ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.trabalhistasResidenciaPrevia && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="contratoTrabalho" className="text-sm font-medium">Contrato de trabalho</Label>
+                        <Input id="contratoTrabalho" value={formData.contratoTrabalho || ""} onChange={(e) => handleChange("contratoTrabalho", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.contratoTrabalhoDoc ? (
+                            <>
+                              <input type="file" id="contratoTrabalhoDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoTrabalhoDoc")} disabled={uploadingDocs.contratoTrabalhoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="contratoTrabalhoDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.contratoTrabalhoDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.contratoTrabalhoDoc && (
+                          <DocumentPreview fileUrl={formData.contratoTrabalhoDoc} onRemove={() => removeDocument("contratoTrabalhoDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="folhaPagamento" className="text-sm font-medium">Folha de pagamento</Label>
+                        <Input id="folhaPagamento" value={formData.folhaPagamento || ""} onChange={(e) => handleChange("folhaPagamento", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.folhaPagamentoDoc ? (
+                            <>
+                              <input type="file" id="folhaPagamentoDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "folhaPagamentoDoc")} disabled={uploadingDocs.folhaPagamentoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="folhaPagamentoDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.folhaPagamentoDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.folhaPagamentoDoc && (
+                          <DocumentPreview fileUrl={formData.folhaPagamentoDoc} onRemove={() => removeDocument("folhaPagamentoDoc")} />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="comprovanteAtividade" className="text-sm font-medium">Documentos comprobatórios de atividade (quando aplicável)</Label>
+                        <Input id="comprovanteAtividade" value={formData.comprovanteAtividade || ""} onChange={(e) => handleChange("comprovanteAtividade", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.comprovanteAtividadeDoc ? (
+                            <>
+                              <input type="file" id="comprovanteAtividadeDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "comprovanteAtividadeDoc")} disabled={uploadingDocs.comprovanteAtividadeDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="comprovanteAtividadeDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.comprovanteAtividadeDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.comprovanteAtividadeDoc && (
+                          <DocumentPreview fileUrl={formData.comprovanteAtividadeDoc} onRemove={() => removeDocument("comprovanteAtividadeDoc")} />
+                        )}
+                      </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("formacaoResidenciaPrevia")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">5</span>
+                        <CardTitle className="text-lg font-semibold">Formação</CardTitle>
+                      </div>
+                      {expandedSections.formacaoResidenciaPrevia ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.formacaoResidenciaPrevia && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="diploma" className="text-sm font-medium">Diploma</Label>
+                        <Input id="diploma" value={formData.diploma || ""} onChange={(e) => handleChange("diploma", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                        <div className="flex items-center gap-2">
+                          {!formData.diplomaDoc ? (
+                            <>
+                              <input type="file" id="diplomaDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "diplomaDoc")} disabled={uploadingDocs.diplomaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                              <Label htmlFor="diplomaDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                <Upload className="h-4 w-4" />
+                                {uploadingDocs.diplomaDoc ? "Enviando..." : "Upload Documento"}
+                              </Label>
+                            </>
+                          ) : null}
+                        </div>
+                        {formData.diplomaDoc && (
+                          <DocumentPreview fileUrl={formData.diplomaDoc} onRemove={() => removeDocument("diplomaDoc")} />
+                        )}
+                      </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+              </div>
+            )}
+            {formData.type === "Trabalho:Renovação 1 ano" && (
+              <div className="space-y-8 mt-8">
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("identificacaoRenovacaoAno")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">1</span>
+                        <CardTitle className="text-lg font-semibold">Identificação</CardTitle>
+                      </div>
+                      {expandedSections.identificacaoRenovacaoAno ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.identificacaoRenovacaoAno && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="rnm" className="text-sm font-medium">RNM</Label>
+                          <Input id="rnm" value={formData.rnm} onChange={(e) => handleChange("rnm", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.rnmDoc ? (
+                              <>
+                                <input type="file" id="rnmDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "rnmDoc")} disabled={uploadingDocs.rnmDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="rnmDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.rnmDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.rnmDoc && (
+                            <DocumentPreview fileUrl={formData.rnmDoc} onRemove={() => removeDocument("rnmDoc")} />
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("empresaRenovacaoAno")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">2</span>
+                        <CardTitle className="text-lg font-semibold">Documentos da Empresa</CardTitle>
+                      </div>
+                      {expandedSections.empresaRenovacaoAno ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.empresaRenovacaoAno && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="contratoEmpresa" className="text-sm font-medium">Contrato Social</Label>
+                          <Input id="contratoEmpresa" value={formData.contratoEmpresa} onChange={(e) => handleChange("contratoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.contratoEmpresaDoc ? (
+                              <>
+                                <input type="file" id="contratoEmpresaDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoEmpresaDoc")} disabled={uploadingDocs.contratoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="contratoEmpresaDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.contratoEmpresaDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.contratoEmpresaDoc && (
+                            <DocumentPreview fileUrl={formData.contratoEmpresaDoc} onRemove={() => removeDocument("contratoEmpresaDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="procuracaoEmpresa" className="text-sm font-medium">Procuração da empresa</Label>
+                          <Input id="procuracaoEmpresa" value={formData.procuracaoEmpresa} onChange={(e) => handleChange("procuracaoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.procuracaoEmpresaDoc ? (
+                              <>
+                                <input type="file" id="procuracaoEmpresaDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "procuracaoEmpresaDoc")} disabled={uploadingDocs.procuracaoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="procuracaoEmpresaDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.procuracaoEmpresaDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.procuracaoEmpresaDoc && (
+                            <DocumentPreview fileUrl={formData.procuracaoEmpresaDoc} onRemove={() => removeDocument("procuracaoEmpresaDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="publicacaoDou" className="text-sm font-medium">Publicação no DOU</Label>
+                          <Input id="publicacaoDou" value={formData.publicacaoDou} onChange={(e) => handleChange("publicacaoDou", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.publicacaoDouDoc ? (
+                              <>
+                                <input type="file" id="publicacaoDouDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "publicacaoDouDoc")} disabled={uploadingDocs.publicacaoDouDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="publicacaoDouDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.publicacaoDouDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.publicacaoDouDoc && (
+                            <DocumentPreview fileUrl={formData.publicacaoDouDoc} onRemove={() => removeDocument("publicacaoDouDoc")} />
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <div className="flex items-center gap-3 pb-2 border-b-2 border-primary/20">
+                    <CardHeader
+                      className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                      onClick={() => toggleSection("vinculoRenovacaoAno")}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">3</span>
+                          <CardTitle className="text-lg font-semibold">Vínculo de Trabalho</CardTitle>
+                        </div>
+                        {expandedSections.vinculoRenovacaoAno ? (
+                          <ChevronUp className="h-5 w-5 text-primary" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </div>
+                    </CardHeader>
                   </div>
-                  {formData.type === "Investidor" && (
+                  {expandedSections.vinculoRenovacaoAno && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                  <div className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="escrituraImoveis" className="text-sm font-medium">
-                        Escritura de Imóveis
-                      </Label>
-                      <Input
-                        id="escrituraImoveis"
-                        value={formData.escrituraImoveis}
-                        onChange={(e) =>
-                          handleChange("escrituraImoveis", e.target.value)
-                        }
-                        placeholder="Status ou informações do documento"
-                        className="h-11 border-2 focus:border-primary"
-                      />
+                      <Label htmlFor="ctps" className="text-sm font-medium">CTPS (páginas do contrato e anotações)</Label>
+                      <Input id="ctps" value={formData.ctps} onChange={(e) => handleChange("ctps", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                       <div className="flex items-center gap-2">
-                        {!formData.escrituraImoveisDoc ? (
+                        {!formData.ctpsDoc ? (
                           <>
-                            <input
-                              type="file"
-                              id="escrituraImoveisDocInput2"
-                              className="hidden"
-                              onChange={(e) => handleDocumentUpload(e, "escrituraImoveisDoc")}
-                              disabled={uploadingDocs.escrituraImoveisDoc}
-                              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                            />
-                            <Label
-                              htmlFor="escrituraImoveisDocInput2"
-                              className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100"
-                            >
+                            <input type="file" id="ctpsDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "ctpsDoc")} disabled={uploadingDocs.ctpsDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                            <Label htmlFor="ctpsDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
                               <Upload className="h-4 w-4" />
-                              {uploadingDocs.escrituraImoveisDoc ? "Enviando..." : "Upload Documento"}
+                              {uploadingDocs.ctpsDoc ? "Enviando..." : "Upload Documento"}
                             </Label>
                           </>
                         ) : null}
                       </div>
-                      {formData.escrituraImoveisDoc && (
-                        <DocumentPreview
-                          fileUrl={formData.escrituraImoveisDoc}
-                          onRemove={() => removeDocument("escrituraImoveisDoc")}
-                        />
+                      {formData.ctpsDoc && (
+                        <DocumentPreview fileUrl={formData.ctpsDoc} onRemove={() => removeDocument("ctpsDoc")} />
                       )}
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="contratoTrabalhoAnterior" className="text-sm font-medium">Contrato de trabalho anterior</Label>
+                      <Input id="contratoTrabalhoAnterior" value={formData.contratoTrabalhoAnterior} onChange={(e) => handleChange("contratoTrabalhoAnterior", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                      <div className="flex items-center gap-2">
+                        {!formData.contratoTrabalhoAnteriorDoc ? (
+                          <>
+                            <input type="file" id="contratoTrabalhoAnteriorDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoTrabalhoAnteriorDoc")} disabled={uploadingDocs.contratoTrabalhoAnteriorDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                            <Label htmlFor="contratoTrabalhoAnteriorDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                              <Upload className="h-4 w-4" />
+                              {uploadingDocs.contratoTrabalhoAnteriorDoc ? "Enviando..." : "Upload Documento"}
+                            </Label>
+                          </>
+                        ) : null}
+                      </div>
+                      {formData.contratoTrabalhoAnteriorDoc && (
+                        <DocumentPreview fileUrl={formData.contratoTrabalhoAnteriorDoc} onRemove={() => removeDocument("contratoTrabalhoAnteriorDoc")} />
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="contratoTrabalhoAtual" className="text-sm font-medium">Contrato de trabalho atual</Label>
+                      <Input id="contratoTrabalhoAtual" value={formData.contratoTrabalhoAtual} onChange={(e) => handleChange("contratoTrabalhoAtual", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                      <div className="flex items-center gap-2">
+                        {!formData.contratoTrabalhoAtualDoc ? (
+                          <>
+                            <input type="file" id="contratoTrabalhoAtualDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoTrabalhoAtualDoc")} disabled={uploadingDocs.contratoTrabalhoAtualDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                            <Label htmlFor="contratoTrabalhoAtualDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                              <Upload className="h-4 w-4" />
+                              {uploadingDocs.contratoTrabalhoAtualDoc ? "Enviando..." : "Upload Documento"}
+                            </Label>
+                          </>
+                        ) : null}
+                      </div>
+                      {formData.contratoTrabalhoAtualDoc && (
+                        <DocumentPreview fileUrl={formData.contratoTrabalhoAtualDoc} onRemove={() => removeDocument("contratoTrabalhoAtualDoc")} />
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="formularioProrrogacao" className="text-sm font-medium">Formulário de prorrogação</Label>
+                      <Input id="formularioProrrogacao" value={formData.formularioProrrogacao} onChange={(e) => handleChange("formularioProrrogacao", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                      <div className="flex items-center gap-2">
+                        {!formData.formularioProrrogacaoDoc ? (
+                          <>
+                            <input type="file" id="formularioProrrogacaoDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "formularioProrrogacaoDoc")} disabled={uploadingDocs.formularioProrrogacaoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                            <Label htmlFor="formularioProrrogacaoDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                              <Upload className="h-4 w-4" />
+                              {uploadingDocs.formularioProrrogacaoDoc ? "Enviando..." : "Upload Documento"}
+                            </Label>
+                          </>
+                        ) : null}
+                      </div>
+                      {formData.formularioProrrogacaoDoc && (
+                        <DocumentPreview fileUrl={formData.formularioProrrogacaoDoc} onRemove={() => removeDocument("formularioProrrogacaoDoc")} />
+                      )}
+                    </div>
+                  </div>
+                    </CardContent>
                   )}
-                </div>
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("segurancaRenovacaoAno")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">4</span>
+                        <CardTitle className="text-lg font-semibold">Segurança</CardTitle>
+                      </div>
+                      {expandedSections.segurancaRenovacaoAno ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.segurancaRenovacaoAno && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="declaracaoAntecedentesCriminais" className="text-sm font-medium">Declaração de Antecedentes Criminais</Label>
+                      <Input id="declaracaoAntecedentesCriminais" value={formData.declaracaoAntecedentesCriminais} onChange={(e) => handleChange("declaracaoAntecedentesCriminais", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                      <div className="flex items-center gap-2">
+                        {!formData.declaracaoAntecedentesCriminaisDoc ? (
+                          <>
+                            <input type="file" id="declaracaoAntecedentesCriminaisDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "declaracaoAntecedentesCriminaisDoc")} disabled={uploadingDocs.declaracaoAntecedentesCriminaisDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                            <Label htmlFor="declaracaoAntecedentesCriminaisDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                              <Upload className="h-4 w-4" />
+                              {uploadingDocs.declaracaoAntecedentesCriminaisDoc ? "Enviando..." : "Upload Documento"}
+                            </Label>
+                          </>
+                        ) : null}
+                      </div>
+                      {formData.declaracaoAntecedentesCriminaisDoc && (
+                        <DocumentPreview fileUrl={formData.declaracaoAntecedentesCriminaisDoc} onRemove={() => removeDocument("declaracaoAntecedentesCriminaisDoc")} />
+                      )}
+                    </div>
+                  </div>
+                    </CardContent>
+                  )}
+                </Card>
+              </div>
+            )}
+            {formData.type === "Trabalho:Indeterminado" && (
+              <div className="space-y-8 mt-8">
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("identificacaoIndeterminado")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">1</span>
+                        <CardTitle className="text-lg font-semibold">Identificação</CardTitle>
+                      </div>
+                      {expandedSections.identificacaoIndeterminado ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.identificacaoIndeterminado && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="rnm" className="text-sm font-medium">RNM</Label>
+                          <Input id="rnm" value={formData.rnm} onChange={(e) => handleChange("rnm", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.rnmDoc ? (
+                              <>
+                                <input type="file" id="rnmDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "rnmDoc")} disabled={uploadingDocs.rnmDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="rnmDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.rnmDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.rnmDoc && (
+                            <DocumentPreview fileUrl={formData.rnmDoc} onRemove={() => removeDocument("rnmDoc")} />
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("empresaIndeterminado")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">2</span>
+                        <CardTitle className="text-lg font-semibold">Documentos da Empresa</CardTitle>
+                      </div>
+                      {expandedSections.empresaIndeterminado ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.empresaIndeterminado && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="contratoEmpresa" className="text-sm font-medium">Contrato Social</Label>
+                          <Input id="contratoEmpresa" value={formData.contratoEmpresa} onChange={(e) => handleChange("contratoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.contratoEmpresaDoc ? (
+                              <>
+                                <input type="file" id="contratoEmpresaDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoEmpresaDoc")} disabled={uploadingDocs.contratoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="contratoEmpresaDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.contratoEmpresaDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.contratoEmpresaDoc && (
+                            <DocumentPreview fileUrl={formData.contratoEmpresaDoc} onRemove={() => removeDocument("contratoEmpresaDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="procuracaoEmpresa" className="text-sm font-medium">Procuração</Label>
+                          <Input id="procuracaoEmpresa" value={formData.procuracaoEmpresa} onChange={(e) => handleChange("procuracaoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.procuracaoEmpresaDoc ? (
+                              <>
+                                <input type="file" id="procuracaoEmpresaDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "procuracaoEmpresaDoc")} disabled={uploadingDocs.procuracaoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="procuracaoEmpresaDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.procuracaoEmpresaDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.procuracaoEmpresaDoc && (
+                            <DocumentPreview fileUrl={formData.procuracaoEmpresaDoc} onRemove={() => removeDocument("procuracaoEmpresaDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="publicacaoDou" className="text-sm font-medium">Publicação no DOU</Label>
+                          <Input id="publicacaoDou" value={formData.publicacaoDou} onChange={(e) => handleChange("publicacaoDou", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.publicacaoDouDoc ? (
+                              <>
+                                <input type="file" id="publicacaoDouDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "publicacaoDouDoc")} disabled={uploadingDocs.publicacaoDouDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="publicacaoDouDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.publicacaoDouDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.publicacaoDouDoc && (
+                            <DocumentPreview fileUrl={formData.publicacaoDouDoc} onRemove={() => removeDocument("publicacaoDouDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="guiaPaga" className="text-sm font-medium">Guia paga</Label>
+                          <Input id="guiaPaga" value={formData.guiaPaga} onChange={(e) => handleChange("guiaPaga", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.guiaPagaDoc ? (
+                              <>
+                                <input type="file" id="guiaPagaDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "guiaPagaDoc")} disabled={uploadingDocs.guiaPagaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="guiaPagaDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.guiaPagaDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.guiaPagaDoc && (
+                            <DocumentPreview fileUrl={formData.guiaPagaDoc} onRemove={() => removeDocument("guiaPagaDoc")} />
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("vinculoIndeterminado")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">3</span>
+                        <CardTitle className="text-lg font-semibold">Vínculo de Trabalho</CardTitle>
+                      </div>
+                      {expandedSections.vinculoIndeterminado ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.vinculoIndeterminado && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="ctps" className="text-sm font-medium">CTPS (páginas relevantes)</Label>
+                          <Input id="ctps" value={formData.ctps} onChange={(e) => handleChange("ctps", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.ctpsDoc ? (
+                              <>
+                                <input type="file" id="ctpsDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "ctpsDoc")} disabled={uploadingDocs.ctpsDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="ctpsDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.ctpsDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.ctpsDoc && (
+                            <DocumentPreview fileUrl={formData.ctpsDoc} onRemove={() => removeDocument("ctpsDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="contratoTrabalhoAnterior" className="text-sm font-medium">Contrato de trabalho anterior</Label>
+                          <Input id="contratoTrabalhoAnterior" value={formData.contratoTrabalhoAnterior} onChange={(e) => handleChange("contratoTrabalhoAnterior", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.contratoTrabalhoAnteriorDoc ? (
+                              <>
+                                <input type="file" id="contratoTrabalhoAnteriorDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoTrabalhoAnteriorDoc")} disabled={uploadingDocs.contratoTrabalhoAnteriorDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="contratoTrabalhoAnteriorDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.contratoTrabalhoAnteriorDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.contratoTrabalhoAnteriorDoc && (
+                            <DocumentPreview fileUrl={formData.contratoTrabalhoAnteriorDoc} onRemove={() => removeDocument("contratoTrabalhoAnteriorDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="contratoTrabalhoIndeterminado" className="text-sm font-medium">Contrato de trabalho por prazo indeterminado</Label>
+                          <Input id="contratoTrabalhoIndeterminado" value={formData.contratoTrabalhoIndeterminado} onChange={(e) => handleChange("contratoTrabalhoIndeterminado", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.contratoTrabalhoIndeterminadoDoc ? (
+                              <>
+                                <input type="file" id="contratoTrabalhoIndeterminadoDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoTrabalhoIndeterminadoDoc")} disabled={uploadingDocs.contratoTrabalhoIndeterminadoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="contratoTrabalhoIndeterminadoDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.contratoTrabalhoIndeterminadoDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.contratoTrabalhoIndeterminadoDoc && (
+                            <DocumentPreview fileUrl={formData.contratoTrabalhoIndeterminadoDoc} onRemove={() => removeDocument("contratoTrabalhoIndeterminadoDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="formularioProrrogacao" className="text-sm font-medium">Formulário de prorrogação</Label>
+                          <Input id="formularioProrrogacao" value={formData.formularioProrrogacao} onChange={(e) => handleChange("formularioProrrogacao", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.formularioProrrogacaoDoc ? (
+                              <>
+                                <input type="file" id="formularioProrrogacaoDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "formularioProrrogacaoDoc")} disabled={uploadingDocs.formularioProrrogacaoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="formularioProrrogacaoDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.formularioProrrogacaoDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.formularioProrrogacaoDoc && (
+                            <DocumentPreview fileUrl={formData.formularioProrrogacaoDoc} onRemove={() => removeDocument("formularioProrrogacaoDoc")} />
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("segurancaIndeterminado")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">4</span>
+                        <CardTitle className="text-lg font-semibold">Segurança</CardTitle>
+                      </div>
+                      {expandedSections.segurancaIndeterminado ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.segurancaIndeterminado && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="declaracaoAntecedentesCriminais" className="text-sm font-medium">Declaração de Antecedentes Criminais</Label>
+                          <Input id="declaracaoAntecedentesCriminais" value={formData.declaracaoAntecedentesCriminais} onChange={(e) => handleChange("declaracaoAntecedentesCriminais", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.declaracaoAntecedentesCriminaisDoc ? (
+                              <>
+                                <input type="file" id="declaracaoAntecedentesCriminaisDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "declaracaoAntecedentesCriminaisDoc")} disabled={uploadingDocs.declaracaoAntecedentesCriminaisDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="declaracaoAntecedentesCriminaisDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.declaracaoAntecedentesCriminaisDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.declaracaoAntecedentesCriminaisDoc && (
+                            <DocumentPreview fileUrl={formData.declaracaoAntecedentesCriminaisDoc} onRemove={() => removeDocument("declaracaoAntecedentesCriminaisDoc")} />
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+              </div>
+            )}
+            {formData.type === "Trabalho:Mudança de Empregador" && (
+              <div className="space-y-8 mt-8">
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("identificacaoMudanca")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">1</span>
+                        <CardTitle className="text-lg font-semibold">Identificação</CardTitle>
+                      </div>
+                      {expandedSections.identificacaoMudanca ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.identificacaoMudanca && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="passaporte" className="text-sm font-medium">Passaporte</Label>
+                          <Input id="passaporte" value={formData.passaporte} onChange={(e) => handleChange("passaporte", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.passaporteDoc ? (
+                              <>
+                                <input type="file" id="passaporteDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "passaporteDoc")} disabled={uploadingDocs.passaporteDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="passaporteDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.passaporteDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.passaporteDoc && (
+                            <DocumentPreview fileUrl={formData.passaporteDoc} onRemove={() => removeDocument("passaporteDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="rnm" className="text-sm font-medium">RNM</Label>
+                          <Input id="rnm" value={formData.rnm} onChange={(e) => handleChange("rnm", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.rnmDoc ? (
+                              <>
+                                <input type="file" id="rnmDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "rnmDoc")} disabled={uploadingDocs.rnmDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="rnmDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.rnmDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.rnmDoc && (
+                            <DocumentPreview fileUrl={formData.rnmDoc} onRemove={() => removeDocument("rnmDoc")} />
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("empresaMudanca")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">2</span>
+                        <CardTitle className="text-lg font-semibold">Documentos da Empresa</CardTitle>
+                      </div>
+                      {expandedSections.empresaMudanca ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.empresaMudanca && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="contratoEmpresa" className="text-sm font-medium">Contrato Social</Label>
+                          <Input id="contratoEmpresa" value={formData.contratoEmpresa} onChange={(e) => handleChange("contratoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.contratoEmpresaDoc ? (
+                              <>
+                                <input type="file" id="contratoEmpresaDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoEmpresaDoc")} disabled={uploadingDocs.contratoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="contratoEmpresaDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.contratoEmpresaDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.contratoEmpresaDoc && (
+                            <DocumentPreview fileUrl={formData.contratoEmpresaDoc} onRemove={() => removeDocument("contratoEmpresaDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="cartaoCnpj" className="text-sm font-medium">CNPJ</Label>
+                          <Input id="cartaoCnpj" value={formData.cartaoCnpj} onChange={(e) => handleChange("cartaoCnpj", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.cartaoCnpjDoc ? (
+                              <>
+                                <input type="file" id="cartaoCnpjDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "cartaoCnpjDoc")} disabled={uploadingDocs.cartaoCnpjDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="cartaoCnpjDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.cartaoCnpjDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.cartaoCnpjDoc && (
+                            <DocumentPreview fileUrl={formData.cartaoCnpjDoc} onRemove={() => removeDocument("cartaoCnpjDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="procuracaoEmpresa" className="text-sm font-medium">Procuração da empresa</Label>
+                          <Input id="procuracaoEmpresa" value={formData.procuracaoEmpresa} onChange={(e) => handleChange("procuracaoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.procuracaoEmpresaDoc ? (
+                              <>
+                                <input type="file" id="procuracaoEmpresaDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "procuracaoEmpresaDoc")} disabled={uploadingDocs.procuracaoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="procuracaoEmpresaDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.procuracaoEmpresaDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.procuracaoEmpresaDoc && (
+                            <DocumentPreview fileUrl={formData.procuracaoEmpresaDoc} onRemove={() => removeDocument("procuracaoEmpresaDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="formularioRn01" className="text-sm font-medium">Formulário RN 01</Label>
+                          <Input id="formularioRn01" value={formData.formularioRn01 || ""} onChange={(e) => handleChange("formularioRn01", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.formularioRn01Doc ? (
+                              <>
+                                <input type="file" id="formularioRn01DocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "formularioRn01Doc")} disabled={uploadingDocs.formularioRn01Doc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="formularioRn01DocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.formularioRn01Doc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.formularioRn01Doc && (
+                            <DocumentPreview fileUrl={formData.formularioRn01Doc} onRemove={() => removeDocument("formularioRn01Doc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="guiaPaga" className="text-sm font-medium">Guia paga</Label>
+                          <Input id="guiaPaga" value={formData.guiaPaga || ""} onChange={(e) => handleChange("guiaPaga", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.guiaPagaDoc ? (
+                              <>
+                                <input type="file" id="guiaPagaDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "guiaPagaDoc")} disabled={uploadingDocs.guiaPagaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="guiaPagaDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.guiaPagaDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.guiaPagaDoc && (
+                            <DocumentPreview fileUrl={formData.guiaPagaDoc} onRemove={() => removeDocument("guiaPagaDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="publicacaoDou" className="text-sm font-medium">Publicação no DOU</Label>
+                          <Input id="publicacaoDou" value={formData.publicacaoDou || ""} onChange={(e) => handleChange("publicacaoDou", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.publicacaoDouDoc ? (
+                              <>
+                                <input type="file" id="publicacaoDouDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "publicacaoDouDoc")} disabled={uploadingDocs.publicacaoDouDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="publicacaoDouDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.publicacaoDouDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.publicacaoDouDoc && (
+                            <DocumentPreview fileUrl={formData.publicacaoDouDoc} onRemove={() => removeDocument("publicacaoDouDoc")} />
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("vinculoMudanca")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">3</span>
+                        <CardTitle className="text-lg font-semibold">Vínculo de Trabalho</CardTitle>
+                      </div>
+                      {expandedSections.vinculoMudanca ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.vinculoMudanca && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="contratoTrabalho" className="text-sm font-medium">Contrato de trabalho</Label>
+                          <Input id="contratoTrabalho" value={formData.contratoTrabalho} onChange={(e) => handleChange("contratoTrabalho", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.contratoTrabalhoDoc ? (
+                              <>
+                                <input type="file" id="contratoTrabalhoDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoTrabalhoDoc")} disabled={uploadingDocs.contratoTrabalhoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="contratoTrabalhoDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.contratoTrabalhoDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.contratoTrabalhoDoc && (
+                            <DocumentPreview fileUrl={formData.contratoTrabalhoDoc} onRemove={() => removeDocument("contratoTrabalhoDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="ctps" className="text-sm font-medium">CTPS (páginas com vínculo anterior e atual)</Label>
+                          <Input id="ctps" value={formData.ctps} onChange={(e) => handleChange("ctps", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.ctpsDoc ? (
+                              <>
+                                <input type="file" id="ctpsDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "ctpsDoc")} disabled={uploadingDocs.ctpsDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="ctpsDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.ctpsDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.ctpsDoc && (
+                            <DocumentPreview fileUrl={formData.ctpsDoc} onRemove={() => removeDocument("ctpsDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="folhaPagamento" className="text-sm font-medium">Folha de pagamento (se houver)</Label>
+                          <Input id="folhaPagamento" value={formData.folhaPagamento} onChange={(e) => handleChange("folhaPagamento", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.folhaPagamentoDoc ? (
+                              <>
+                                <input type="file" id="folhaPagamentoDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "folhaPagamentoDoc")} disabled={uploadingDocs.folhaPagamentoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="folhaPagamentoDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.folhaPagamentoDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.folhaPagamentoDoc && (
+                            <DocumentPreview fileUrl={formData.folhaPagamentoDoc} onRemove={() => removeDocument("folhaPagamentoDoc")} />
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("justificativaMudanca")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">4</span>
+                        <CardTitle className="text-lg font-semibold">Justificativa</CardTitle>
+                      </div>
+                      {expandedSections.justificativaMudanca ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.justificativaMudanca && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="justificativaMudancaEmpregador" className="text-sm font-medium">Justificativa da mudança de empregador</Label>
+                          <Input id="justificativaMudancaEmpregador" value={formData.justificativaMudancaEmpregador} onChange={(e) => handleChange("justificativaMudancaEmpregador", e.target.value)} placeholder="Descreva a justificativa ou anexe o documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.justificativaMudancaEmpregadorDoc ? (
+                              <>
+                                <input type="file" id="justificativaMudancaEmpregadorDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "justificativaMudancaEmpregadorDoc")} disabled={uploadingDocs.justificativaMudancaEmpregadorDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="justificativaMudancaEmpregadorDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.justificativaMudancaEmpregadorDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.justificativaMudancaEmpregadorDoc && (
+                            <DocumentPreview fileUrl={formData.justificativaMudancaEmpregadorDoc} onRemove={() => removeDocument("justificativaMudancaEmpregadorDoc")} />
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("formacaoMudanca")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">5</span>
+                        <CardTitle className="text-lg font-semibold">Formação</CardTitle>
+                      </div>
+                      {expandedSections.formacaoMudanca ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.formacaoMudanca && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="diploma" className="text-sm font-medium">Diploma</Label>
+                          <Input id="diploma" value={formData.diploma} onChange={(e) => handleChange("diploma", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.diplomaDoc ? (
+                              <>
+                                <input type="file" id="diplomaDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "diplomaDoc")} disabled={uploadingDocs.diplomaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="diplomaDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.diplomaDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.diplomaDoc && (
+                            <DocumentPreview fileUrl={formData.diplomaDoc} onRemove={() => removeDocument("diplomaDoc")} />
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+              </div>
+            )}
+            {formData.type === "Investidor" && (
+              <div className="space-y-8 mt-8">
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("identificacaoInvestidor")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">1</span>
+                        <CardTitle className="text-lg font-semibold">Identificação</CardTitle>
+                      </div>
+                      {expandedSections.identificacaoInvestidor ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.identificacaoInvestidor && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="passaporte" className="text-sm font-medium">Passaporte</Label>
+                          <Input id="passaporte" value={formData.passaporte} onChange={(e) => handleChange("passaporte", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.passaporteDoc ? (
+                              <>
+                                <input type="file" id="passaporteDocInput_investidor" className="hidden" onChange={(e) => handleDocumentUpload(e, "passaporteDoc")} disabled={uploadingDocs.passaporteDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="passaporteDocInput_investidor" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.passaporteDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.passaporteDoc && (
+                            <DocumentPreview fileUrl={formData.passaporteDoc} onRemove={() => removeDocument("passaporteDoc")} />
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+
+                <Card className="border-2 border-border shadow-md overflow-hidden">
+                  <CardHeader
+                    className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                    onClick={() => toggleSection("empresaInvestidor")}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">2</span>
+                        <CardTitle className="text-lg font-semibold">Documentos da Empresa / Investimento</CardTitle>
+                      </div>
+                      {expandedSections.empresaInvestidor ? (
+                        <ChevronUp className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  {expandedSections.empresaInvestidor && (
+                    <CardContent className="pt-6 pb-6 bg-card">
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="contratoEmpresa" className="text-sm font-medium">Contrato Social</Label>
+                          <Input id="contratoEmpresa" value={formData.contratoEmpresa} onChange={(e) => handleChange("contratoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.contratoEmpresaDoc ? (
+                              <>
+                                <input type="file" id="contratoEmpresaDocInput_investidor" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoEmpresaDoc")} disabled={uploadingDocs.contratoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="contratoEmpresaDocInput_investidor" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.contratoEmpresaDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.contratoEmpresaDoc && (
+                            <DocumentPreview fileUrl={formData.contratoEmpresaDoc} onRemove={() => removeDocument("contratoEmpresaDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="cartaoCnpj" className="text-sm font-medium">CNPJ</Label>
+                          <Input id="cartaoCnpj" value={formData.cartaoCnpj} onChange={(e) => handleChange("cartaoCnpj", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.cartaoCnpjDoc ? (
+                              <>
+                                <input type="file" id="cartaoCnpjDocInput_investidor" className="hidden" onChange={(e) => handleDocumentUpload(e, "cartaoCnpjDoc")} disabled={uploadingDocs.cartaoCnpjDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="cartaoCnpjDocInput_investidor" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.cartaoCnpjDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.cartaoCnpjDoc && (
+                            <DocumentPreview fileUrl={formData.cartaoCnpjDoc} onRemove={() => removeDocument("cartaoCnpjDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="comprovanteInvestimento" className="text-sm font-medium">Comprovante do investimento</Label>
+                          <Input id="comprovanteInvestimento" value={formData.comprovanteInvestimento} onChange={(e) => handleChange("comprovanteInvestimento", e.target.value)} placeholder="Extrato, contrato, transferência etc." className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.comprovanteInvestimentoDoc ? (
+                              <>
+                                <input type="file" id="comprovanteInvestimentoDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "comprovanteInvestimentoDoc")} disabled={uploadingDocs.comprovanteInvestimentoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="comprovanteInvestimentoDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.comprovanteInvestimentoDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.comprovanteInvestimentoDoc && (
+                            <DocumentPreview fileUrl={formData.comprovanteInvestimentoDoc} onRemove={() => removeDocument("comprovanteInvestimentoDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="planoInvestimentos" className="text-sm font-medium">Plano de Investimentos</Label>
+                          <Input id="planoInvestimentos" value={formData.planoInvestimentos} onChange={(e) => handleChange("planoInvestimentos", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.planoInvestimentosDoc ? (
+                              <>
+                                <input type="file" id="planoInvestimentosDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "planoInvestimentosDoc")} disabled={uploadingDocs.planoInvestimentosDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="planoInvestimentosDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.planoInvestimentosDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.planoInvestimentosDoc && (
+                            <DocumentPreview fileUrl={formData.planoInvestimentosDoc} onRemove={() => removeDocument("planoInvestimentosDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="formularioRequerimento" className="text-sm font-medium">Formulário de Requerimento</Label>
+                          <Input id="formularioRequerimento" value={formData.formularioRequerimento} onChange={(e) => handleChange("formularioRequerimento", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.formularioRequerimentoDoc ? (
+                              <>
+                                <input type="file" id="formularioRequerimentoDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "formularioRequerimentoDoc")} disabled={uploadingDocs.formularioRequerimentoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="formularioRequerimentoDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.formularioRequerimentoDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.formularioRequerimentoDoc && (
+                            <DocumentPreview fileUrl={formData.formularioRequerimentoDoc} onRemove={() => removeDocument("formularioRequerimentoDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="procuracaoEmpresa" className="text-sm font-medium">Procuração</Label>
+                          <Input id="procuracaoEmpresa" value={formData.procuracaoEmpresa} onChange={(e) => handleChange("procuracaoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.procuracaoEmpresaDoc ? (
+                              <>
+                                <input type="file" id="procuracaoEmpresaDocInput_investidor" className="hidden" onChange={(e) => handleDocumentUpload(e, "procuracaoEmpresaDoc")} disabled={uploadingDocs.procuracaoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="procuracaoEmpresaDocInput_investidor" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.procuracaoEmpresaDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.procuracaoEmpresaDoc && (
+                            <DocumentPreview fileUrl={formData.procuracaoEmpresaDoc} onRemove={() => removeDocument("procuracaoEmpresaDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="guiaPaga" className="text-sm font-medium">Guia paga</Label>
+                          <Input id="guiaPaga" value={formData.guiaPaga} onChange={(e) => handleChange("guiaPaga", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.guiaPagaDoc ? (
+                              <>
+                                <input type="file" id="guiaPagaDocInput_investidor" className="hidden" onChange={(e) => handleDocumentUpload(e, "guiaPagaDoc")} disabled={uploadingDocs.guiaPagaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="guiaPagaDocInput_investidor" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.guiaPagaDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.guiaPagaDoc && (
+                            <DocumentPreview fileUrl={formData.guiaPagaDoc} onRemove={() => removeDocument("guiaPagaDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="protocolado" className="text-sm font-medium">Protocolado</Label>
+                          <Input id="protocolado" value={formData.protocolado} onChange={(e) => handleChange("protocolado", e.target.value)} placeholder="Recibo/Protocolo do pedido" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.protocoladoDoc ? (
+                              <>
+                                <input type="file" id="protocoladoDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "protocoladoDoc")} disabled={uploadingDocs.protocoladoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="protocoladoDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.protocoladoDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.protocoladoDoc && (
+                            <DocumentPreview fileUrl={formData.protocoladoDoc} onRemove={() => removeDocument("protocoladoDoc")} />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="publicacaoDou" className="text-sm font-medium">Publicação no DOU</Label>
+                          <Input id="publicacaoDou" value={formData.publicacaoDou} onChange={(e) => handleChange("publicacaoDou", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
+                          <div className="flex items-center gap-2">
+                            {!formData.publicacaoDouDoc ? (
+                              <>
+                                <input type="file" id="publicacaoDouDocInput_investidor" className="hidden" onChange={(e) => handleDocumentUpload(e, "publicacaoDouDoc")} disabled={uploadingDocs.publicacaoDouDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                                <Label htmlFor="publicacaoDouDocInput_investidor" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
+                                  <Upload className="h-4 w-4" />
+                                  {uploadingDocs.publicacaoDouDoc ? "Enviando..." : "Upload Documento"}
+                                </Label>
+                              </>
+                            ) : null}
+                          </div>
+                          {formData.publicacaoDouDoc && (
+                            <DocumentPreview fileUrl={formData.publicacaoDouDoc} onRemove={() => removeDocument("publicacaoDouDoc")} />
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
               </div>
             )}
 
             {/* Ações */}
-            <div className="flex gap-4 justify-end pt-6 border-t-2 border-border">
-              <Link href="/dashboard/vistos">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  disabled={loading}
-                className="h-12 px-4 border-2 hover:bg-muted transition-colors"
-                >
+            <div className="flex gap-4">
+              <Button type="submit" className="flex-1" disabled={loading}>
+                {loading ? "Salvando..." : "Salvar Visto"}
+              </Button>
+              <Link href="/dashboard/vistos" className="flex-1">
+                <Button type="button" variant="outline" className="w-full" disabled={loading}>
                   Cancelar
                 </Button>
               </Link>
-              <Button 
-                type="submit" 
-                disabled={loading}
-                className="h-12 px-4 bg-primary hover:bg-primary text-primary-foreground shadow-md hover:shadow-lg transition-all"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {loading ? "Salvando..." : "Salvar Visto"}
-              </Button>
             </div>
           </CardContent>
         </Card>

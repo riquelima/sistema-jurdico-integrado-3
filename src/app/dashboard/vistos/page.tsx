@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Globe, Eye, Plane, Briefcase, Building2, Clock, CheckCircle2, AlertCircle, FileText, CreditCard } from "lucide-react";
+import { Plus, Search, Globe, Eye, Plane, Briefcase, Building2, Clock, CheckCircle2, AlertCircle, FileText, CreditCard, User, Calendar, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingState } from "@/components/loading-state";
@@ -20,6 +20,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Visto {
   id: string;
@@ -43,6 +54,14 @@ export default function VistosPage() {
     }
   );
   const vistos = Array.isArray(vistosData) ? vistosData : [];
+  const vistosIdsKey = useMemo(() => {
+    try {
+      const ids = Array.isArray(vistos) ? vistos.map((v: any) => String(v.id)) : [];
+      return [...new Set(ids)].sort().join(",");
+    } catch {
+      return "";
+    }
+  }, [vistos]);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -63,6 +82,59 @@ export default function VistosPage() {
     finalizado: vistos.filter(v => normalizeStatus(v.status) === "finalizado").length,
   };
 
+  const [vistosAssignments, setVistosAssignments] = useState<Record<string, { responsibleName?: string; dueDate?: string; currentIndex?: number }>>({});
+
+  useEffect(() => {
+    if (!vistosIdsKey) { setVistosAssignments({}); return; }
+    const loadAssignments = async () => {
+      const entries = await Promise.all(
+        vistos.map(async (v: any) => {
+          const id = String(v.id);
+          try {
+            const res = await fetch(`/api/step-assignments?moduleType=vistos&recordId=${id}`);
+            if (!res.ok) return [id, null] as const;
+            const data = await res.json();
+            const arr = Array.isArray(data) ? data : [data];
+            let currentIdx = 0;
+            if (arr.length) {
+              const pending = arr.filter((a: any) => !a.isDone);
+              if (pending.length) {
+                currentIdx = Math.min(...pending.map((a: any) => (a.stepIndex ?? 0)));
+              } else {
+                currentIdx = Math.max(...arr.map((a: any) => (a.stepIndex ?? 0)));
+              }
+            }
+            const currentAssignment = arr.find((a: any) => a.stepIndex === currentIdx) || null;
+            return [id, { responsibleName: currentAssignment?.responsibleName, dueDate: currentAssignment?.dueDate, currentIndex: currentIdx }] as const;
+          } catch {
+            return [id, null] as const;
+          }
+        })
+      );
+      const map: Record<string, { responsibleName?: string; dueDate?: string; currentIndex?: number }> = {};
+      for (const [id, value] of entries) {
+        if (value) map[id] = value;
+      }
+      setVistosAssignments((prev) => {
+        const prevKeys = Object.keys(prev).sort().join(",");
+        const nextKeys = Object.keys(map).sort().join(",");
+        if (prevKeys === nextKeys) {
+          let changed = false;
+          for (const k of Object.keys(map)) {
+            const a = prev[k];
+            const b = map[k];
+            if (!a || !b || a.responsibleName !== b.responsibleName || a.dueDate !== b.dueDate || a.currentIndex !== b.currentIndex) {
+              changed = true; break;
+            }
+          }
+          if (!changed) return prev;
+        }
+        return map;
+      });
+    };
+    loadAssignments();
+  }, [vistosIdsKey]);
+
   const getStatusColor = (status: string) => {
     switch (normalizeStatus(status)) {
       case "em andamento":
@@ -75,16 +147,11 @@ export default function VistosPage() {
   };
 
   const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "Turismo":
-        return <Plane className="h-6 w-6 text-white" />;
-      case "Trabalho":
-        return <Briefcase className="h-6 w-6 text-white" />;
-      case "Investidor":
-        return <Building2 className="h-6 w-6 text-white" />;
-      default:
-        return <Globe className="h-6 w-6 text-white" />;
-    }
+    const t = (type || "").toLowerCase();
+    if (t.includes("turismo")) return <Plane className="h-6 w-6 text-white" />;
+    if (t.includes("trabalho")) return <Briefcase className="h-6 w-6 text-white" />;
+    if (t.includes("investidor")) return <Building2 className="h-6 w-6 text-white" />;
+    return <Globe className="h-6 w-6 text-white" />;
   };
 
   const getStatusIcon = (status: string) => {
@@ -95,6 +162,63 @@ export default function VistosPage() {
         return <CheckCircle2 className="h-4 w-4" />;
       default:
         return <Clock className="h-4 w-4" />;
+    }
+  };
+
+  const getVistoSteps = (type: string) => {
+    const t = (type || "").toLowerCase();
+    const BASE_STEPS = [
+      "Cadastro de Documentos",
+      "Análise de Elegibilidade",
+      "Preparação da Documentação",
+      "Agendamento no Consulado",
+      "Entrevista Consular",
+      "Aguardar Resultado",
+      "Retirada do Visto",
+      "Processo Finalizado",
+    ];
+    const TURISMO_STEPS = [
+      "Cadastro de Documentos",
+      "Verificação de Requisitos",
+      "Preparação da Documentação",
+      "Agendamento no Consulado",
+      "Entrevista Consular",
+      "Aguardar Resultado",
+      "Retirada do Visto",
+      "Processo Finalizado",
+    ];
+    const ESTUDANTE_STEPS = [
+      "Cadastro de Documentos",
+      "Verificação de Aceitação Acadêmica",
+      "Preparação da Documentação",
+      "Comprovação Financeira",
+      "Agendamento no Consulado",
+      "Entrevista Consular",
+      "Aguardar Resultado",
+      "Retirada do Visto",
+      "Processo Finalizado",
+    ];
+    if (t.includes("turismo")) return TURISMO_STEPS;
+    if (t.includes("estudante")) return ESTUDANTE_STEPS;
+    return BASE_STEPS;
+  };
+
+  const getVistoStepTitle = (type: string, index: number) => {
+    const steps = getVistoSteps(type);
+    const clampedIndex = Math.min(Math.max(index || 0, 0), steps.length - 1);
+    return steps[clampedIndex];
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/vistos?id=${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        refetch();
+      } else {
+        console.error('Failed to delete visto');
+      }
+    } catch (error) {
+      console.error('Error deleting visto:', error);
     }
   };
 
@@ -119,7 +243,7 @@ export default function VistosPage() {
           <Link href="/dashboard/vistos/novo">
             <Button size="lg" className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold shadow-lg">
               <Plus className="h-5 w-5 mr-2" />
-              Novo Visto
+              Nova Ação
             </Button>
           </Link>
         </div>
@@ -192,7 +316,11 @@ export default function VistosPage() {
               <SelectContent>
                 <SelectItem value="all">Todos os tipos</SelectItem>
                 <SelectItem value="Turismo">Turismo</SelectItem>
-                <SelectItem value="Trabalho">Trabalho</SelectItem>
+                <SelectItem value="Trabalho:Brasil">Trabalho:Brasil</SelectItem>
+                <SelectItem value="Trabalho:Residência Prévia">Trabalho:Residência Prévia</SelectItem>
+                <SelectItem value="Trabalho:Renovação 1 ano">Trabalho:Renovação 1 ano</SelectItem>
+                <SelectItem value="Trabalho:Indeterminado">Trabalho:Indeterminado</SelectItem>
+                <SelectItem value="Trabalho:Mudança de Empregador">Trabalho:Mudança de Empregador</SelectItem>
                 <SelectItem value="Investidor">Investidor</SelectItem>
               </SelectContent>
             </Select>
@@ -240,9 +368,45 @@ export default function VistosPage() {
           filteredVistos.map((visto) => (
             <Card 
               key={visto.id} 
-              className="border-slate-200 dark:border-slate-700 hover:shadow-xl hover:border-amber-500/50 transition-all duration-200 bg-gradient-to-r from-white to-slate-50 dark:from-slate-900 dark:to-slate-800"
+              className="border-slate-200 dark:border-slate-700 hover:shadow-xl hover:border-amber-500/50 transition-all duration-200 bg-gradient-to-r from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 relative"
             >
               <CardContent className="pt-6">
+                <div className="absolute top-2 right-2 flex items-center gap-2">
+                  <OptimizedLink 
+                    href={`/dashboard/vistos/${visto.id}`}
+                    prefetchData={() => prefetchVistoById(visto.id)}
+                  >
+                    <Button 
+                      size="sm"
+                      className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md h-8 px-3"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </OptimizedLink>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-red-600 hover:text-white hover:bg-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all duration-200"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza que deseja excluir o visto de {visto.clientName}? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(visto.id)}>Excluir</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4 flex-1">
                     {/* Ícone do processo */}
@@ -262,76 +426,26 @@ export default function VistosPage() {
                           </Badge>
                       </div>
 
-                      <div className="flex items-center gap-6 text-sm flex-wrap">
-                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                          <div className="p-1.5 bg-purple-100 dark:bg-purple-900 rounded">
-                            <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                          </div>
-                          <span className="font-medium">Tipo: {visto.type}</span>
+                      <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Tipo de ação:</span>
+                          <span>{visto.type}</span>
                         </div>
-                        
-                        {visto.cpf && (
-                          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                            <span className="font-semibold">CPF:</span>
-                            <span>{visto.cpf}</span>
-                          </div>
-                        )}
-
-                        {visto.rnm && (
-                          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                            <span className="font-semibold">RNM:</span>
-                            <span>{visto.rnm}</span>
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                          <div className="p-1.5 bg-slate-100 dark:bg-slate-700 rounded">
-                            <Clock className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                          </div>
-                          <span>
-                            {new Date(visto.createdAt).toLocaleDateString("pt-BR", {
-                              day: "2-digit",
-                              month: "long",
-                              year: "numeric"
-                            })}
-                          </span>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Data de criação:</span>
+                          <span>{new Date(visto.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</span>
                         </div>
                       </div>
 
-                      {/* Barra de progresso */}
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-slate-600 dark:text-slate-400 font-medium">Progresso do Processo</span>
-                          <span className="text-slate-700 dark:text-slate-300 font-semibold">
-                            {normalizeStatus(visto.status) === "finalizado" ? "100%" : "50%"}
-                          </span>
-                        </div>
-                        <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              normalizeStatus(visto.status) === "finalizado" 
-                                ? "bg-gradient-to-r from-emerald-500 to-emerald-600 w-full" 
-                                : "bg-gradient-to-r from-blue-500 to-blue-600 w-1/2"
-                            }`}
-                          />
-                        </div>
-                      </div>
+                      
+
+                      
                     </div>
                   </div>
 
-                  {/* Botão de ação */}
-                  <OptimizedLink 
-                    href={`/dashboard/vistos/${visto.id}`}
-                    prefetchData={() => prefetchVistoById(visto.id)}
-                  >
-                    <Button 
-                      size="lg"
-                      className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md"
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Ver Detalhes
-                    </Button>
-                  </OptimizedLink>
+                  
                 </div>
               </CardContent>
             </Card>

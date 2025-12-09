@@ -25,6 +25,7 @@ import {
   Circle,
   AlertCircle,
   ChevronDown,
+  ChevronUp,
   ChevronRight,
   X,
   Plus
@@ -143,6 +144,12 @@ export default function VistoDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState<{ [key: number]: string }>({});
   const [status, setStatus] = useState("");
+  const [visto, setVisto] = useState<any>(null);
+  const [expandedSections, setExpandedSections] = useState<{ documentosPessoais: boolean; comprovacaoFinanceira: boolean; outrosDocumentos: boolean }>({ documentosPessoais: true, comprovacaoFinanceira: true, outrosDocumentos: true });
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
+  const showWorkflow = false;
   const [expandedSteps, setExpandedSteps] = useState<{ [key: number]: boolean }>({});
   const [uploadingFiles, setUploadingFiles] = useState<{ [key: string]: boolean }>({});
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
@@ -184,6 +191,7 @@ export default function VistoDetailsPage() {
       const res = await fetch(`/api/vistos?id=${params.id}`);
       if (res.ok) {
         const record = await res.json();
+        setVisto(record);
         const flowType = (record.type || "Visto de Trabalho") as VistoType;
         const steps: StepData[] = (WORKFLOWS[flowType] || WORKFLOWS["Visto de Trabalho"]).map((title: string, index: number) => ({
           id: index,
@@ -1258,83 +1266,205 @@ export default function VistoDetailsPage() {
         onDelete={handleDeleteCase}
         left={
           <div className="space-y-6">
-            {/* Case Info Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="w-5 h-5" />
-                  Informações do Caso
-                </CardTitle>
+            {showWorkflow && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    Fluxo de Trabalho - {caseData.type}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {caseData.steps.map((step, index) => (
+                    <StepItem
+                      key={step.id}
+                      index={index}
+                      title={step.title}
+                      isCurrent={index === currentStepIndex}
+                      isCompleted={step.completed}
+                      isPending={index > currentStepIndex}
+                      expanded={expandedSteps[step.id] || false}
+                      onToggle={() => toggleStepExpansion(step.id)}
+                      onMarkComplete={() => handleStepCompletion(step.id)}
+                      assignment={assignments[index]}
+                      onSaveAssignment={(a) => handleSaveAssignment(index, a.responsibleName, a.dueDate)}
+                    >
+                      {renderStepContent(step)}
+                    </StepItem>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            <Card className="border-2 border-border shadow-md overflow-hidden">
+              <CardHeader
+                className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                onClick={() => toggleSection("documentosPessoais")}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">1</span>
+                    <CardTitle className="text-lg font-semibold">Documentos Pessoais</CardTitle>
+                  </div>
+                  {expandedSections.documentosPessoais ? (
+                    <ChevronUp className="h-5 w-5 text-primary" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="case-type">Tipo de Visto</Label>
-                    <Select value={caseData.type} onValueChange={(value) => setCaseData(prev => prev ? { ...prev, type: value } : prev)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.keys(WORKFLOWS).map((type) => (
-                          <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+              {expandedSections.documentosPessoais && (
+                <CardContent className="pt-6 pb-6 bg-card">
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="cpf">CPF</Label>
+                      <Input id="cpf" value={visto?.cpf || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("cpfDoc")}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="rnm">RNM</Label>
+                      <Input id="rnm" value={visto?.rnm || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("rnmDoc")}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="passaporte">Passaporte</Label>
+                      <Input id="passaporte" value={visto?.passaporte || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("passaporteDoc")}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="comprovanteEndereco">Comprovante de Endereço / Declaração</Label>
+                      <Input id="comprovanteEndereco" value={visto?.comprovanteEndereco || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("comprovanteEnderecoDoc")}
+                      {renderDocLinks("declaracaoResidenciaDoc")}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="foto3x4">Foto digital 3x4</Label>
+                      <Input id="foto3x4" value={""} disabled placeholder="—" className="h-11 border-2" />
+                      {renderDocLinks("foto3x4Doc")}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="documentoChines">Documento Chinês (quando aplicável)</Label>
+                      <Input id="documentoChines" value={visto?.documentoChines || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("documentoChinesDoc")}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="antecedentesCriminais">Antecedentes Criminais</Label>
+                      <Input id="antecedentesCriminais" value={visto?.antecedentesCriminais || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("antecedentesCriminaisDoc")}
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="case-status">Status</Label>
-                    <Select value={status} onValueChange={handleStatusChange}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                        <SelectItem value="Concluído">Concluído</SelectItem>
-                        <SelectItem value="Pausado">Pausado</SelectItem>
-                        <SelectItem value="Cancelado">Cancelado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="case-description">Descrição</Label>
-                  <Textarea
-                    id="case-description"
-                    value={caseData.description}
-                    onChange={(e) => setCaseData(prev => prev ? { ...prev, description: e.target.value } : prev)}
-                    rows={3}
-                  />
-                </div>
-              </CardContent>
+                </CardContent>
+              )}
             </Card>
 
-            {/* Workflow Steps */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Fluxo de Trabalho - {caseData.type}
-                </CardTitle>
+            <Card className="border-2 border-border shadow-md overflow-hidden">
+              <CardHeader
+                className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                onClick={() => toggleSection("comprovacaoFinanceira")}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">2</span>
+                    <CardTitle className="text-lg font-semibold">Comprovação Financeira PF</CardTitle>
+                  </div>
+                  {expandedSections.comprovacaoFinanceira ? (
+                    <ChevronUp className="h-5 w-5 text-primary" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {caseData.steps.map((step, index) => (
-                  <StepItem
-                    key={step.id}
-                    index={index}
-                    title={step.title}
-                    isCurrent={index === currentStepIndex}
-                    isCompleted={step.completed}
-                    isPending={index > currentStepIndex}
-                    expanded={expandedSteps[step.id] || false}
-                    onToggle={() => toggleStepExpansion(step.id)}
-                    onMarkComplete={() => handleStepCompletion(step.id)}
-                    assignment={assignments[index]}
-                    onSaveAssignment={(a) => handleSaveAssignment(index, a.responsibleName, a.dueDate)}
-                  >
-                    {renderStepContent(step)}
-                  </StepItem>
-                ))}
-              </CardContent>
+              {expandedSections.comprovacaoFinanceira && (
+                <CardContent className="pt-6 pb-6 bg-card">
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="certidaoNascimentoFilhos">Filhos (Certidão de Nascimento)</Label>
+                      <Input id="certidaoNascimentoFilhos" value={visto?.certidaoNascimentoFilhos || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("certidaoNascimentoFilhosDoc")}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cartaoCnpj">Empresa: Cartão CNPJ</Label>
+                      <Input id="cartaoCnpj" value={visto?.cartaoCnpj || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("cartaoCnpjDoc")}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="contratoEmpresa">Contrato Social</Label>
+                      <Input id="contratoEmpresa" value={visto?.contratoEmpresa || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("contratoEmpresaDoc")}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="escrituraImoveis">Imóveis (Escritura/Matrícula)</Label>
+                      <Input id="escrituraImoveis" value={visto?.escrituraImoveis || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("escrituraImoveisDoc")}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="extratosBancarios">Últimos 3 extratos bancários</Label>
+                      <Input id="extratosBancarios" value={visto?.extratosBancarios || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("extratosBancariosDoc")}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="impostoRenda">Imposto de Renda</Label>
+                      <Input id="impostoRenda" value={visto?.impostoRenda || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("impostoRendaDoc")}
+                    </div>
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+
+            <Card className="border-2 border-border shadow-md overflow-hidden">
+              <CardHeader
+                className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
+                onClick={() => toggleSection("outrosDocumentos")}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-semibold text-sm">3</span>
+                    <CardTitle className="text-lg font-semibold">Outros Documentos</CardTitle>
+                  </div>
+                  {expandedSections.outrosDocumentos ? (
+                    <ChevronUp className="h-5 w-5 text-primary" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </div>
+              </CardHeader>
+              {expandedSections.outrosDocumentos && (
+                <CardContent className="pt-6 pb-6 bg-card">
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="reservasPassagens">Reservas de Passagens</Label>
+                      <Input id="reservasPassagens" value={visto?.reservasPassagens || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("reservasPassagensDoc")}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="reservasHotel">Reservas de Hotel</Label>
+                      <Input id="reservasHotel" value={visto?.reservasHotel || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("reservasHotelDoc")}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="seguroViagem">Seguro Viagem</Label>
+                      <Input id="seguroViagem" value={visto?.seguroViagem || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("seguroViagemDoc")}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="roteiroViagem">Roteiro de Viagem Detalhado</Label>
+                      <Input id="roteiroViagem" value={visto?.roteiroViagem || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("roteiroViagemDoc")}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="taxa">Taxa Consular</Label>
+                      <Input id="taxa" value={visto?.taxa || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("taxaDoc")}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="formularioConsulado">Formulário do Consulado preenchido</Label>
+                      <Input id="formularioConsulado" value={visto?.formularioConsulado || ""} disabled placeholder="Status ou informações do documento" className="h-11 border-2" />
+                      {renderDocLinks("formularioConsuladoDoc")}
+                    </div>
+                  </div>
+                </CardContent>
+              )}
             </Card>
           </div>
         }
@@ -1343,8 +1473,8 @@ export default function VistoDetailsPage() {
             <StatusPanel
               status={status}
               onStatusChange={handleStatusChange}
-              currentStep={currentStepIndex + 1}
-              totalSteps={caseData.steps.length}
+              currentStep={1}
+              totalSteps={1}
               createdAt={caseData.createdAt}
               updatedAt={caseData.updatedAt}
             />
@@ -1352,12 +1482,21 @@ export default function VistoDetailsPage() {
             <DocumentPanel
               onDropFiles={(files) => handleFileUpload(files)}
               uploading={uploadingFiles['general'] || false}
+              documents={documents as any}
+              loadingDocuments={false}
+              onDocumentDownload={(doc) => { if ((doc as any)?.file_path) window.open((doc as any).file_path, '_blank') }}
+              onDocumentDelete={(doc) => handleDeleteDocument(doc as any)}
+              editingDocumentId={editingDocument?.id as any}
+              editingDocumentName={newDocumentName}
+              onDocumentNameChange={setNewDocumentName}
+              onDocumentNameSave={(documentId) => { /* no-op */ }}
+              onDocumentDoubleClick={(doc) => handleRenameDocument(doc as any)}
             />
 
             <NotesPanel
-              notes={notes[currentStepIndex] || ""}
-              onChange={(value) => setNotes(prev => ({ ...prev, [currentStepIndex]: value }))}
-              onSave={() => saveStepNotes(currentStepIndex)}
+              notes={notes[0] || ""}
+              onChange={(value) => setNotes(prev => ({ ...prev, 0: value }))}
+              onSave={() => saveStepNotes(0)}
             />
           </div>
         }

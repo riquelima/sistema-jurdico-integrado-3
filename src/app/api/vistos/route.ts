@@ -18,6 +18,12 @@ function mapVistosDbFieldsToFrontend(record: any) {
     passaporteDoc: record.passaporte_doc,
     comprovanteEndereco: record.comprovante_endereco,
     comprovanteEnderecoDoc: record.comprovante_endereco_doc,
+    declaracaoResidenciaDoc: record.declaracao_residencia_doc,
+    foto3x4Doc: record.foto_3x4_doc,
+    documentoChines: record.documento_chines,
+    documentoChinesDoc: record.documento_chines_doc,
+    antecedentesCriminais: record.antecedentes_criminais,
+    antecedentesCriminaisDoc: record.antecedentes_criminais_doc,
     certidaoNascimentoFilhos: record.certidao_nascimento_filhos,
     certidaoNascimentoFilhosDoc: record.certidao_nascimento_filhos_doc,
     cartaoCnpj: record.cartao_cnpj,
@@ -26,6 +32,10 @@ function mapVistosDbFieldsToFrontend(record: any) {
     contratoEmpresaDoc: record.contrato_empresa_doc,
     escrituraImoveis: record.escritura_imoveis,
     escrituraImoveisDoc: record.escritura_imoveis_doc,
+    extratosBancarios: record.extratos_bancarios,
+    extratosBancariosDoc: record.extratos_bancarios_doc,
+    impostoRenda: record.imposto_renda,
+    impostoRendaDoc: record.imposto_renda_doc,
     reservasPassagens: record.reservas_passagens,
     reservasPassagensDoc: record.reservas_passagens_doc,
     reservasHotel: record.reservas_hotel,
@@ -36,6 +46,60 @@ function mapVistosDbFieldsToFrontend(record: any) {
     roteiroViagemDoc: record.roteiro_viagem_doc,
     taxa: record.taxa,
     taxaDoc: record.taxa_doc,
+    formularioConsulado: record.formulario_consulado,
+    formularioConsuladoDoc: record.formulario_consulado_doc,
+    comprovanteResidenciaPrevia: record.comprovante_residencia_previa,
+    comprovanteResidenciaPreviaDoc: record.comprovante_residencia_previa_doc,
+    formularioRn02: record.formulario_rn02,
+    formularioRn02Doc: record.formulario_rn02_doc,
+    comprovanteAtividade: record.comprovante_atividade,
+    comprovanteAtividadeDoc: record.comprovante_atividade_doc,
+    // Novos campos para Visto de Trabalho - Brasil
+    certidaoNascimento: record.certidao_nascimento,
+    certidaoNascimentoDoc: record.certidao_nascimento_doc,
+    declaracaoCompreensao: record.declaracao_compreensao,
+    declaracaoCompreensaoDoc: record.declaracao_compreensao_doc,
+    declaracoesEmpresa: record.declaracoes_empresa,
+    declaracoesEmpresaDoc: record.declaracoes_empresa_doc,
+    procuracaoEmpresa: record.procuracao_empresa,
+    procuracaoEmpresaDoc: record.procuracao_empresa_doc,
+    formularioRn01: record.formulario_rn01,
+    formularioRn01Doc: record.formulario_rn01_doc,
+    guiaPaga: record.guia_paga,
+    guiaPagaDoc: record.guia_paga_doc,
+    publicacaoDou: record.dou,
+    publicacaoDouDoc: record.dou_doc,
+    comprovanteInvestimento: record.comprovante_investimento,
+    comprovanteInvestimentoDoc: record.comprovante_investimento_doc,
+    planoInvestimentos: record.plano_investimentos,
+    planoInvestimentosDoc: record.plano_investimentos_doc,
+    formularioRequerimento: record.formulario_requerimento,
+    formularioRequerimentoDoc: record.formulario_requerimento_doc,
+    protocolado: record.protocolado,
+    protocoladoDoc: record.protocolado_doc,
+    contratoTrabalho: record.contrato_trabalho,
+    contratoTrabalhoDoc: record.contrato_trabalho_doc,
+    folhaPagamento: record.folha_pagamento,
+    folhaPagamentoDoc: record.folha_pagamento_doc,
+    comprovanteVinculoAnterior: record.comprovante_vinculo_anterior,
+    comprovanteVinculoAnteriorDoc: record.comprovante_vinculo_anterior_doc,
+    declaracaoAntecedentesCriminais: record.declaracao_antecedentes_criminais,
+    declaracaoAntecedentesCriminaisDoc: record.declaracao_antecedentes_criminais_doc,
+    diploma: record.diploma,
+    diplomaDoc: record.diploma_doc,
+    contratoTrabalhoIndeterminado: record.contrato_trabalho_indeterminado,
+    contratoTrabalhoIndeterminadoDoc: record.contrato_trabalho_indeterminado_doc,
+    // Renovação 1 ano
+    ctps: record.ctps,
+    ctpsDoc: record.ctps_doc,
+    contratoTrabalhoAnterior: record.contrato_trabalho_anterior,
+    contratoTrabalhoAnteriorDoc: record.contrato_trabalho_anterior_doc,
+    contratoTrabalhoAtual: record.contrato_trabalho_atual,
+    contratoTrabalhoAtualDoc: record.contrato_trabalho_atual_doc,
+    formularioProrrogacao: record.formulario_prorrogacao,
+    formularioProrrogacaoDoc: record.formulario_prorrogacao_doc,
+    justificativaMudancaEmpregador: record.justificativa_mudanca_empregador,
+    justificativaMudancaEmpregadorDoc: record.justificativa_mudanca_empregador_doc,
     status: record.status,
     notes: record.notes,
     createdAt: record.created_at,
@@ -178,6 +242,12 @@ export async function POST(request: NextRequest) {
       passaporte_doc: body.passaporteDoc?.trim() || null,
       comprovante_endereco: body.comprovanteEndereco?.trim() || null,
       comprovante_endereco_doc: body.comprovanteEnderecoDoc?.trim() || null,
+      declaracao_residencia_doc: body.declaracaoResidenciaDoc?.trim() || null,
+      foto_3x4_doc: body.foto3x4Doc?.trim() || null,
+      documento_chines: body.documentoChines?.trim() || null,
+      documento_chines_doc: body.documentoChinesDoc?.trim() || null,
+      antecedentes_criminais: body.antecedentesCriminais?.trim() || null,
+      antecedentes_criminais_doc: body.antecedentesCriminaisDoc?.trim() || null,
       certidao_nascimento_filhos: body.certidaoNascimentoFilhos?.trim() || null,
       certidao_nascimento_filhos_doc: body.certidaoNascimentoFilhosDoc?.trim() || null,
       cartao_cnpj: body.cartaoCnpj?.trim() || null,
@@ -186,6 +256,10 @@ export async function POST(request: NextRequest) {
       contrato_empresa_doc: body.contratoEmpresaDoc?.trim() || null,
       escritura_imoveis: body.escrituraImoveis?.trim() || null,
       escritura_imoveis_doc: body.escrituraImoveisDoc?.trim() || null,
+      extratos_bancarios: body.extratosBancarios?.trim() || null,
+      extratos_bancarios_doc: body.extratosBancariosDoc?.trim() || null,
+      imposto_renda: body.impostoRenda?.trim() || null,
+      imposto_renda_doc: body.impostoRendaDoc?.trim() || null,
       reservas_passagens: body.reservasPassagens?.trim() || null,
       reservas_passagens_doc: body.reservasPassagensDoc?.trim() || null,
       reservas_hotel: body.reservasHotel?.trim() || null,
@@ -196,6 +270,60 @@ export async function POST(request: NextRequest) {
       roteiro_viagem_doc: body.roteiroViagemDoc?.trim() || null,
       taxa: body.taxa?.trim() || null,
       taxa_doc: body.taxaDoc?.trim() || null,
+      formulario_consulado: body.formularioConsulado?.trim() || null,
+      formulario_consulado_doc: body.formularioConsuladoDoc?.trim() || null,
+      comprovante_residencia_previa: body.comprovanteResidenciaPrevia?.trim() || null,
+      comprovante_residencia_previa_doc: body.comprovanteResidenciaPreviaDoc?.trim() || null,
+      formulario_rn02: body.formularioRn02?.trim() || null,
+      formulario_rn02_doc: body.formularioRn02Doc?.trim() || null,
+      comprovante_atividade: body.comprovanteAtividade?.trim() || null,
+      comprovante_atividade_doc: body.comprovanteAtividadeDoc?.trim() || null,
+      // Novos campos para Visto de Trabalho - Brasil
+      certidao_nascimento: body.certidaoNascimento?.trim() || null,
+      certidao_nascimento_doc: body.certidaoNascimentoDoc?.trim() || null,
+      declaracao_compreensao: body.declaracaoCompreensao?.trim() || null,
+      declaracao_compreensao_doc: body.declaracaoCompreensaoDoc?.trim() || null,
+      declaracoes_empresa: body.declaracoesEmpresa?.trim() || null,
+      declaracoes_empresa_doc: body.declaracoesEmpresaDoc?.trim() || null,
+      procuracao_empresa: body.procuracaoEmpresa?.trim() || null,
+      procuracao_empresa_doc: body.procuracaoEmpresaDoc?.trim() || null,
+      formulario_rn01: body.formularioRn01?.trim() || null,
+      formulario_rn01_doc: body.formularioRn01Doc?.trim() || null,
+      guia_paga: body.guiaPaga?.trim() || null,
+      guia_paga_doc: body.guiaPagaDoc?.trim() || null,
+      dou: body.publicacaoDou?.trim() || null,
+      dou_doc: body.publicacaoDouDoc?.trim() || null,
+      comprovante_investimento: body.comprovanteInvestimento?.trim() || null,
+      comprovante_investimento_doc: body.comprovanteInvestimentoDoc?.trim() || null,
+      plano_investimentos: body.planoInvestimentos?.trim() || null,
+      plano_investimentos_doc: body.planoInvestimentosDoc?.trim() || null,
+      formulario_requerimento: body.formularioRequerimento?.trim() || null,
+      formulario_requerimento_doc: body.formularioRequerimentoDoc?.trim() || null,
+      protocolado: body.protocolado?.trim() || null,
+      protocolado_doc: body.protocoladoDoc?.trim() || null,
+      contrato_trabalho: body.contratoTrabalho?.trim() || null,
+      contrato_trabalho_doc: body.contratoTrabalhoDoc?.trim() || null,
+      folha_pagamento: body.folhaPagamento?.trim() || null,
+      folha_pagamento_doc: body.folhaPagamentoDoc?.trim() || null,
+      comprovante_vinculo_anterior: body.comprovanteVinculoAnterior?.trim() || null,
+      comprovante_vinculo_anterior_doc: body.comprovanteVinculoAnteriorDoc?.trim() || null,
+      declaracao_antecedentes_criminais: body.declaracaoAntecedentesCriminais?.trim() || null,
+      declaracao_antecedentes_criminais_doc: body.declaracaoAntecedentesCriminaisDoc?.trim() || null,
+      diploma: body.diploma?.trim() || null,
+      diploma_doc: body.diplomaDoc?.trim() || null,
+      contrato_trabalho_indeterminado: body.contratoTrabalhoIndeterminado?.trim() || null,
+      contrato_trabalho_indeterminado_doc: body.contratoTrabalhoIndeterminadoDoc?.trim() || null,
+      // Renovação 1 ano
+      ctps: body.ctps?.trim() || null,
+      ctps_doc: body.ctpsDoc?.trim() || null,
+      contrato_trabalho_anterior: body.contratoTrabalhoAnterior?.trim() || null,
+      contrato_trabalho_anterior_doc: body.contratoTrabalhoAnteriorDoc?.trim() || null,
+      contrato_trabalho_atual: body.contratoTrabalhoAtual?.trim() || null,
+      contrato_trabalho_atual_doc: body.contratoTrabalhoAtualDoc?.trim() || null,
+      formulario_prorrogacao: body.formularioProrrogacao?.trim() || null,
+      formulario_prorrogacao_doc: body.formularioProrrogacaoDoc?.trim() || null,
+      justificativa_mudanca_empregador: body.justificativaMudancaEmpregador?.trim() || null,
+      justificativa_mudanca_empregador_doc: body.justificativaMudancaEmpregadorDoc?.trim() || null,
       status: body.status?.trim() || 'Em Andamento',
       notes: body.notes?.trim() || null,
     };
@@ -296,6 +424,30 @@ export async function PUT(request: NextRequest) {
       updateData.comprovante_endereco_doc = body.comprovanteEnderecoDoc?.trim() || null;
     }
 
+    if (body.declaracaoResidenciaDoc !== undefined) {
+      updateData.declaracao_residencia_doc = body.declaracaoResidenciaDoc?.trim() || null;
+    }
+
+    if (body.foto3x4Doc !== undefined) {
+      updateData.foto_3x4_doc = body.foto3x4Doc?.trim() || null;
+    }
+
+    if (body.documentoChines !== undefined) {
+      updateData.documento_chines = body.documentoChines?.trim() || null;
+    }
+
+    if (body.documentoChinesDoc !== undefined) {
+      updateData.documento_chines_doc = body.documentoChinesDoc?.trim() || null;
+    }
+
+    if (body.antecedentesCriminais !== undefined) {
+      updateData.antecedentes_criminais = body.antecedentesCriminais?.trim() || null;
+    }
+
+    if (body.antecedentesCriminaisDoc !== undefined) {
+      updateData.antecedentes_criminais_doc = body.antecedentesCriminaisDoc?.trim() || null;
+    }
+
     if (body.certidaoNascimentoFilhos !== undefined) {
       updateData.certidao_nascimento_filhos = body.certidaoNascimentoFilhos?.trim() || null;
     }
@@ -326,6 +478,22 @@ export async function PUT(request: NextRequest) {
 
     if (body.escrituraImoveisDoc !== undefined) {
       updateData.escritura_imoveis_doc = body.escrituraImoveisDoc?.trim() || null;
+    }
+
+    if (body.extratosBancarios !== undefined) {
+      updateData.extratos_bancarios = body.extratosBancarios?.trim() || null;
+    }
+
+    if (body.extratosBancariosDoc !== undefined) {
+      updateData.extratos_bancarios_doc = body.extratosBancariosDoc?.trim() || null;
+    }
+
+    if (body.impostoRenda !== undefined) {
+      updateData.imposto_renda = body.impostoRenda?.trim() || null;
+    }
+
+    if (body.impostoRendaDoc !== undefined) {
+      updateData.imposto_renda_doc = body.impostoRendaDoc?.trim() || null;
     }
 
     if (body.reservasPassagens !== undefined) {
@@ -366,6 +534,167 @@ export async function PUT(request: NextRequest) {
 
     if (body.taxaDoc !== undefined) {
       updateData.taxa_doc = body.taxaDoc?.trim() || null;
+    }
+
+    if (body.formularioConsulado !== undefined) {
+      updateData.formulario_consulado = body.formularioConsulado?.trim() || null;
+    }
+
+    if (body.formularioConsuladoDoc !== undefined) {
+      updateData.formulario_consulado_doc = body.formularioConsuladoDoc?.trim() || null;
+    }
+    if (body.comprovanteResidenciaPrevia !== undefined) {
+      updateData.comprovante_residencia_previa = body.comprovanteResidenciaPrevia?.trim() || null;
+    }
+    if (body.comprovanteResidenciaPreviaDoc !== undefined) {
+      updateData.comprovante_residencia_previa_doc = body.comprovanteResidenciaPreviaDoc?.trim() || null;
+    }
+    if (body.formularioRn02 !== undefined) {
+      updateData.formulario_rn02 = body.formularioRn02?.trim() || null;
+    }
+    if (body.formularioRn02Doc !== undefined) {
+      updateData.formulario_rn02_doc = body.formularioRn02Doc?.trim() || null;
+    }
+    if (body.comprovanteAtividade !== undefined) {
+      updateData.comprovante_atividade = body.comprovanteAtividade?.trim() || null;
+    }
+    if (body.comprovanteAtividadeDoc !== undefined) {
+      updateData.comprovante_atividade_doc = body.comprovanteAtividadeDoc?.trim() || null;
+    }
+
+    // Novos campos para Visto de Trabalho - Brasil
+    if (body.certidaoNascimento !== undefined) {
+      updateData.certidao_nascimento = body.certidaoNascimento?.trim() || null;
+    }
+    if (body.certidaoNascimentoDoc !== undefined) {
+      updateData.certidao_nascimento_doc = body.certidaoNascimentoDoc?.trim() || null;
+    }
+    if (body.declaracaoCompreensao !== undefined) {
+      updateData.declaracao_compreensao = body.declaracaoCompreensao?.trim() || null;
+    }
+    if (body.declaracaoCompreensaoDoc !== undefined) {
+      updateData.declaracao_compreensao_doc = body.declaracaoCompreensaoDoc?.trim() || null;
+    }
+    if (body.declaracoesEmpresa !== undefined) {
+      updateData.declaracoes_empresa = body.declaracoesEmpresa?.trim() || null;
+    }
+    if (body.declaracoesEmpresaDoc !== undefined) {
+      updateData.declaracoes_empresa_doc = body.declaracoesEmpresaDoc?.trim() || null;
+    }
+    if (body.procuracaoEmpresa !== undefined) {
+      updateData.procuracao_empresa = body.procuracaoEmpresa?.trim() || null;
+    }
+    if (body.procuracaoEmpresaDoc !== undefined) {
+      updateData.procuracao_empresa_doc = body.procuracaoEmpresaDoc?.trim() || null;
+    }
+    if (body.formularioRn01 !== undefined) {
+      updateData.formulario_rn01 = body.formularioRn01?.trim() || null;
+    }
+    if (body.formularioRn01Doc !== undefined) {
+      updateData.formulario_rn01_doc = body.formularioRn01Doc?.trim() || null;
+    }
+    if (body.guiaPaga !== undefined) {
+      updateData.guia_paga = body.guiaPaga?.trim() || null;
+    }
+    if (body.guiaPagaDoc !== undefined) {
+      updateData.guia_paga_doc = body.guiaPagaDoc?.trim() || null;
+    }
+    if (body.publicacaoDou !== undefined) {
+      updateData.dou = body.publicacaoDou?.trim() || null;
+    }
+    if (body.publicacaoDouDoc !== undefined) {
+      updateData.dou_doc = body.publicacaoDouDoc?.trim() || null;
+    }
+    if (body.comprovanteInvestimento !== undefined) {
+      updateData.comprovante_investimento = body.comprovanteInvestimento?.trim() || null;
+    }
+    if (body.comprovanteInvestimentoDoc !== undefined) {
+      updateData.comprovante_investimento_doc = body.comprovanteInvestimentoDoc?.trim() || null;
+    }
+    if (body.planoInvestimentos !== undefined) {
+      updateData.plano_investimentos = body.planoInvestimentos?.trim() || null;
+    }
+    if (body.planoInvestimentosDoc !== undefined) {
+      updateData.plano_investimentos_doc = body.planoInvestimentosDoc?.trim() || null;
+    }
+    if (body.formularioRequerimento !== undefined) {
+      updateData.formulario_requerimento = body.formularioRequerimento?.trim() || null;
+    }
+    if (body.formularioRequerimentoDoc !== undefined) {
+      updateData.formulario_requerimento_doc = body.formularioRequerimentoDoc?.trim() || null;
+    }
+    if (body.protocolado !== undefined) {
+      updateData.protocolado = body.protocolado?.trim() || null;
+    }
+    if (body.protocoladoDoc !== undefined) {
+      updateData.protocolado_doc = body.protocoladoDoc?.trim() || null;
+    }
+    if (body.contratoTrabalho !== undefined) {
+      updateData.contrato_trabalho = body.contratoTrabalho?.trim() || null;
+    }
+    if (body.contratoTrabalhoDoc !== undefined) {
+      updateData.contrato_trabalho_doc = body.contratoTrabalhoDoc?.trim() || null;
+    }
+    if (body.folhaPagamento !== undefined) {
+      updateData.folha_pagamento = body.folhaPagamento?.trim() || null;
+    }
+    if (body.folhaPagamentoDoc !== undefined) {
+      updateData.folha_pagamento_doc = body.folhaPagamentoDoc?.trim() || null;
+    }
+    if (body.comprovanteVinculoAnterior !== undefined) {
+      updateData.comprovante_vinculo_anterior = body.comprovanteVinculoAnterior?.trim() || null;
+    }
+    if (body.comprovanteVinculoAnteriorDoc !== undefined) {
+      updateData.comprovante_vinculo_anterior_doc = body.comprovanteVinculoAnteriorDoc?.trim() || null;
+    }
+    if (body.declaracaoAntecedentesCriminais !== undefined) {
+      updateData.declaracao_antecedentes_criminais = body.declaracaoAntecedentesCriminais?.trim() || null;
+    }
+    if (body.declaracaoAntecedentesCriminaisDoc !== undefined) {
+      updateData.declaracao_antecedentes_criminais_doc = body.declaracaoAntecedentesCriminaisDoc?.trim() || null;
+    }
+    if (body.diploma !== undefined) {
+      updateData.diploma = body.diploma?.trim() || null;
+    }
+    if (body.diplomaDoc !== undefined) {
+      updateData.diploma_doc = body.diplomaDoc?.trim() || null;
+    }
+    if (body.contratoTrabalhoIndeterminado !== undefined) {
+      updateData.contrato_trabalho_indeterminado = body.contratoTrabalhoIndeterminado?.trim() || null;
+    }
+    if (body.contratoTrabalhoIndeterminadoDoc !== undefined) {
+      updateData.contrato_trabalho_indeterminado_doc = body.contratoTrabalhoIndeterminadoDoc?.trim() || null;
+    }
+    // Renovação 1 ano
+    if (body.ctps !== undefined) {
+      updateData.ctps = body.ctps?.trim() || null;
+    }
+    if (body.ctpsDoc !== undefined) {
+      updateData.ctps_doc = body.ctpsDoc?.trim() || null;
+    }
+    if (body.contratoTrabalhoAnterior !== undefined) {
+      updateData.contrato_trabalho_anterior = body.contratoTrabalhoAnterior?.trim() || null;
+    }
+    if (body.contratoTrabalhoAnteriorDoc !== undefined) {
+      updateData.contrato_trabalho_anterior_doc = body.contratoTrabalhoAnteriorDoc?.trim() || null;
+    }
+    if (body.contratoTrabalhoAtual !== undefined) {
+      updateData.contrato_trabalho_atual = body.contratoTrabalhoAtual?.trim() || null;
+    }
+    if (body.contratoTrabalhoAtualDoc !== undefined) {
+      updateData.contrato_trabalho_atual_doc = body.contratoTrabalhoAtualDoc?.trim() || null;
+    }
+    if (body.formularioProrrogacao !== undefined) {
+      updateData.formulario_prorrogacao = body.formularioProrrogacao?.trim() || null;
+    }
+    if (body.formularioProrrogacaoDoc !== undefined) {
+      updateData.formulario_prorrogacao_doc = body.formularioProrrogacaoDoc?.trim() || null;
+    }
+    if (body.justificativaMudancaEmpregador !== undefined) {
+      updateData.justificativa_mudanca_empregador = body.justificativaMudancaEmpregador?.trim() || null;
+    }
+    if (body.justificativaMudancaEmpregadorDoc !== undefined) {
+      updateData.justificativa_mudanca_empregador_doc = body.justificativaMudancaEmpregadorDoc?.trim() || null;
     }
 
     if (body.status !== undefined) {

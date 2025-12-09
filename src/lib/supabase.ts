@@ -99,6 +99,14 @@ export const FIELD_TO_DOCUMENT_NAME: Record<string, string> = {
   douRatificacaoDoc: 'DOU da Ratificação',
   protocoloManifestoDoc: 'Protocolo do Manifesto no SEI',
   documentoFinalizacaoDoc: 'Documento de Finalização',
+  // Vistos - nomes amigáveis
+  declaracaoResidenciaDocFile: 'Declaração de Residência',
+  foto3x4DocFile: 'Foto digital 3x4',
+  documentoChinesDocFile: 'Documento Chinês',
+  antecedentesCriminaisDocFile: 'Antecedentes Criminais',
+  extratosBancariosDocFile: 'Extratos Bancários (Últimos 3)',
+  impostoRendaDocFile: 'Imposto de Renda',
+  formularioConsuladoDocFile: 'Formulário do Consulado',
 };
 
 function sanitizeFileName(fileName: string): string {
