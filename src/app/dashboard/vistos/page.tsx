@@ -69,6 +69,7 @@ export default function VistosPage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFinalOverrides, setStatusFinalOverrides] = useState<Record<string, { statusFinal: string; statusFinalOutro: string | null }>>({});
   useEffect(() => {
     // Prefetch disponível para navegação futura
   }, []);
@@ -227,6 +228,51 @@ export default function VistosPage() {
     return steps[clampedIndex];
   };
 
+  const cycleStatusFinal = (current?: string) => {
+    const order = ["Deferido", "Indeferido", "Outro"];
+    const idx = order.indexOf(String(current || ""));
+    const nextIdx = ((idx < 0 ? -1 : idx) + 1) % order.length;
+    return order[nextIdx];
+  };
+
+  const getStatusFinalClass = (s: string) => {
+    const v = (s || "").toLowerCase();
+    if (v === "deferido") return "text-emerald-600 font-semibold";
+    if (v === "indeferido") return "text-red-600 font-semibold";
+    return "text-slate-700 dark:text-slate-300";
+  };
+
+  const handleStatusFinalToggle = async (v: Visto) => {
+    const id = String(v.id);
+    const current = String(statusFinalOverrides[id]?.statusFinal ?? v.statusFinal ?? "");
+    const next = cycleStatusFinal(current);
+    const optimistic: { statusFinal: string; statusFinalOutro: string | null } = {
+      statusFinal: next,
+      statusFinalOutro: next === "Outro" ? (statusFinalOverrides[id]?.statusFinalOutro ?? v.statusFinalOutro ?? "Outro") : null,
+    };
+    setStatusFinalOverrides((prev) => ({ ...prev, [id]: optimistic }));
+
+    const payload: any = { statusFinal: optimistic.statusFinal, statusFinalOutro: optimistic.statusFinalOutro };
+    try {
+      await fetch(`/api/vistos?id=${v.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      setStatusFinalOverrides((prev) => {
+        const { [id]: _, ...rest } = prev;
+        return rest;
+      });
+      refetch();
+    } catch (e) {
+      console.error('Erro ao alternar status final:', e);
+      setStatusFinalOverrides((prev) => {
+        const { [id]: _, ...rest } = prev;
+        return rest;
+      });
+    }
+  };
+
   const handleDelete = async (id: string) => {
     try {
       const response = await fetch(`/api/vistos?id=${id}`, { method: 'DELETE' });
@@ -258,8 +304,8 @@ export default function VistosPage() {
               </div>
             </div>
           </div>
-          <Link href="/dashboard/vistos/novo">
-            <Button size="lg" className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold shadow-lg">
+          <Link href="/dashboard/vistos/novo" className="w-full md:w-auto">
+            <Button size="lg" className="w-full md:w-auto bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold shadow-lg">
               <Plus className="h-5 w-5 mr-2" />
               Nova Ação
             </Button>
@@ -267,8 +313,8 @@ export default function VistosPage() {
         </div>
 
         {/* Cards de estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 items-stretch">
+          <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 h-full min-h-[140px]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-slate-400 text-sm font-medium">Total de Processos</p>
@@ -280,7 +326,7 @@ export default function VistosPage() {
             </div>
           </div>
 
-          <div className="bg-blue-900 rounded-lg p-4 border border-blue-700">
+          <div className="bg-blue-900 rounded-lg p-4 border border-blue-700 h-full min-h-[140px]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-300 text-sm font-medium">Em andamento</p>
@@ -294,7 +340,7 @@ export default function VistosPage() {
 
           
 
-          <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700">
+          <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700 h-full min-h-[140px]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-emerald-300 text-sm font-medium">Finalizados</p>
@@ -396,7 +442,7 @@ export default function VistosPage() {
                   >
                     <Button 
                       size="sm"
-                      className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md h-8 px-3"
+                      className="h-8 w-8 p-0 bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md"
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -462,13 +508,18 @@ export default function VistosPage() {
                           <span className="font-medium">Data de criação:</span>
                           <span>{new Date(visto.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 cursor-pointer w-full" onClick={() => handleStatusFinalToggle(visto)}>
                           <Circle className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                           <span className="font-medium">Status Processo:</span>
-                          <span>{(() => {
-                            const s = String(visto.statusFinal || "");
+                          <span className={(() => {
+                            const override = statusFinalOverrides[String(visto.id)];
+                            const s = String((override?.statusFinal ?? visto.statusFinal) || "");
+                            return getStatusFinalClass(s);
+                          })()}>{(() => {
+                            const override = statusFinalOverrides[String(visto.id)];
+                            const s = String((override?.statusFinal ?? visto.statusFinal) || "");
                             if (!s) return "—";
-                            if (s === "Outro") return String(visto.statusFinalOutro || "Outro");
+                            if (s === "Outro") return String((override?.statusFinalOutro ?? visto.statusFinalOutro) || "Outro");
                             return s;
                           })()}</span>
                         </div>

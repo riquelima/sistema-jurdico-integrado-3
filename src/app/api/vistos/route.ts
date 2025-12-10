@@ -103,6 +103,8 @@ function mapVistosDbFieldsToFrontend(record: any) {
     formularioProrrogacaoDoc: record.formulario_prorrogacao_doc,
     justificativaMudancaEmpregador: record.justificativa_mudanca_empregador,
     justificativaMudancaEmpregadorDoc: record.justificativa_mudanca_empregador_doc,
+    statusFinal: record.status_final,
+    statusFinalOutro: record.status_final_outro,
     status: record.status,
     notes: record.notes,
     createdAt: record.created_at,
@@ -339,6 +341,8 @@ export async function POST(request: NextRequest) {
       formulario_prorrogacao_doc: body.formularioProrrogacaoDoc?.trim() || null,
       justificativa_mudanca_empregador: body.justificativaMudancaEmpregador?.trim() || null,
       justificativa_mudanca_empregador_doc: body.justificativaMudancaEmpregadorDoc?.trim() || null,
+      status_final: body.statusFinal?.trim() || null,
+      status_final_outro: body.statusFinalOutro?.trim() || null,
       status: body.status?.trim() || 'Em Andamento',
       notes: body.notes?.trim() || null,
     };
@@ -734,6 +738,14 @@ export async function PUT(request: NextRequest) {
 
     if (body.status !== undefined) {
       updateData.status = body.status.trim();
+    }
+
+    if (body.statusFinal !== undefined) {
+      updateData.status_final = body.statusFinal?.trim() || null;
+    }
+
+    if (body.statusFinalOutro !== undefined) {
+      updateData.status_final_outro = body.statusFinalOutro?.trim() || null;
     }
 
     if (body.notes !== undefined) {

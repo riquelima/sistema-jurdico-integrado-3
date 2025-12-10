@@ -207,7 +207,7 @@ export default function PerdaNacionalidadePage() {
           </Link>
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
           <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 h-full min-h-[140px]">
             <div className="flex items-center justify-between">
               <div>
