@@ -11,6 +11,8 @@ function mapVistosDbFieldsToFrontend(record: any) {
     clientName: record.client_name,
     type: record.type,
     country: record.country,
+    travelStartDate: record.travel_start_date,
+    travelEndDate: record.travel_end_date,
     currentStep: record.current_step,
     completedSteps: record.completed_steps,
     cpf: record.cpf,
@@ -249,6 +251,8 @@ export async function POST(request: NextRequest) {
       client_name: body.clientName.trim(),
       type: body.type.trim(),
       country: body.country?.trim() || null,
+      travel_start_date: body.travelStartDate?.trim() || null,
+      travel_end_date: body.travelEndDate?.trim() || null,
       current_step: typeof body.currentStep === 'number' ? body.currentStep : 1,
       completed_steps: normalizeJson(body.completedSteps),
       cpf: body.cpf?.trim() || null,
@@ -341,7 +345,12 @@ export async function POST(request: NextRequest) {
       formulario_prorrogacao_doc: body.formularioProrrogacaoDoc?.trim() || null,
       justificativa_mudanca_empregador: body.justificativaMudancaEmpregador?.trim() || null,
       justificativa_mudanca_empregador_doc: body.justificativaMudancaEmpregadorDoc?.trim() || null,
-      status_final: body.statusFinal?.trim() || null,
+      status_final: (() => {
+        const provided = body.statusFinal?.trim();
+        if (provided) return provided;
+        const t = (body.type || '').toLowerCase();
+        return t.includes('turismo') ? 'Aguardando' : null;
+      })(),
       status_final_outro: body.statusFinalOutro?.trim() || null,
       status: body.status?.trim() || 'Em Andamento',
       notes: body.notes?.trim() || null,
@@ -413,6 +422,12 @@ export async function PUT(request: NextRequest) {
 
     if (body.country !== undefined) {
       updateData.country = body.country?.trim() || null;
+    }
+    if (body.travelStartDate !== undefined) {
+      updateData.travel_start_date = body.travelStartDate?.trim() || null;
+    }
+    if (body.travelEndDate !== undefined) {
+      updateData.travel_end_date = body.travelEndDate?.trim() || null;
     }
 
     if (body.currentStep !== undefined) {

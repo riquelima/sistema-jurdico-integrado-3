@@ -1240,7 +1240,7 @@ export default function VistoDetailsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {((caseData?.type || "").toLowerCase().includes("turismo")
-                      ? ["Aprovado", "Negado", "Outro"]
+                      ? ["Aprovado", "Negado", "Aguardando"]
                       : ["Deferido", "Indeferido", "Outro"]).map((s) => (
                         <SelectItem key={s} value={s}>{s}</SelectItem>
                     ))}

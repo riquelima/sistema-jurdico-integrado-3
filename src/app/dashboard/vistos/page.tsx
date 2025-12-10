@@ -46,6 +46,8 @@ interface Visto {
   statusFinalOutro?: string;
   currentStep?: number;
   country?: string;
+  travelStartDate?: string;
+  travelEndDate?: string;
 }
 
 export default function VistosPage() {
@@ -75,7 +77,16 @@ export default function VistosPage() {
   }, []);
 
   const filteredVistos = vistos.filter((v) => {
-    const matchesSearch = v.clientName?.toLowerCase().includes(search.toLowerCase()) ?? false;
+    const s = (search || "").toLowerCase();
+    const fields = [
+      v.clientName,
+      v.type,
+      v.country,
+      v.cpf,
+      v.rnm,
+      v.passaporte,
+    ];
+    const matchesSearch = !s || fields.some((f) => String(f || "").toLowerCase().includes(s));
     const matchesType = typeFilter === "all" || v.type === typeFilter;
     const matchesStatus = statusFilter === "all" || normalizeStatus(v.status) === statusFilter.toLowerCase();
     return matchesSearch && matchesType && matchesStatus;
@@ -228,8 +239,14 @@ export default function VistosPage() {
     return steps[clampedIndex];
   };
 
-  const cycleStatusFinal = (current?: string) => {
-    const order = ["Deferido", "Indeferido", "Outro"];
+  const getFinalStatusOrder = (type: string) => {
+    const t = (type || "").toLowerCase();
+    if (t.includes("turismo")) return ["Aprovado", "Negado", "Aguardando"];
+    return ["Deferido", "Indeferido", "Outro"];
+  };
+
+  const cycleStatusFinal = (current: string | undefined, type: string) => {
+    const order = getFinalStatusOrder(type);
     const idx = order.indexOf(String(current || ""));
     const nextIdx = ((idx < 0 ? -1 : idx) + 1) % order.length;
     return order[nextIdx];
@@ -237,15 +254,16 @@ export default function VistosPage() {
 
   const getStatusFinalClass = (s: string) => {
     const v = (s || "").toLowerCase();
-    if (v === "deferido") return "text-emerald-600 font-semibold";
-    if (v === "indeferido") return "text-red-600 font-semibold";
+    if (v === "deferido" || v === "aprovado") return "text-emerald-600 font-semibold";
+    if (v === "indeferido" || v === "negado") return "text-red-600 font-semibold";
+    if (v === "aguardando") return "text-amber-600 font-semibold";
     return "text-slate-700 dark:text-slate-300";
   };
 
   const handleStatusFinalToggle = async (v: Visto) => {
     const id = String(v.id);
     const current = String(statusFinalOverrides[id]?.statusFinal ?? v.statusFinal ?? "");
-    const next = cycleStatusFinal(current);
+    const next = cycleStatusFinal(current, v.type);
     const optimistic: { statusFinal: string; statusFinalOutro: string | null } = {
       statusFinal: next,
       statusFinalOutro: next === "Outro" ? (statusFinalOverrides[id]?.statusFinalOutro ?? v.statusFinalOutro ?? "Outro") : null,
@@ -498,6 +516,16 @@ export default function VistosPage() {
                             <Globe className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                             <span className="font-medium">Destino:</span>
                             <span>{String(visto.country || "—")}</span>
+                            {(() => {
+                              const fmt = (s?: string) => {
+                                if (!s) return "";
+                                try { const d = new Date(s); return isNaN(d.getTime()) ? "" : d.toLocaleDateString("pt-BR"); } catch { return ""; }
+                              };
+                              const start = fmt(visto.travelStartDate);
+                              const end = fmt(visto.travelEndDate);
+                              const text = [start, end].filter(Boolean).join(" — ");
+                              return text ? (<span className="text-slate-500">• {text}</span>) : null;
+                            })()}
                           </div>
                         )}
                         <div className="flex items-center gap-2">

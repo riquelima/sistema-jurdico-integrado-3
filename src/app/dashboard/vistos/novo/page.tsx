@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,10 +15,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, ChevronDown, ChevronUp, Upload } from "lucide-react";
+import { ArrowLeft, Save, ChevronDown, ChevronUp, Upload, ChevronsUpDown, Check, Calendar as CalendarIcon } from "lucide-react";
 import Link from "next/link";
 import { DocumentPreview } from "@/components/ui/document-preview";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 
 export default function NovoVistoPage() {
   const router = useRouter();
@@ -57,6 +62,8 @@ export default function NovoVistoPage() {
     clientName: "",
     type: "Turismo",
     country: "",
+    travelStartDate: "",
+    travelEndDate: "",
     cpf: "",
     cpfDoc: "",
     rnm: "",
@@ -189,6 +196,16 @@ export default function NovoVistoPage() {
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  const countryOptions = useMemo(() => {
+    const codes = [
+      "AF","AL","DZ","AS","AD","AO","AI","AQ","AG","AR","AM","AW","AU","AT","AZ","BS","BH","BD","BB","BY","BE","BZ","BJ","BM","BT","BO","BQ","BA","BW","BV","BR","IO","BN","BG","BF","BI","CV","KH","CM","CA","KY","CF","TD","CL","CN","CX","CC","CO","KM","CD","CG","CK","CR","CI","HR","CU","CW","CY","CZ","DK","DJ","DM","DO","EC","EG","SV","GQ","ER","EE","SZ","ET","FK","FO","FJ","FI","FR","GF","PF","TF","GA","GM","GE","DE","GH","GI","GR","GL","GD","GP","GU","GT","GG","GN","GW","GY","HT","HM","VA","HN","HK","HU","IS","IN","ID","IR","IQ","IE","IM","IL","IT","JM","JP","JE","JO","KZ","KE","KI","KP","KR","KW","KG","LA","LV","LB","LS","LR","LY","LI","LT","LU","MO","MK","MG","MW","MY","MV","ML","MT","MH","MQ","MR","MU","YT","MX","FM","MD","MC","MN","ME","MS","MA","MZ","MM","NA","NR","NP","NL","NC","NZ","NI","NE","NG","NU","NF","MP","NO","OM","PK","PW","PS","PA","PG","PY","PE","PH","PN","PL","PT","PR","QA","RE","RO","RU","RW","BL","SH","KN","LC","MF","PM","VC","WS","SM","ST","SA","SN","RS","SC","SL","SG","SX","SK","SI","SB","SO","ZA","GS","SS","ES","LK","SD","SR","SJ","SE","CH","SY","TW","TJ","TZ","TH","TL","TG","TK","TO","TT","TN","TR","TM","TC","TV","UG","UA","AE","GB","US","UM","UY","UZ","VU","VE","VN","VG","VI","WF","EH","YE","ZM","ZW"
+    ];
+    const dn = new Intl.DisplayNames(["pt-BR"], { type: "region" });
+    const flag = (code: string) => code.replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt(0)));
+    const list = codes.map(code => ({ code, name: dn.of(code) || code, flag: flag(code) }));
+    return list.sort((a, b) => a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" }));
+  }, []);
 
   const handleDocumentUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -379,95 +396,151 @@ export default function NovoVistoPage() {
           </CardHeader>
           <CardContent className="space-y-8 p-8">
             {/* Informações Básicas */}
-            <div className="grid gap-6 grid-cols-3">
-              <div className="space-y-3">
-                <Label htmlFor="clientName" className="text-base font-medium text-foreground">
-                  Nome do Cliente <span className="text-primary">*</span>
-                </Label>
-                <Input
-                  id="clientName"
-                  value={formData.clientName}
-                  onChange={(e) => handleChange("clientName", e.target.value)}
-                  required
-                  className="h-9 border-2 focus:border-primary transition-colors"
-                  placeholder="Digite o nome completo do cliente"
-                />
-              </div>
+
+            <div className="space-y-4">
+              <div className="grid gap-6 grid-cols-3">
+                <div className="space-y-3">
+                  <Label htmlFor="clientName" className="text-base font-medium text-foreground">
+                    Nome do Cliente <span className="text-primary">*</span>
+                  </Label>
+                  <Input
+                    id="clientName"
+                    value={formData.clientName}
+                    onChange={(e) => handleChange("clientName", e.target.value)}
+                    required
+                    className="h-9 border-2 focus:border-primary transition-colors"
+                    placeholder="Digite o nome completo do cliente"
+                  />
+                </div>
               <div className="space-y-3">
                 <Label htmlFor="country" className="text-base font-medium text-foreground">
                   País do Visto <span className="text-primary">*</span>
                 </Label>
-                <Select
-                  value={formData.country}
-                  onValueChange={(value) => handleChange("country", value)}
-                >
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="h-9 w-full border-2 border-input rounded-md px-3 py-1 text-sm bg-background shadow-none hover:bg-background hover:text-foreground hover:shadow-none transition-colors justify-between text-foreground">
+                      <span className="text-sm">
+                        {formData.country || "Selecione o país"}
+                      </span>
+                      <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0 w-[420px]">
+                    <Command>
+                      <CommandInput placeholder="Pesquisar país..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhum país encontrado.</CommandEmpty>
+                        <CommandGroup>
+                          {countryOptions.map((c) => (
+                            <CommandItem
+                              key={c.code}
+                              value={c.name}
+                              onSelect={() => handleChange("country", c.name)}
+                            >
+                              <span>{c.name}</span>
+                              {formData.country === c.name ? (
+                                <Check className="ml-auto h-4 w-4" />
+                              ) : null}
+                            </CommandItem>
+                          ))}
+                          <CommandItem value="Outro" onSelect={() => handleChange("country", "Outro")}>Outro</CommandItem>
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+                <div className="space-y-3">
+                  <Label htmlFor="type" className="text-base font-medium text-foreground">
+                    Tipo de Visto <span className="text-primary">*</span>
+                  </Label>
+                  <Select
+                    value={formData.type}
+                    onValueChange={(value) => handleChange("type", value)}
+                  >
                   <SelectTrigger className="h-12 w-full border-2 focus:border-cyan-500">
-                    <SelectValue placeholder="Selecione o país" />
+                    <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel className="font-bold text-slate-900 dark:text-slate-100">Países</SelectLabel>
-                      <SelectItem value="Brasil">Brasil</SelectItem>
-                      <SelectItem value="China">China</SelectItem>
-                      <SelectItem value="Estados Unidos">Estados Unidos</SelectItem>
-                      <SelectItem value="Canadá">Canadá</SelectItem>
-                      <SelectItem value="Reino Unido">Reino Unido</SelectItem>
-                      <SelectItem value="Portugal">Portugal</SelectItem>
-                      <SelectItem value="França">França</SelectItem>
-                      <SelectItem value="Alemanha">Alemanha</SelectItem>
-                      <SelectItem value="Itália">Itália</SelectItem>
-                      <SelectItem value="Espanha">Espanha</SelectItem>
-                      <SelectItem value="Austrália">Austrália</SelectItem>
-                      <SelectItem value="Japão">Japão</SelectItem>
-                      <SelectItem value="Irlanda">Irlanda</SelectItem>
-                      <SelectItem value="Holanda">Holanda</SelectItem>
-                      <SelectItem value="Suíça">Suíça</SelectItem>
-                      <SelectItem value="Suécia">Suécia</SelectItem>
-                      <SelectItem value="Noruega">Noruega</SelectItem>
-                      <SelectItem value="Dinamarca">Dinamarca</SelectItem>
-                      <SelectItem value="Bélgica">Bélgica</SelectItem>
-                      <SelectItem value="Áustria">Áustria</SelectItem>
-                      <SelectItem value="Outro">Outro</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel className="font-bold text-slate-900 dark:text-slate-100">Visto de Turismo</SelectLabel>
+                        <SelectItem value="Turismo">Turismo</SelectItem>
+                      </SelectGroup>
+                      <SelectGroup>
+                        <SelectLabel className="font-bold text-slate-900 dark:text-slate-100">Visto de Trabalho</SelectLabel>
+                        <SelectItem value="Trabalho:Brasil">Trabalho - Brasil</SelectItem>
+                        <SelectItem value="Trabalho:Residência Prévia">Trabalho - Residência Prévia</SelectItem>
+                        <SelectItem value="Trabalho:Renovação 1 ano">Trabalho - Renovação 1 ano</SelectItem>
+                        <SelectItem value="Trabalho:Indeterminado">Trabalho - Indeterminado</SelectItem>
+                        <SelectItem value="Trabalho:Mudança de Empregador">Trabalho - Mudança de Empregador</SelectItem>
+                      </SelectGroup>
+                      <SelectGroup>
+                        <SelectLabel className="font-bold text-slate-900 dark:text-slate-100">Visto de Investidor</SelectLabel>
+                        <SelectItem value="Investidor">Investidor</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="space-y-3">
-                <Label htmlFor="type" className="text-base font-medium text-foreground">
-                  Tipo de Visto <span className="text-primary">*</span>
-                </Label>
-                <Select
-                  value={formData.type}
-                  onValueChange={(value) => handleChange("type", value)}
-                >
-                <SelectTrigger className="h-12 w-full border-2 focus:border-cyan-500">
-                  <SelectValue />
-                </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel className="font-bold text-slate-900 dark:text-slate-100">Visto de Turismo</SelectLabel>
-                      <SelectItem value="Turismo">Turismo</SelectItem>
-                    </SelectGroup>
-                    <SelectGroup>
-                      <SelectLabel className="font-bold text-slate-900 dark:text-slate-100">Visto de Trabalho</SelectLabel>
-                      <SelectItem value="Trabalho:Brasil">Trabalho - Brasil</SelectItem>
-                      <SelectItem value="Trabalho:Residência Prévia">Trabalho - Residência Prévia</SelectItem>
-                      <SelectItem value="Trabalho:Renovação 1 ano">Trabalho - Renovação 1 ano</SelectItem>
-                      <SelectItem value="Trabalho:Indeterminado">Trabalho - Indeterminado</SelectItem>
-                      <SelectItem value="Trabalho:Mudança de Empregador">Trabalho - Mudança de Empregador</SelectItem>
-                    </SelectGroup>
-                    <SelectGroup>
-                      <SelectLabel className="font-bold text-slate-900 dark:text-slate-100">Visto de Investidor</SelectLabel>
-                      <SelectItem value="Investidor">Investidor</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
+
+              {formData.type === "Turismo" && (
+                <div className="space-y-3">
+                  <Label className="text-base font-medium text-foreground">Período da Viagem</Label>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="h-9 w-full border-2 border-input rounded-md px-3 py-1 text-sm bg-background shadow-none hover:bg-background hover:text-foreground hover:shadow-none transition-colors justify-between text-foreground">
+                          <span className="text-sm">{formData.travelStartDate ? format(parseISO(formData.travelStartDate), "dd/MM/yyyy", { locale: ptBR }) : "Início"}</span>
+                          <CalendarIcon className="h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="p-2 w-auto">
+                        <Calendar
+                          mode="single"
+                          selected={formData.travelStartDate ? new Date(formData.travelStartDate) : undefined}
+                          onSelect={(d) => {
+                            const fmt = (dt?: Date) => dt ? `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}` : "";
+                            handleChange("travelStartDate", fmt(d || undefined));
+                          }}
+                          weekStartsOn={1}
+                          captionLayout="label"
+                          locale={ptBR}
+                          className="w-full"
+                          style={{ "--cell-size": "2.4rem" } as React.CSSProperties}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="h-9 w-full border-2 border-input rounded-md px-3 py-1 text-sm bg-background shadow-none hover:bg-background hover:text-foreground hover:shadow-none transition-colors justify-between text-foreground">
+                          <span className="text-sm">{formData.travelEndDate ? format(parseISO(formData.travelEndDate), "dd/MM/yyyy", { locale: ptBR }) : "Fim"}</span>
+                          <CalendarIcon className="h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="p-2 w-auto">
+                        <Calendar
+                          mode="single"
+                          selected={formData.travelEndDate ? new Date(formData.travelEndDate) : undefined}
+                          onSelect={(d) => {
+                            const fmt = (dt?: Date) => dt ? `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}` : "";
+                            handleChange("travelEndDate", fmt(d || undefined));
+                          }}
+                          weekStartsOn={1}
+                          captionLayout="label"
+                          locale={ptBR}
+                          className="w-full"
+                          style={{ "--cell-size": "2.4rem" } as React.CSSProperties}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {formData.type === "Turismo" && (
-              <div className="space-y-6 mt-8">
-                {/* 1 - Documentos Pessoais */}
+          {formData.type === "Turismo" && (
+            <div className="space-y-6 mt-8">
+              {/* 1 - Documentos Pessoais */}
                 <Card className="border-2 border-border shadow-md overflow-hidden">
                 <CardHeader
                   className="cursor-pointer bg-gradient-to-r from-muted to-muted hover:from-primary hover:to-primary transition-all duration-300 border-b-2 border-border py-4"
@@ -1100,7 +1173,7 @@ export default function NovoVistoPage() {
                             className="h-11 border-2 focus:border-primary"
                           />
                           <div className="flex items-center gap-2">
-                            {!formData.reservasPassagensDoc ? (
+                          {true ? (
                               <>
                                 <input
                                   type="file"
@@ -1141,7 +1214,7 @@ export default function NovoVistoPage() {
                             className="h-11 border-2 focus:border-primary"
                           />
                           <div className="flex items-center gap-2">
-                            {!formData.reservasHotelDoc ? (
+                          {true ? (
                               <>
                                 <input
                                   type="file"
@@ -1182,7 +1255,7 @@ export default function NovoVistoPage() {
                             className="h-11 border-2 focus:border-primary"
                           />
                           <div className="flex items-center gap-2">
-                            {!formData.seguroViagemDoc ? (
+                          {true ? (
                               <>
                                 <input
                                   type="file"
@@ -1223,7 +1296,7 @@ export default function NovoVistoPage() {
                             className="h-11 border-2 focus:border-primary"
                           />
                           <div className="flex items-center gap-2">
-                            {!formData.roteiroViagemDoc ? (
+                          {true ? (
                               <>
                                 <input
                                   type="file"
@@ -1260,7 +1333,7 @@ export default function NovoVistoPage() {
                             className="h-11 border-2 focus:border-primary"
                           />
                           <div className="flex items-center gap-2">
-                            {!formData.taxaDoc ? (
+                          {true ? (
                               <>
                                 <input
                                   type="file"
@@ -1299,7 +1372,7 @@ export default function NovoVistoPage() {
                             className="h-11 border-2 focus:border-primary"
                           />
                           <div className="flex items-center gap-2">
-                            {!formData.formularioConsuladoDoc ? (
+                          {true ? (
                               <>
                                 <input
                                   type="file"
@@ -1365,7 +1438,7 @@ export default function NovoVistoPage() {
                           className="h-11 border-2 focus:border-primary"
                         />
                         <div className="flex items-center gap-2">
-                          {!formData.passaporteDoc ? (
+                          {true ? (
                             <>
                               <input
                                 type="file"
@@ -1396,7 +1469,7 @@ export default function NovoVistoPage() {
                           className="h-11 border-2 focus:border-primary"
                         />
                         <div className="flex items-center gap-2">
-                          {!formData.certidaoNascimentoDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="certidaoNascimentoDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "certidaoNascimentoDoc")} disabled={uploadingDocs.certidaoNascimentoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="certidaoNascimentoDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1414,7 +1487,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="declaracaoCompreensao" className="text-sm font-medium">Declaração de Compreensão</Label>
                         <Input id="declaracaoCompreensao" value={formData.declaracaoCompreensao} onChange={(e) => handleChange("declaracaoCompreensao", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.declaracaoCompreensaoDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="declaracaoCompreensaoDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "declaracaoCompreensaoDoc")} disabled={uploadingDocs.declaracaoCompreensaoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="declaracaoCompreensaoDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1457,7 +1530,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="contratoEmpresa" className="text-sm font-medium">Contrato Social</Label>
                         <Input id="contratoEmpresa" value={formData.contratoEmpresa} onChange={(e) => handleChange("contratoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.contratoEmpresaDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="contratoEmpresaDocInput_trabalho" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoEmpresaDoc")} disabled={uploadingDocs.contratoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="contratoEmpresaDocInput_trabalho" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1475,7 +1548,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="cartaoCnpj" className="text-sm font-medium">CNPJ</Label>
                         <Input id="cartaoCnpj" value={formData.cartaoCnpj} onChange={(e) => handleChange("cartaoCnpj", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.cartaoCnpjDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="cartaoCnpjDocInput_trabalho" className="hidden" onChange={(e) => handleDocumentUpload(e, "cartaoCnpjDoc")} disabled={uploadingDocs.cartaoCnpjDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="cartaoCnpjDocInput_trabalho" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1493,7 +1566,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="declaracoesEmpresa" className="text-sm font-medium">Declarações da Empresa</Label>
                         <Input id="declaracoesEmpresa" value={formData.declaracoesEmpresa} onChange={(e) => handleChange("declaracoesEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.declaracoesEmpresaDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="declaracoesEmpresaDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "declaracoesEmpresaDoc")} disabled={uploadingDocs.declaracoesEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="declaracoesEmpresaDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1511,7 +1584,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="procuracaoEmpresa" className="text-sm font-medium">Procuração da empresa</Label>
                         <Input id="procuracaoEmpresa" value={formData.procuracaoEmpresa} onChange={(e) => handleChange("procuracaoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.procuracaoEmpresaDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="procuracaoEmpresaDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "procuracaoEmpresaDoc")} disabled={uploadingDocs.procuracaoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="procuracaoEmpresaDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1529,7 +1602,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="formularioRn01" className="text-sm font-medium">Formulário RN 01</Label>
                         <Input id="formularioRn01" value={formData.formularioRn01} onChange={(e) => handleChange("formularioRn01", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.formularioRn01Doc ? (
+                          {true ? (
                             <>
                               <input type="file" id="formularioRn01DocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "formularioRn01Doc")} disabled={uploadingDocs.formularioRn01Doc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="formularioRn01DocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1547,7 +1620,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="guiaPaga" className="text-sm font-medium">Guia paga</Label>
                         <Input id="guiaPaga" value={formData.guiaPaga} onChange={(e) => handleChange("guiaPaga", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.guiaPagaDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="guiaPagaDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "guiaPagaDoc")} disabled={uploadingDocs.guiaPagaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="guiaPagaDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1565,7 +1638,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="publicacaoDou" className="text-sm font-medium">Publicação no DOU</Label>
                         <Input id="publicacaoDou" value={formData.publicacaoDou} onChange={(e) => handleChange("publicacaoDou", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.publicacaoDouDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="publicacaoDouDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "publicacaoDouDoc")} disabled={uploadingDocs.publicacaoDouDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="publicacaoDouDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1608,7 +1681,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="contratoTrabalho" className="text-sm font-medium">Contrato de trabalho</Label>
                         <Input id="contratoTrabalho" value={formData.contratoTrabalho} onChange={(e) => handleChange("contratoTrabalho", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.contratoTrabalhoDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="contratoTrabalhoDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoTrabalhoDoc")} disabled={uploadingDocs.contratoTrabalhoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="contratoTrabalhoDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1626,7 +1699,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="folhaPagamento" className="text-sm font-medium">Folha de pagamento (últimas)</Label>
                         <Input id="folhaPagamento" value={formData.folhaPagamento} onChange={(e) => handleChange("folhaPagamento", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.folhaPagamentoDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="folhaPagamentoDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "folhaPagamentoDoc")} disabled={uploadingDocs.folhaPagamentoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="folhaPagamentoDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1644,7 +1717,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="comprovanteVinculoAnterior" className="text-sm font-medium">Comprovante de vínculo anterior (se houver)</Label>
                         <Input id="comprovanteVinculoAnterior" value={formData.comprovanteVinculoAnterior} onChange={(e) => handleChange("comprovanteVinculoAnterior", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.comprovanteVinculoAnteriorDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="comprovanteVinculoAnteriorDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "comprovanteVinculoAnteriorDoc")} disabled={uploadingDocs.comprovanteVinculoAnteriorDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="comprovanteVinculoAnteriorDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1687,7 +1760,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="antecedentesCriminais" className="text-sm font-medium">Antecedentes Criminais</Label>
                         <Input id="antecedentesCriminais" value={formData.antecedentesCriminais} onChange={(e) => handleChange("antecedentesCriminais", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.antecedentesCriminaisDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="antecedentesCriminaisDocInput_trabalho" className="hidden" onChange={(e) => handleDocumentUpload(e, "antecedentesCriminaisDoc")} disabled={uploadingDocs.antecedentesCriminaisDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="antecedentesCriminaisDocInput_trabalho" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1705,7 +1778,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="declaracaoAntecedentesCriminais" className="text-sm font-medium">Declaração de Antecedentes Criminais</Label>
                         <Input id="declaracaoAntecedentesCriminais" value={formData.declaracaoAntecedentesCriminais} onChange={(e) => handleChange("declaracaoAntecedentesCriminais", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.declaracaoAntecedentesCriminaisDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="declaracaoAntecedentesCriminaisDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "declaracaoAntecedentesCriminaisDoc")} disabled={uploadingDocs.declaracaoAntecedentesCriminaisDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="declaracaoAntecedentesCriminaisDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1748,7 +1821,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="diploma" className="text-sm font-medium">Diploma</Label>
                         <Input id="diploma" value={formData.diploma} onChange={(e) => handleChange("diploma", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.diplomaDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="diplomaDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "diplomaDoc")} disabled={uploadingDocs.diplomaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="diplomaDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1794,7 +1867,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="passaporte" className="text-sm font-medium">Passaporte</Label>
                         <Input id="passaporte" value={formData.passaporte} onChange={(e) => handleChange("passaporte", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.passaporteDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="passaporteDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "passaporteDoc")} disabled={uploadingDocs.passaporteDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="passaporteDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1812,7 +1885,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="declaracaoCompreensao" className="text-sm font-medium">Declaração de Compreensão</Label>
                         <Input id="declaracaoCompreensao" value={formData.declaracaoCompreensao} onChange={(e) => handleChange("declaracaoCompreensao", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.declaracaoCompreensaoDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="declaracaoCompreensaoDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "declaracaoCompreensaoDoc")} disabled={uploadingDocs.declaracaoCompreensaoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="declaracaoCompreensaoDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1855,7 +1928,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="comprovanteResidenciaPrevia" className="text-sm font-medium">Comprovante de residência prévia no Brasil</Label>
                         <Input id="comprovanteResidenciaPrevia" value={formData.comprovanteResidenciaPrevia || ""} onChange={(e) => handleChange("comprovanteResidenciaPrevia", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.comprovanteResidenciaPreviaDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="comprovanteResidenciaPreviaDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "comprovanteResidenciaPreviaDoc")} disabled={uploadingDocs.comprovanteResidenciaPreviaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="comprovanteResidenciaPreviaDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1898,7 +1971,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="contratoEmpresa" className="text-sm font-medium">Contrato Social</Label>
                         <Input id="contratoEmpresa" value={formData.contratoEmpresa} onChange={(e) => handleChange("contratoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.contratoEmpresaDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="contratoEmpresaDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoEmpresaDoc")} disabled={uploadingDocs.contratoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="contratoEmpresaDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1916,7 +1989,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="cartaoCnpj" className="text-sm font-medium">CNPJ</Label>
                         <Input id="cartaoCnpj" value={formData.cartaoCnpj} onChange={(e) => handleChange("cartaoCnpj", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.cartaoCnpjDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="cartaoCnpjDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "cartaoCnpjDoc")} disabled={uploadingDocs.cartaoCnpjDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="cartaoCnpjDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1934,7 +2007,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="declaracoesEmpresa" className="text-sm font-medium">Declarações da Empresa</Label>
                         <Input id="declaracoesEmpresa" value={formData.declaracoesEmpresa} onChange={(e) => handleChange("declaracoesEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.declaracoesEmpresaDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="declaracoesEmpresaDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "declaracoesEmpresaDoc")} disabled={uploadingDocs.declaracoesEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="declaracoesEmpresaDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1952,7 +2025,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="procuracaoEmpresa" className="text-sm font-medium">Procuração da Empresa</Label>
                         <Input id="procuracaoEmpresa" value={formData.procuracaoEmpresa} onChange={(e) => handleChange("procuracaoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.procuracaoEmpresaDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="procuracaoEmpresaDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "procuracaoEmpresaDoc")} disabled={uploadingDocs.procuracaoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="procuracaoEmpresaDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1970,7 +2043,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="formularioRn02" className="text-sm font-medium">Formulário RN 02</Label>
                         <Input id="formularioRn02" value={formData.formularioRn02 || ""} onChange={(e) => handleChange("formularioRn02", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.formularioRn02Doc ? (
+                          {true ? (
                             <>
                               <input type="file" id="formularioRn02DocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "formularioRn02Doc")} disabled={uploadingDocs.formularioRn02Doc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="formularioRn02DocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -1988,7 +2061,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="guiaPaga" className="text-sm font-medium">Guia paga</Label>
                         <Input id="guiaPaga" value={formData.guiaPaga || ""} onChange={(e) => handleChange("guiaPaga", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.guiaPagaDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="guiaPagaDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "guiaPagaDoc")} disabled={uploadingDocs.guiaPagaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="guiaPagaDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2006,7 +2079,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="publicacaoDou" className="text-sm font-medium">Publicação no DOU</Label>
                         <Input id="publicacaoDou" value={formData.publicacaoDou || ""} onChange={(e) => handleChange("publicacaoDou", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.publicacaoDouDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="publicacaoDouDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "publicacaoDouDoc")} disabled={uploadingDocs.publicacaoDouDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="publicacaoDouDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2049,7 +2122,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="contratoTrabalho" className="text-sm font-medium">Contrato de trabalho</Label>
                         <Input id="contratoTrabalho" value={formData.contratoTrabalho || ""} onChange={(e) => handleChange("contratoTrabalho", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.contratoTrabalhoDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="contratoTrabalhoDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoTrabalhoDoc")} disabled={uploadingDocs.contratoTrabalhoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="contratoTrabalhoDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2067,7 +2140,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="folhaPagamento" className="text-sm font-medium">Folha de pagamento</Label>
                         <Input id="folhaPagamento" value={formData.folhaPagamento || ""} onChange={(e) => handleChange("folhaPagamento", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.folhaPagamentoDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="folhaPagamentoDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "folhaPagamentoDoc")} disabled={uploadingDocs.folhaPagamentoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="folhaPagamentoDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2085,7 +2158,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="comprovanteAtividade" className="text-sm font-medium">Documentos comprobatórios de atividade (quando aplicável)</Label>
                         <Input id="comprovanteAtividade" value={formData.comprovanteAtividade || ""} onChange={(e) => handleChange("comprovanteAtividade", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.comprovanteAtividadeDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="comprovanteAtividadeDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "comprovanteAtividadeDoc")} disabled={uploadingDocs.comprovanteAtividadeDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="comprovanteAtividadeDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2128,7 +2201,7 @@ export default function NovoVistoPage() {
                         <Label htmlFor="diploma" className="text-sm font-medium">Diploma</Label>
                         <Input id="diploma" value={formData.diploma || ""} onChange={(e) => handleChange("diploma", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                         <div className="flex items-center gap-2">
-                          {!formData.diplomaDoc ? (
+                          {true ? (
                             <>
                               <input type="file" id="diplomaDocInput_resprevia" className="hidden" onChange={(e) => handleDocumentUpload(e, "diplomaDoc")} disabled={uploadingDocs.diplomaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                               <Label htmlFor="diplomaDocInput_resprevia" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2174,7 +2247,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="rnm" className="text-sm font-medium">RNM</Label>
                           <Input id="rnm" value={formData.rnm} onChange={(e) => handleChange("rnm", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.rnmDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="rnmDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "rnmDoc")} disabled={uploadingDocs.rnmDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="rnmDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2217,7 +2290,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="contratoEmpresa" className="text-sm font-medium">Contrato Social</Label>
                           <Input id="contratoEmpresa" value={formData.contratoEmpresa} onChange={(e) => handleChange("contratoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.contratoEmpresaDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="contratoEmpresaDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoEmpresaDoc")} disabled={uploadingDocs.contratoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="contratoEmpresaDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2235,7 +2308,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="procuracaoEmpresa" className="text-sm font-medium">Procuração da empresa</Label>
                           <Input id="procuracaoEmpresa" value={formData.procuracaoEmpresa} onChange={(e) => handleChange("procuracaoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.procuracaoEmpresaDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="procuracaoEmpresaDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "procuracaoEmpresaDoc")} disabled={uploadingDocs.procuracaoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="procuracaoEmpresaDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2253,7 +2326,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="publicacaoDou" className="text-sm font-medium">Publicação no DOU</Label>
                           <Input id="publicacaoDou" value={formData.publicacaoDou} onChange={(e) => handleChange("publicacaoDou", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.publicacaoDouDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="publicacaoDouDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "publicacaoDouDoc")} disabled={uploadingDocs.publicacaoDouDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="publicacaoDouDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2298,7 +2371,7 @@ export default function NovoVistoPage() {
                       <Label htmlFor="ctps" className="text-sm font-medium">CTPS (páginas do contrato e anotações)</Label>
                       <Input id="ctps" value={formData.ctps} onChange={(e) => handleChange("ctps", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                       <div className="flex items-center gap-2">
-                        {!formData.ctpsDoc ? (
+                        {true ? (
                           <>
                             <input type="file" id="ctpsDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "ctpsDoc")} disabled={uploadingDocs.ctpsDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                             <Label htmlFor="ctpsDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2316,7 +2389,7 @@ export default function NovoVistoPage() {
                       <Label htmlFor="contratoTrabalhoAnterior" className="text-sm font-medium">Contrato de trabalho anterior</Label>
                       <Input id="contratoTrabalhoAnterior" value={formData.contratoTrabalhoAnterior} onChange={(e) => handleChange("contratoTrabalhoAnterior", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                       <div className="flex items-center gap-2">
-                        {!formData.contratoTrabalhoAnteriorDoc ? (
+                        {true ? (
                           <>
                             <input type="file" id="contratoTrabalhoAnteriorDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoTrabalhoAnteriorDoc")} disabled={uploadingDocs.contratoTrabalhoAnteriorDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                             <Label htmlFor="contratoTrabalhoAnteriorDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2334,7 +2407,7 @@ export default function NovoVistoPage() {
                       <Label htmlFor="contratoTrabalhoAtual" className="text-sm font-medium">Contrato de trabalho atual</Label>
                       <Input id="contratoTrabalhoAtual" value={formData.contratoTrabalhoAtual} onChange={(e) => handleChange("contratoTrabalhoAtual", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                       <div className="flex items-center gap-2">
-                        {!formData.contratoTrabalhoAtualDoc ? (
+                        {true ? (
                           <>
                             <input type="file" id="contratoTrabalhoAtualDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoTrabalhoAtualDoc")} disabled={uploadingDocs.contratoTrabalhoAtualDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                             <Label htmlFor="contratoTrabalhoAtualDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2352,7 +2425,7 @@ export default function NovoVistoPage() {
                       <Label htmlFor="formularioProrrogacao" className="text-sm font-medium">Formulário de prorrogação</Label>
                       <Input id="formularioProrrogacao" value={formData.formularioProrrogacao} onChange={(e) => handleChange("formularioProrrogacao", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                       <div className="flex items-center gap-2">
-                        {!formData.formularioProrrogacaoDoc ? (
+                        {true ? (
                           <>
                             <input type="file" id="formularioProrrogacaoDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "formularioProrrogacaoDoc")} disabled={uploadingDocs.formularioProrrogacaoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                             <Label htmlFor="formularioProrrogacaoDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2395,7 +2468,7 @@ export default function NovoVistoPage() {
                       <Label htmlFor="declaracaoAntecedentesCriminais" className="text-sm font-medium">Declaração de Antecedentes Criminais</Label>
                       <Input id="declaracaoAntecedentesCriminais" value={formData.declaracaoAntecedentesCriminais} onChange={(e) => handleChange("declaracaoAntecedentesCriminais", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                       <div className="flex items-center gap-2">
-                        {!formData.declaracaoAntecedentesCriminaisDoc ? (
+                        {true ? (
                           <>
                             <input type="file" id="declaracaoAntecedentesCriminaisDocInput_renovacao" className="hidden" onChange={(e) => handleDocumentUpload(e, "declaracaoAntecedentesCriminaisDoc")} disabled={uploadingDocs.declaracaoAntecedentesCriminaisDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                             <Label htmlFor="declaracaoAntecedentesCriminaisDocInput_renovacao" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2441,7 +2514,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="rnm" className="text-sm font-medium">RNM</Label>
                           <Input id="rnm" value={formData.rnm} onChange={(e) => handleChange("rnm", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.rnmDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="rnmDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "rnmDoc")} disabled={uploadingDocs.rnmDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="rnmDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2484,7 +2557,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="contratoEmpresa" className="text-sm font-medium">Contrato Social</Label>
                           <Input id="contratoEmpresa" value={formData.contratoEmpresa} onChange={(e) => handleChange("contratoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.contratoEmpresaDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="contratoEmpresaDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoEmpresaDoc")} disabled={uploadingDocs.contratoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="contratoEmpresaDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2502,7 +2575,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="procuracaoEmpresa" className="text-sm font-medium">Procuração</Label>
                           <Input id="procuracaoEmpresa" value={formData.procuracaoEmpresa} onChange={(e) => handleChange("procuracaoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.procuracaoEmpresaDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="procuracaoEmpresaDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "procuracaoEmpresaDoc")} disabled={uploadingDocs.procuracaoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="procuracaoEmpresaDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2520,7 +2593,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="publicacaoDou" className="text-sm font-medium">Publicação no DOU</Label>
                           <Input id="publicacaoDou" value={formData.publicacaoDou} onChange={(e) => handleChange("publicacaoDou", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.publicacaoDouDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="publicacaoDouDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "publicacaoDouDoc")} disabled={uploadingDocs.publicacaoDouDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="publicacaoDouDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2538,7 +2611,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="guiaPaga" className="text-sm font-medium">Guia paga</Label>
                           <Input id="guiaPaga" value={formData.guiaPaga} onChange={(e) => handleChange("guiaPaga", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.guiaPagaDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="guiaPagaDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "guiaPagaDoc")} disabled={uploadingDocs.guiaPagaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="guiaPagaDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2581,7 +2654,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="ctps" className="text-sm font-medium">CTPS (páginas relevantes)</Label>
                           <Input id="ctps" value={formData.ctps} onChange={(e) => handleChange("ctps", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.ctpsDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="ctpsDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "ctpsDoc")} disabled={uploadingDocs.ctpsDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="ctpsDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2599,7 +2672,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="contratoTrabalhoAnterior" className="text-sm font-medium">Contrato de trabalho anterior</Label>
                           <Input id="contratoTrabalhoAnterior" value={formData.contratoTrabalhoAnterior} onChange={(e) => handleChange("contratoTrabalhoAnterior", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.contratoTrabalhoAnteriorDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="contratoTrabalhoAnteriorDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoTrabalhoAnteriorDoc")} disabled={uploadingDocs.contratoTrabalhoAnteriorDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="contratoTrabalhoAnteriorDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2617,7 +2690,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="contratoTrabalhoIndeterminado" className="text-sm font-medium">Contrato de trabalho por prazo indeterminado</Label>
                           <Input id="contratoTrabalhoIndeterminado" value={formData.contratoTrabalhoIndeterminado} onChange={(e) => handleChange("contratoTrabalhoIndeterminado", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.contratoTrabalhoIndeterminadoDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="contratoTrabalhoIndeterminadoDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoTrabalhoIndeterminadoDoc")} disabled={uploadingDocs.contratoTrabalhoIndeterminadoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="contratoTrabalhoIndeterminadoDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2635,7 +2708,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="formularioProrrogacao" className="text-sm font-medium">Formulário de prorrogação</Label>
                           <Input id="formularioProrrogacao" value={formData.formularioProrrogacao} onChange={(e) => handleChange("formularioProrrogacao", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.formularioProrrogacaoDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="formularioProrrogacaoDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "formularioProrrogacaoDoc")} disabled={uploadingDocs.formularioProrrogacaoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="formularioProrrogacaoDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2678,7 +2751,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="declaracaoAntecedentesCriminais" className="text-sm font-medium">Declaração de Antecedentes Criminais</Label>
                           <Input id="declaracaoAntecedentesCriminais" value={formData.declaracaoAntecedentesCriminais} onChange={(e) => handleChange("declaracaoAntecedentesCriminais", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.declaracaoAntecedentesCriminaisDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="declaracaoAntecedentesCriminaisDocInput_indeterminado" className="hidden" onChange={(e) => handleDocumentUpload(e, "declaracaoAntecedentesCriminaisDoc")} disabled={uploadingDocs.declaracaoAntecedentesCriminaisDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="declaracaoAntecedentesCriminaisDocInput_indeterminado" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2724,7 +2797,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="passaporte" className="text-sm font-medium">Passaporte</Label>
                           <Input id="passaporte" value={formData.passaporte} onChange={(e) => handleChange("passaporte", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.passaporteDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="passaporteDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "passaporteDoc")} disabled={uploadingDocs.passaporteDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="passaporteDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2742,7 +2815,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="rnm" className="text-sm font-medium">RNM</Label>
                           <Input id="rnm" value={formData.rnm} onChange={(e) => handleChange("rnm", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.rnmDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="rnmDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "rnmDoc")} disabled={uploadingDocs.rnmDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="rnmDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2785,7 +2858,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="contratoEmpresa" className="text-sm font-medium">Contrato Social</Label>
                           <Input id="contratoEmpresa" value={formData.contratoEmpresa} onChange={(e) => handleChange("contratoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.contratoEmpresaDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="contratoEmpresaDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoEmpresaDoc")} disabled={uploadingDocs.contratoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="contratoEmpresaDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2803,7 +2876,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="cartaoCnpj" className="text-sm font-medium">CNPJ</Label>
                           <Input id="cartaoCnpj" value={formData.cartaoCnpj} onChange={(e) => handleChange("cartaoCnpj", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.cartaoCnpjDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="cartaoCnpjDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "cartaoCnpjDoc")} disabled={uploadingDocs.cartaoCnpjDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="cartaoCnpjDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2821,7 +2894,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="procuracaoEmpresa" className="text-sm font-medium">Procuração da empresa</Label>
                           <Input id="procuracaoEmpresa" value={formData.procuracaoEmpresa} onChange={(e) => handleChange("procuracaoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.procuracaoEmpresaDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="procuracaoEmpresaDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "procuracaoEmpresaDoc")} disabled={uploadingDocs.procuracaoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="procuracaoEmpresaDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2839,7 +2912,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="formularioRn01" className="text-sm font-medium">Formulário RN 01</Label>
                           <Input id="formularioRn01" value={formData.formularioRn01 || ""} onChange={(e) => handleChange("formularioRn01", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.formularioRn01Doc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="formularioRn01DocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "formularioRn01Doc")} disabled={uploadingDocs.formularioRn01Doc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="formularioRn01DocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2857,7 +2930,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="guiaPaga" className="text-sm font-medium">Guia paga</Label>
                           <Input id="guiaPaga" value={formData.guiaPaga || ""} onChange={(e) => handleChange("guiaPaga", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.guiaPagaDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="guiaPagaDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "guiaPagaDoc")} disabled={uploadingDocs.guiaPagaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="guiaPagaDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2875,7 +2948,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="publicacaoDou" className="text-sm font-medium">Publicação no DOU</Label>
                           <Input id="publicacaoDou" value={formData.publicacaoDou || ""} onChange={(e) => handleChange("publicacaoDou", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.publicacaoDouDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="publicacaoDouDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "publicacaoDouDoc")} disabled={uploadingDocs.publicacaoDouDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="publicacaoDouDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2918,7 +2991,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="contratoTrabalho" className="text-sm font-medium">Contrato de trabalho</Label>
                           <Input id="contratoTrabalho" value={formData.contratoTrabalho} onChange={(e) => handleChange("contratoTrabalho", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.contratoTrabalhoDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="contratoTrabalhoDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoTrabalhoDoc")} disabled={uploadingDocs.contratoTrabalhoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="contratoTrabalhoDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2936,7 +3009,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="ctps" className="text-sm font-medium">CTPS (páginas com vínculo anterior e atual)</Label>
                           <Input id="ctps" value={formData.ctps} onChange={(e) => handleChange("ctps", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.ctpsDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="ctpsDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "ctpsDoc")} disabled={uploadingDocs.ctpsDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="ctpsDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2954,7 +3027,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="folhaPagamento" className="text-sm font-medium">Folha de pagamento (se houver)</Label>
                           <Input id="folhaPagamento" value={formData.folhaPagamento} onChange={(e) => handleChange("folhaPagamento", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.folhaPagamentoDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="folhaPagamentoDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "folhaPagamentoDoc")} disabled={uploadingDocs.folhaPagamentoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="folhaPagamentoDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -2997,7 +3070,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="justificativaMudancaEmpregador" className="text-sm font-medium">Justificativa da mudança de empregador</Label>
                           <Input id="justificativaMudancaEmpregador" value={formData.justificativaMudancaEmpregador} onChange={(e) => handleChange("justificativaMudancaEmpregador", e.target.value)} placeholder="Descreva a justificativa ou anexe o documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.justificativaMudancaEmpregadorDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="justificativaMudancaEmpregadorDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "justificativaMudancaEmpregadorDoc")} disabled={uploadingDocs.justificativaMudancaEmpregadorDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="justificativaMudancaEmpregadorDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -3040,7 +3113,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="diploma" className="text-sm font-medium">Diploma</Label>
                           <Input id="diploma" value={formData.diploma} onChange={(e) => handleChange("diploma", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.diplomaDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="diplomaDocInput_mudanca" className="hidden" onChange={(e) => handleDocumentUpload(e, "diplomaDoc")} disabled={uploadingDocs.diplomaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="diplomaDocInput_mudanca" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -3086,7 +3159,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="passaporte" className="text-sm font-medium">Passaporte</Label>
                           <Input id="passaporte" value={formData.passaporte} onChange={(e) => handleChange("passaporte", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.passaporteDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="passaporteDocInput_investidor" className="hidden" onChange={(e) => handleDocumentUpload(e, "passaporteDoc")} disabled={uploadingDocs.passaporteDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="passaporteDocInput_investidor" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -3129,7 +3202,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="contratoEmpresa" className="text-sm font-medium">Contrato Social</Label>
                           <Input id="contratoEmpresa" value={formData.contratoEmpresa} onChange={(e) => handleChange("contratoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.contratoEmpresaDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="contratoEmpresaDocInput_investidor" className="hidden" onChange={(e) => handleDocumentUpload(e, "contratoEmpresaDoc")} disabled={uploadingDocs.contratoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="contratoEmpresaDocInput_investidor" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -3147,7 +3220,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="cartaoCnpj" className="text-sm font-medium">CNPJ</Label>
                           <Input id="cartaoCnpj" value={formData.cartaoCnpj} onChange={(e) => handleChange("cartaoCnpj", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.cartaoCnpjDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="cartaoCnpjDocInput_investidor" className="hidden" onChange={(e) => handleDocumentUpload(e, "cartaoCnpjDoc")} disabled={uploadingDocs.cartaoCnpjDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="cartaoCnpjDocInput_investidor" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -3165,7 +3238,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="comprovanteInvestimento" className="text-sm font-medium">Comprovante do investimento</Label>
                           <Input id="comprovanteInvestimento" value={formData.comprovanteInvestimento} onChange={(e) => handleChange("comprovanteInvestimento", e.target.value)} placeholder="Extrato, contrato, transferência etc." className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.comprovanteInvestimentoDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="comprovanteInvestimentoDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "comprovanteInvestimentoDoc")} disabled={uploadingDocs.comprovanteInvestimentoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="comprovanteInvestimentoDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -3183,7 +3256,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="planoInvestimentos" className="text-sm font-medium">Plano de Investimentos</Label>
                           <Input id="planoInvestimentos" value={formData.planoInvestimentos} onChange={(e) => handleChange("planoInvestimentos", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.planoInvestimentosDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="planoInvestimentosDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "planoInvestimentosDoc")} disabled={uploadingDocs.planoInvestimentosDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="planoInvestimentosDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -3201,7 +3274,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="formularioRequerimento" className="text-sm font-medium">Formulário de Requerimento</Label>
                           <Input id="formularioRequerimento" value={formData.formularioRequerimento} onChange={(e) => handleChange("formularioRequerimento", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.formularioRequerimentoDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="formularioRequerimentoDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "formularioRequerimentoDoc")} disabled={uploadingDocs.formularioRequerimentoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="formularioRequerimentoDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -3219,7 +3292,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="procuracaoEmpresa" className="text-sm font-medium">Procuração</Label>
                           <Input id="procuracaoEmpresa" value={formData.procuracaoEmpresa} onChange={(e) => handleChange("procuracaoEmpresa", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.procuracaoEmpresaDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="procuracaoEmpresaDocInput_investidor" className="hidden" onChange={(e) => handleDocumentUpload(e, "procuracaoEmpresaDoc")} disabled={uploadingDocs.procuracaoEmpresaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="procuracaoEmpresaDocInput_investidor" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -3237,7 +3310,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="guiaPaga" className="text-sm font-medium">Guia paga</Label>
                           <Input id="guiaPaga" value={formData.guiaPaga} onChange={(e) => handleChange("guiaPaga", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.guiaPagaDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="guiaPagaDocInput_investidor" className="hidden" onChange={(e) => handleDocumentUpload(e, "guiaPagaDoc")} disabled={uploadingDocs.guiaPagaDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="guiaPagaDocInput_investidor" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -3255,7 +3328,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="protocolado" className="text-sm font-medium">Protocolado</Label>
                           <Input id="protocolado" value={formData.protocolado} onChange={(e) => handleChange("protocolado", e.target.value)} placeholder="Recibo/Protocolo do pedido" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.protocoladoDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="protocoladoDocInput" className="hidden" onChange={(e) => handleDocumentUpload(e, "protocoladoDoc")} disabled={uploadingDocs.protocoladoDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="protocoladoDocInput" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
@@ -3273,7 +3346,7 @@ export default function NovoVistoPage() {
                           <Label htmlFor="publicacaoDou" className="text-sm font-medium">Publicação no DOU</Label>
                           <Input id="publicacaoDou" value={formData.publicacaoDou} onChange={(e) => handleChange("publicacaoDou", e.target.value)} placeholder="Status ou informações do documento" className="h-11 border-2 focus:border-primary" />
                           <div className="flex items-center gap-2">
-                            {!formData.publicacaoDouDoc ? (
+                            {true ? (
                               <>
                                 <input type="file" id="publicacaoDouDocInput_investidor" className="hidden" onChange={(e) => handleDocumentUpload(e, "publicacaoDouDoc")} disabled={uploadingDocs.publicacaoDouDoc} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
                                 <Label htmlFor="publicacaoDouDocInput_investidor" className="inline-flex items-center justify-center gap-2 rounded-md px-2.5 py-1 text-sm font-medium border bg-white shadow-sm hover:bg-slate-100">
