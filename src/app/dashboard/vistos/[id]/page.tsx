@@ -148,6 +148,7 @@ export default function VistoDetailsPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [isEditingDocuments, setIsEditingDocuments] = useState(false);
 
   // Estados para dados específicos de cada etapa
   const [stepData, setStepData] = useState<{ [key: number]: any }>({});
@@ -384,7 +385,7 @@ export default function VistoDetailsPage() {
     if (!list.length) return null as any;
     return (
       <div className="mt-2">
-        <Label>Documento anexado</Label>
+        <div className="text-sm"><span className="font-medium">Documento anexado:</span></div>
         <ul className="list-disc pl-5">
           {list.map((doc: any) => (
             <li key={String(doc.id)}>
@@ -633,27 +634,41 @@ export default function VistoDetailsPage() {
     const stepId = step.id;
     const currentStepData = stepData[stepId] || {};
 
-    switch (stepId) {
+  switch (stepId) {
       case 0: // Cadastro de Documentos
         const renderField = (label: string, fieldKey?: string, docKey?: string) => (
           <div className="space-y-2">
-            <Label htmlFor={`${(fieldKey || docKey || '').replace(/Doc$/, '')}-${stepId}`}>{label}</Label>
+            {isEditingDocuments ? (
+              <Label htmlFor={`${(fieldKey || docKey || '').replace(/Doc$/, '')}-${stepId}`}>{label}</Label>
+            ) : null}
             {fieldKey ? (
-              <Input
-                id={`${fieldKey}-${stepId}`}
-                value={String((visto || {})[fieldKey] || '')}
-                onChange={(e) => handleVistoFieldChange(fieldKey, e.target.value)}
-                placeholder={"Status ou informações do documento"}
-              />
+              isEditingDocuments ? (
+                <Input
+                  id={`${fieldKey}-${stepId}`}
+                  value={String((visto || {})[fieldKey] || '')}
+                  onChange={(e) => handleVistoFieldChange(fieldKey, e.target.value)}
+                  placeholder={"Status ou informações do documento"}
+                />
+              ) : (
+                <div className="text-sm">
+                  <span className="font-medium">{label}:</span> {String((visto || {})[fieldKey] || '') || '-'}
+                </div>
+              )
             ) : null}
             {docKey ? (
-              <div className="flex items-center gap-2">
-                <input type="file" id={`${docKey}-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, docKey, stepId); }} />
-                <Button variant="outline" size="sm" onClick={() => document.getElementById(`${docKey}-${stepId}`)?.click()} disabled={uploadingFiles[`${docKey}-${stepId}`]}>
-                  {uploadingFiles[`${docKey}-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                  Upload
-                </Button>
-              </div>
+              isEditingDocuments ? (
+                <div className="flex items-center gap-2">
+                  <input type="file" id={`${docKey}-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, docKey, stepId); }} />
+                  <Button variant="outline" size="sm" onClick={() => document.getElementById(`${docKey}-${stepId}`)?.click()} disabled={uploadingFiles[`${docKey}-${stepId}`]}>
+                    {uploadingFiles[`${docKey}-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                    Upload
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-sm">
+                  <span className="font-medium">{label}:</span> {((documents || []) as any[]).some((d: any) => (d.field_name || d.fieldName) === docKey) ? 'Anexado' : '-'}
+                </div>
+              )
             ) : null}
             {docKey ? renderDocLinks(docKey) : null}
           </div>
@@ -671,129 +686,203 @@ export default function VistoDetailsPage() {
 
         return (
           <div className="space-y-6">
+            <div className="flex items-center justify-end">
+              {isEditingDocuments ? (
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="secondary" onClick={() => { saveStepData(stepId, currentStepData); setIsEditingDocuments(false); }}>
+                    <Save className="w-4 h-4" />
+                    Salvar
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setIsEditingDocuments(false)}>
+                    Cancelar
+                  </Button>
+                </div>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => setIsEditingDocuments(true)}>
+                  Editar
+                </Button>
+              )}
+            </div>
+            <div className="space-y-4">
+              <h4 className="font-semibold text-lg">Dados do Cliente</h4>
+              <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                <div className="text-sm"><span className="font-medium">Nome do Cliente:</span> {String(caseData?.clientName || visto?.clientName || (visto as any)?.client_name || '-')}</div>
+                <div className="text-sm"><span className="font-medium">Tipo do Visto:</span> {String(visto?.type || caseData?.type || '-')}</div>
+                <div className="text-sm"><span className="font-medium">Status:</span> {String(visto?.status || caseData?.status || '-')}</div>
+                <div className="text-sm"><span className="font-medium">Status Final:</span> {String((visto as any)?.statusFinal || '-')}</div>
+                <div className="text-sm"><span className="font-medium">Status Final (Outro):</span> {String((visto as any)?.statusFinalOutro || '-')}</div>
+                <div className="text-sm"><span className="font-medium">Data Inicial da Viagem:</span> {String((visto as any)?.travelStartDate || '-')}</div>
+                <div className="text-sm"><span className="font-medium">Data Final da Viagem:</span> {String((visto as any)?.travelEndDate || '-')}</div>
+                <div className="text-sm"><span className="font-medium">ID do Caso:</span> {String(caseData?.id || visto?.id || '-')}</div>
+                <div className="text-sm"><span className="font-medium">Criado em:</span> {String((visto as any)?.createdAt || (visto as any)?.created_at || '-')}</div>
+                <div className="text-sm"><span className="font-medium">Atualizado em:</span> {String((visto as any)?.updatedAt || (visto as any)?.updated_at || '-')}</div>
+              </div>
+            </div>
             <div className="space-y-4">
               <h4 className="font-semibold text-lg">Documentos Pessoais</h4>
               <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
                 <div className="space-y-2">
-                  <Label htmlFor={`country-${stepId}`}>País do Visto</Label>
-                  <Select
-                    value={String(visto?.country || "")}
-                    onValueChange={(val) => handleVistoFieldChange('country', val)}
-                  >
-                    <SelectTrigger id={`country-${stepId}`} className="h-9 w-full border-2 focus:border-cyan-500">
-                      <SelectValue placeholder="Selecione o país" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Brasil">Brasil</SelectItem>
-                      <SelectItem value="China">China</SelectItem>
-                      <SelectItem value="Estados Unidos">Estados Unidos</SelectItem>
-                      <SelectItem value="Canadá">Canadá</SelectItem>
-                      <SelectItem value="Reino Unido">Reino Unido</SelectItem>
-                      <SelectItem value="Portugal">Portugal</SelectItem>
-                      <SelectItem value="França">França</SelectItem>
-                      <SelectItem value="Alemanha">Alemanha</SelectItem>
-                      <SelectItem value="Itália">Itália</SelectItem>
-                      <SelectItem value="Espanha">Espanha</SelectItem>
-                      <SelectItem value="Austrália">Austrália</SelectItem>
-                      <SelectItem value="Japão">Japão</SelectItem>
-                      <SelectItem value="Irlanda">Irlanda</SelectItem>
-                      <SelectItem value="Holanda">Holanda</SelectItem>
-                      <SelectItem value="Suíça">Suíça</SelectItem>
-                      <SelectItem value="Suécia">Suécia</SelectItem>
-                      <SelectItem value="Noruega">Noruega</SelectItem>
-                      <SelectItem value="Dinamarca">Dinamarca</SelectItem>
-                      <SelectItem value="Bélgica">Bélgica</SelectItem>
-                      <SelectItem value="Áustria">Áustria</SelectItem>
-                      <SelectItem value="Outro">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {isEditingDocuments ? (<Label htmlFor={`country-${stepId}`}>País do Visto</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Select
+                      value={String(visto?.country || "")}
+                      onValueChange={(val) => handleVistoFieldChange('country', val)}
+                    >
+                      <SelectTrigger id={`country-${stepId}`} className="h-9 w-full border-2 focus:border-cyan-500">
+                        <SelectValue placeholder="Selecione o país" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Brasil">Brasil</SelectItem>
+                        <SelectItem value="China">China</SelectItem>
+                        <SelectItem value="Estados Unidos">Estados Unidos</SelectItem>
+                        <SelectItem value="Canadá">Canadá</SelectItem>
+                        <SelectItem value="Reino Unido">Reino Unido</SelectItem>
+                        <SelectItem value="Portugal">Portugal</SelectItem>
+                        <SelectItem value="França">França</SelectItem>
+                        <SelectItem value="Alemanha">Alemanha</SelectItem>
+                        <SelectItem value="Itália">Itália</SelectItem>
+                        <SelectItem value="Espanha">Espanha</SelectItem>
+                        <SelectItem value="Austrália">Austrália</SelectItem>
+                        <SelectItem value="Japão">Japão</SelectItem>
+                        <SelectItem value="Irlanda">Irlanda</SelectItem>
+                        <SelectItem value="Holanda">Holanda</SelectItem>
+                        <SelectItem value="Suíça">Suíça</SelectItem>
+                        <SelectItem value="Suécia">Suécia</SelectItem>
+                        <SelectItem value="Noruega">Noruega</SelectItem>
+                        <SelectItem value="Dinamarca">Dinamarca</SelectItem>
+                        <SelectItem value="Bélgica">Bélgica</SelectItem>
+                        <SelectItem value="Áustria">Áustria</SelectItem>
+                        <SelectItem value="Outro">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">País do Visto:</span> {String(visto?.country || '') || '-'}</div>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`cpf-${stepId}`}>CPF</Label>
-                  <Input
-                    id={`cpf-${stepId}`}
-                    value={visto?.cpf || ""}
-                    onChange={(e) => handleVistoFieldChange('cpf', e.target.value)}
-                    placeholder="000.000.000-00"
-                  />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`cpfDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'cpfDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`cpfDoc-${stepId}`)?.click()} disabled={uploadingFiles[`cpfDoc-${stepId}`]}>
-                      {uploadingFiles[`cpfDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload CPF
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`cpf-${stepId}`}>CPF</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input
+                      id={`cpf-${stepId}`}
+                      value={visto?.cpf || ""}
+                      onChange={(e) => handleVistoFieldChange('cpf', e.target.value)}
+                      placeholder="000.000.000-00"
+                    />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">CPF:</span> {String(visto?.cpf || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`cpfDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'cpfDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`cpfDoc-${stepId}`)?.click()} disabled={uploadingFiles[`cpfDoc-${stepId}`]}>
+                        {uploadingFiles[`cpfDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload CPF
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('cpfDoc')}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`rnm-${stepId}`}>RNM</Label>
-                  <Input id={`rnm-${stepId}`} value={visto?.rnm || ""} onChange={(e) => handleVistoFieldChange('rnm', e.target.value)} placeholder="Número RNM" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`rnmDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'rnmDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`rnmDoc-${stepId}`)?.click()} disabled={uploadingFiles[`rnmDoc-${stepId}`]}>
-                      {uploadingFiles[`rnmDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload RNM
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`rnm-${stepId}`}>RNM</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`rnm-${stepId}`} value={visto?.rnm || ""} onChange={(e) => handleVistoFieldChange('rnm', e.target.value)} placeholder="Número RNM" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">RNM:</span> {String(visto?.rnm || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`rnmDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'rnmDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`rnmDoc-${stepId}`)?.click()} disabled={uploadingFiles[`rnmDoc-${stepId}`]}>
+                        {uploadingFiles[`rnmDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload RNM
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('rnmDoc')}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`passaporte-${stepId}`}>Passaporte</Label>
-                  <Input id={`passaporte-${stepId}`} value={visto?.passaporte || ""} onChange={(e) => handleVistoFieldChange('passaporte', e.target.value)} placeholder="Número do passaporte" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`passaporteDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'passaporteDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`passaporteDoc-${stepId}`)?.click()} disabled={uploadingFiles[`passaporteDoc-${stepId}`]}>
-                      {uploadingFiles[`passaporteDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload Passaporte
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`passaporte-${stepId}`}>Passaporte</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`passaporte-${stepId}`} value={visto?.passaporte || ""} onChange={(e) => handleVistoFieldChange('passaporte', e.target.value)} placeholder="Número do passaporte" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">Passaporte:</span> {String(visto?.passaporte || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`passaporteDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'passaporteDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`passaporteDoc-${stepId}`)?.click()} disabled={uploadingFiles[`passaporteDoc-${stepId}`]}>
+                        {uploadingFiles[`passaporteDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload Passaporte
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('passaporteDoc')}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`comprovanteEndereco-${stepId}`}>Comprovante de Endereço</Label>
-                  <Input id={`comprovanteEndereco-${stepId}`} value={visto?.comprovanteEndereco || ""} onChange={(e) => handleVistoFieldChange('comprovanteEndereco', e.target.value)} placeholder="Informe endereço / declaração" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`comprovanteEnderecoDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'comprovanteEnderecoDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`comprovanteEnderecoDoc-${stepId}`)?.click()} disabled={uploadingFiles[`comprovanteEnderecoDoc-${stepId}`]}>
-                      {uploadingFiles[`comprovanteEnderecoDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload Endereço
-                    </Button>
-                  </div>
-                  {renderDocLinks('comprovanteEnderecoDoc')}
-                  <div className="mt-2">
+                  {isEditingDocuments ? (<Label htmlFor={`comprovanteEndereco-${stepId}`}>Comprovante de Endereço</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`comprovanteEndereco-${stepId}`} value={visto?.comprovanteEndereco || ""} onChange={(e) => handleVistoFieldChange('comprovanteEndereco', e.target.value)} placeholder="Informe endereço / declaração" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">Comprovante de Endereço:</span> {String(visto?.comprovanteEndereco || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
                     <div className="flex items-center gap-2">
-                      <input type="file" id={`declaracaoResidenciaDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'declaracaoResidenciaDoc', stepId); }} />
-                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`declaracaoResidenciaDoc-${stepId}`)?.click()} disabled={uploadingFiles[`declaracaoResidenciaDoc-${stepId}`]}>
-                        {uploadingFiles[`declaracaoResidenciaDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                        Upload Declaração
+                      <input type="file" id={`comprovanteEnderecoDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'comprovanteEnderecoDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`comprovanteEnderecoDoc-${stepId}`)?.click()} disabled={uploadingFiles[`comprovanteEnderecoDoc-${stepId}`]}>
+                        {uploadingFiles[`comprovanteEnderecoDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload Endereço
                       </Button>
                     </div>
-                    {renderDocLinks('declaracaoResidenciaDoc')}
-                  </div>
+                  ) : null}
+                  {renderDocLinks('comprovanteEnderecoDoc')}
+                  {isEditingDocuments ? (
+                    <div className="mt-2">
+                      <div className="flex items-center gap-2">
+                        <input type="file" id={`declaracaoResidenciaDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'declaracaoResidenciaDoc', stepId); }} />
+                        <Button variant="outline" size="sm" onClick={() => document.getElementById(`declaracaoResidenciaDoc-${stepId}`)?.click()} disabled={uploadingFiles[`declaracaoResidenciaDoc-${stepId}`]}>
+                          {uploadingFiles[`declaracaoResidenciaDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                          Upload Declaração
+                        </Button>
+                      </div>
+                      {renderDocLinks('declaracaoResidenciaDoc')}
+                    </div>
+                  ) : null}
                 </div>
                 {renderField('Foto digital 3x4', undefined, 'foto3x4Doc')}
                 <div className="space-y-2">
-                  <Label htmlFor={`documentoChines-${stepId}`}>Documento Chinês (quando aplicável)</Label>
-                  <Input id={`documentoChines-${stepId}`} value={visto?.documentoChines || ""} onChange={(e) => handleVistoFieldChange('documentoChines', e.target.value)} placeholder="Descrição do documento" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`documentoChinesDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'documentoChinesDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`documentoChinesDoc-${stepId}`)?.click()} disabled={uploadingFiles[`documentoChinesDoc-${stepId}`]}>
-                      {uploadingFiles[`documentoChinesDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload Documento Chinês
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`documentoChines-${stepId}`}>Documento Chinês (quando aplicável)</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`documentoChines-${stepId}`} value={visto?.documentoChines || ""} onChange={(e) => handleVistoFieldChange('documentoChines', e.target.value)} placeholder="Descrição do documento" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">Documento Chinês (quando aplicável):</span> {String(visto?.documentoChines || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`documentoChinesDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'documentoChinesDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`documentoChinesDoc-${stepId}`)?.click()} disabled={uploadingFiles[`documentoChinesDoc-${stepId}`]}>
+                        {uploadingFiles[`documentoChinesDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload Documento Chinês
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('documentoChinesDoc')}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`antecedentesCriminais-${stepId}`}>Antecedentes Criminais</Label>
-                  <Input id={`antecedentesCriminais-${stepId}`} value={visto?.antecedentesCriminais || ""} onChange={(e) => handleVistoFieldChange('antecedentesCriminais', e.target.value)} placeholder="Número/Status" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`antecedentesCriminaisDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'antecedentesCriminaisDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`antecedentesCriminaisDoc-${stepId}`)?.click()} disabled={uploadingFiles[`antecedentesCriminaisDoc-${stepId}`]}>
-                      {uploadingFiles[`antecedentesCriminaisDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload Antecedentes
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`antecedentesCriminais-${stepId}`}>Antecedentes Criminais</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`antecedentesCriminais-${stepId}`} value={visto?.antecedentesCriminais || ""} onChange={(e) => handleVistoFieldChange('antecedentesCriminais', e.target.value)} placeholder="Número/Status" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">Antecedentes Criminais:</span> {String(visto?.antecedentesCriminais || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`antecedentesCriminaisDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'antecedentesCriminaisDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`antecedentesCriminaisDoc-${stepId}`)?.click()} disabled={uploadingFiles[`antecedentesCriminaisDoc-${stepId}`]}>
+                        {uploadingFiles[`antecedentesCriminaisDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload Antecedentes
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('antecedentesCriminaisDoc')}
                 </div>
               </div>
@@ -803,75 +892,111 @@ export default function VistoDetailsPage() {
               <h4 className="font-semibold text-lg">Comprovação Financeira PF</h4>
               <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
                 <div className="space-y-2">
-                  <Label htmlFor={`certidaoNascimentoFilhos-${stepId}`}>Filhos (Certidão de Nascimento)</Label>
-                  <Input id={`certidaoNascimentoFilhos-${stepId}`} value={visto?.certidaoNascimentoFilhos || ""} onChange={(e) => handleVistoFieldChange('certidaoNascimentoFilhos', e.target.value)} placeholder="Informações" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`certidaoNascimentoFilhosDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'certidaoNascimentoFilhosDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`certidaoNascimentoFilhosDoc-${stepId}`)?.click()} disabled={uploadingFiles[`certidaoNascimentoFilhosDoc-${stepId}`]}>
-                      {uploadingFiles[`certidaoNascimentoFilhosDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload Certidão
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`certidaoNascimentoFilhos-${stepId}`}>Filhos (Certidão de Nascimento)</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`certidaoNascimentoFilhos-${stepId}`} value={visto?.certidaoNascimentoFilhos || ""} onChange={(e) => handleVistoFieldChange('certidaoNascimentoFilhos', e.target.value)} placeholder="Informações" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">Filhos (Certidão de Nascimento):</span> {String(visto?.certidaoNascimentoFilhos || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`certidaoNascimentoFilhosDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'certidaoNascimentoFilhosDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`certidaoNascimentoFilhosDoc-${stepId}`)?.click()} disabled={uploadingFiles[`certidaoNascimentoFilhosDoc-${stepId}`]}>
+                        {uploadingFiles[`certidaoNascimentoFilhosDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload Certidão
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('certidaoNascimentoFilhosDoc')}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`cartaoCnpj-${stepId}`}>Empresa: Cartão CNPJ</Label>
-                  <Input id={`cartaoCnpj-${stepId}`} value={visto?.cartaoCnpj || ""} onChange={(e) => handleVistoFieldChange('cartaoCnpj', e.target.value)} placeholder="CNPJ" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`cartaoCnpjDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'cartaoCnpjDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`cartaoCnpjDoc-${stepId}`)?.click()} disabled={uploadingFiles[`cartaoCnpjDoc-${stepId}`]}>
-                      {uploadingFiles[`cartaoCnpjDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload CNPJ
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`cartaoCnpj-${stepId}`}>Empresa: Cartão CNPJ</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`cartaoCnpj-${stepId}`} value={visto?.cartaoCnpj || ""} onChange={(e) => handleVistoFieldChange('cartaoCnpj', e.target.value)} placeholder="CNPJ" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">Empresa: Cartão CNPJ:</span> {String(visto?.cartaoCnpj || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`cartaoCnpjDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'cartaoCnpjDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`cartaoCnpjDoc-${stepId}`)?.click()} disabled={uploadingFiles[`cartaoCnpjDoc-${stepId}`]}>
+                        {uploadingFiles[`cartaoCnpjDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload CNPJ
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('cartaoCnpjDoc')}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`contratoEmpresa-${stepId}`}>Contrato Social</Label>
-                  <Input id={`contratoEmpresa-${stepId}`} value={visto?.contratoEmpresa || ""} onChange={(e) => handleVistoFieldChange('contratoEmpresa', e.target.value)} placeholder="Contrato Social" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`contratoEmpresaDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'contratoEmpresaDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`contratoEmpresaDoc-${stepId}`)?.click()} disabled={uploadingFiles[`contratoEmpresaDoc-${stepId}`]}>
-                      {uploadingFiles[`contratoEmpresaDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload Contrato
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`contratoEmpresa-${stepId}`}>Contrato Social</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`contratoEmpresa-${stepId}`} value={visto?.contratoEmpresa || ""} onChange={(e) => handleVistoFieldChange('contratoEmpresa', e.target.value)} placeholder="Contrato Social" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">Contrato Social:</span> {String(visto?.contratoEmpresa || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`contratoEmpresaDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'contratoEmpresaDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`contratoEmpresaDoc-${stepId}`)?.click()} disabled={uploadingFiles[`contratoEmpresaDoc-${stepId}`]}>
+                        {uploadingFiles[`contratoEmpresaDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload Contrato
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('contratoEmpresaDoc')}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`escrituraImoveis-${stepId}`}>Imóveis (Escritura/Matrícula)</Label>
-                  <Input id={`escrituraImoveis-${stepId}`} value={visto?.escrituraImoveis || ""} onChange={(e) => handleVistoFieldChange('escrituraImoveis', e.target.value)} placeholder="Imóveis" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`escrituraImoveisDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'escrituraImoveisDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`escrituraImoveisDoc-${stepId}`)?.click()} disabled={uploadingFiles[`escrituraImoveisDoc-${stepId}`]}>
-                      {uploadingFiles[`escrituraImoveisDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload Escritura
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`escrituraImoveis-${stepId}`}>Imóveis (Escritura/Matrícula)</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`escrituraImoveis-${stepId}`} value={visto?.escrituraImoveis || ""} onChange={(e) => handleVistoFieldChange('escrituraImoveis', e.target.value)} placeholder="Imóveis" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">Imóveis (Escritura/Matrícula):</span> {String(visto?.escrituraImoveis || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`escrituraImoveisDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'escrituraImoveisDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`escrituraImoveisDoc-${stepId}`)?.click()} disabled={uploadingFiles[`escrituraImoveisDoc-${stepId}`]}>
+                        {uploadingFiles[`escrituraImoveisDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload Escritura
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('escrituraImoveisDoc')}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`extratosBancarios-${stepId}`}>Últimos 3 extratos bancários</Label>
-                  <Input id={`extratosBancarios-${stepId}`} value={visto?.extratosBancarios || ""} onChange={(e) => handleVistoFieldChange('extratosBancarios', e.target.value)} placeholder="Extratos" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`extratosBancariosDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'extratosBancariosDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`extratosBancariosDoc-${stepId}`)?.click()} disabled={uploadingFiles[`extratosBancariosDoc-${stepId}`]}>
-                      {uploadingFiles[`extratosBancariosDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload Extratos
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`extratosBancarios-${stepId}`}>Últimos 3 extratos bancários</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`extratosBancarios-${stepId}`} value={visto?.extratosBancarios || ""} onChange={(e) => handleVistoFieldChange('extratosBancarios', e.target.value)} placeholder="Extratos" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">Últimos 3 extratos bancários:</span> {String(visto?.extratosBancarios || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`extratosBancariosDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'extratosBancariosDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`extratosBancariosDoc-${stepId}`)?.click()} disabled={uploadingFiles[`extratosBancariosDoc-${stepId}`]}>
+                        {uploadingFiles[`extratosBancariosDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload Extratos
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('extratosBancariosDoc')}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`impostoRenda-${stepId}`}>Imposto de Renda</Label>
-                  <Input id={`impostoRenda-${stepId}`} value={visto?.impostoRenda || ""} onChange={(e) => handleVistoFieldChange('impostoRenda', e.target.value)} placeholder="IR" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`impostoRendaDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'impostoRendaDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`impostoRendaDoc-${stepId}`)?.click()} disabled={uploadingFiles[`impostoRendaDoc-${stepId}`]}>
-                      {uploadingFiles[`impostoRendaDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload IR
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`impostoRenda-${stepId}`}>Imposto de Renda</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`impostoRenda-${stepId}`} value={visto?.impostoRenda || ""} onChange={(e) => handleVistoFieldChange('impostoRenda', e.target.value)} placeholder="IR" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">Imposto de Renda:</span> {String(visto?.impostoRenda || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`impostoRendaDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'impostoRendaDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`impostoRendaDoc-${stepId}`)?.click()} disabled={uploadingFiles[`impostoRendaDoc-${stepId}`]}>
+                        {uploadingFiles[`impostoRendaDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload IR
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('impostoRendaDoc')}
                 </div>
               </div>
@@ -881,75 +1006,111 @@ export default function VistoDetailsPage() {
               <h4 className="font-semibold text-lg">Outros Documentos</h4>
               <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
                 <div className="space-y-2">
-                  <Label htmlFor={`reservasPassagens-${stepId}`}>Reservas de Passagens</Label>
-                  <Input id={`reservasPassagens-${stepId}`} value={visto?.reservasPassagens || ""} onChange={(e) => handleVistoFieldChange('reservasPassagens', e.target.value)} placeholder="Detalhes" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`reservasPassagensDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'reservasPassagensDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`reservasPassagensDoc-${stepId}`)?.click()} disabled={uploadingFiles[`reservasPassagensDoc-${stepId}`]}>
-                      {uploadingFiles[`reservasPassagensDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload Passagens
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`reservasPassagens-${stepId}`}>Reservas de Passagens</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`reservasPassagens-${stepId}`} value={visto?.reservasPassagens || ""} onChange={(e) => handleVistoFieldChange('reservasPassagens', e.target.value)} placeholder="Detalhes" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">Reservas de Passagens:</span> {String(visto?.reservasPassagens || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`reservasPassagensDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'reservasPassagensDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`reservasPassagensDoc-${stepId}`)?.click()} disabled={uploadingFiles[`reservasPassagensDoc-${stepId}`]}>
+                        {uploadingFiles[`reservasPassagensDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload Passagens
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('reservasPassagensDoc')}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`reservasHotel-${stepId}`}>Reservas de Hotel</Label>
-                  <Input id={`reservasHotel-${stepId}`} value={visto?.reservasHotel || ""} onChange={(e) => handleVistoFieldChange('reservasHotel', e.target.value)} placeholder="Detalhes" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`reservasHotelDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'reservasHotelDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`reservasHotelDoc-${stepId}`)?.click()} disabled={uploadingFiles[`reservasHotelDoc-${stepId}`]}>
-                      {uploadingFiles[`reservasHotelDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload Hotel
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`reservasHotel-${stepId}`}>Reservas de Hotel</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`reservasHotel-${stepId}`} value={visto?.reservasHotel || ""} onChange={(e) => handleVistoFieldChange('reservasHotel', e.target.value)} placeholder="Detalhes" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">Reservas de Hotel:</span> {String(visto?.reservasHotel || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`reservasHotelDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'reservasHotelDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`reservasHotelDoc-${stepId}`)?.click()} disabled={uploadingFiles[`reservasHotelDoc-${stepId}`]}>
+                        {uploadingFiles[`reservasHotelDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload Hotel
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('reservasHotelDoc')}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`seguroViagem-${stepId}`}>Seguro Viagem</Label>
-                  <Input id={`seguroViagem-${stepId}`} value={visto?.seguroViagem || ""} onChange={(e) => handleVistoFieldChange('seguroViagem', e.target.value)} placeholder="Detalhes" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`seguroViagemDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'seguroViagemDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`seguroViagemDoc-${stepId}`)?.click()} disabled={uploadingFiles[`seguroViagemDoc-${stepId}`]}>
-                      {uploadingFiles[`seguroViagemDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload Seguro
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`seguroViagem-${stepId}`}>Seguro Viagem</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`seguroViagem-${stepId}`} value={visto?.seguroViagem || ""} onChange={(e) => handleVistoFieldChange('seguroViagem', e.target.value)} placeholder="Detalhes" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">Seguro Viagem:</span> {String(visto?.seguroViagem || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`seguroViagemDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'seguroViagemDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`seguroViagemDoc-${stepId}`)?.click()} disabled={uploadingFiles[`seguroViagemDoc-${stepId}`]}>
+                        {uploadingFiles[`seguroViagemDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload Seguro
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('seguroViagemDoc')}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`roteiroViagem-${stepId}`}>Roteiro de Viagem Detalhado</Label>
-                  <Input id={`roteiroViagem-${stepId}`} value={visto?.roteiroViagem || ""} onChange={(e) => handleVistoFieldChange('roteiroViagem', e.target.value)} placeholder="Detalhes" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`roteiroViagemDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'roteiroViagemDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`roteiroViagemDoc-${stepId}`)?.click()} disabled={uploadingFiles[`roteiroViagemDoc-${stepId}`]}>
-                      {uploadingFiles[`roteiroViagemDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload Roteiro
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`roteiroViagem-${stepId}`}>Roteiro de Viagem Detalhado</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`roteiroViagem-${stepId}`} value={visto?.roteiroViagem || ""} onChange={(e) => handleVistoFieldChange('roteiroViagem', e.target.value)} placeholder="Detalhes" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">Roteiro de Viagem Detalhado:</span> {String(visto?.roteiroViagem || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`roteiroViagemDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'roteiroViagemDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`roteiroViagemDoc-${stepId}`)?.click()} disabled={uploadingFiles[`roteiroViagemDoc-${stepId}`]}>
+                        {uploadingFiles[`roteiroViagemDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload Roteiro
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('roteiroViagemDoc')}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`taxa-${stepId}`}>Taxa Consular</Label>
-                  <Input id={`taxa-${stepId}`} value={visto?.taxa || ""} onChange={(e) => handleVistoFieldChange('taxa', e.target.value)} placeholder="Valor/Status" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`taxaDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'taxaDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`taxaDoc-${stepId}`)?.click()} disabled={uploadingFiles[`taxaDoc-${stepId}`]}>
-                      {uploadingFiles[`taxaDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload Taxa
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`taxa-${stepId}`}>Taxa Consular</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`taxa-${stepId}`} value={visto?.taxa || ""} onChange={(e) => handleVistoFieldChange('taxa', e.target.value)} placeholder="Valor/Status" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">Taxa Consular:</span> {String(visto?.taxa || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`taxaDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'taxaDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`taxaDoc-${stepId}`)?.click()} disabled={uploadingFiles[`taxaDoc-${stepId}`]}>
+                        {uploadingFiles[`taxaDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload Taxa
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('taxaDoc')}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`formularioConsulado-${stepId}`}>Formulário do Consulado preenchido</Label>
-                  <Input id={`formularioConsulado-${stepId}`} value={visto?.formularioConsulado || ""} onChange={(e) => handleVistoFieldChange('formularioConsulado', e.target.value)} placeholder="Detalhes" />
-                  <div className="flex items-center gap-2">
-                    <input type="file" id={`formularioConsuladoDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'formularioConsuladoDoc', stepId); }} />
-                    <Button variant="outline" size="sm" onClick={() => document.getElementById(`formularioConsuladoDoc-${stepId}`)?.click()} disabled={uploadingFiles[`formularioConsuladoDoc-${stepId}`]}>
-                      {uploadingFiles[`formularioConsuladoDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Upload Formulário
-                    </Button>
-                  </div>
+                  {isEditingDocuments ? (<Label htmlFor={`formularioConsulado-${stepId}`}>Formulário do Consulado preenchido</Label>) : null}
+                  {isEditingDocuments ? (
+                    <Input id={`formularioConsulado-${stepId}`} value={visto?.formularioConsulado || ""} onChange={(e) => handleVistoFieldChange('formularioConsulado', e.target.value)} placeholder="Detalhes" />
+                  ) : (
+                    <div className="text-sm"><span className="font-medium">Formulário do Consulado preenchido:</span> {String(visto?.formularioConsulado || '') || '-'}</div>
+                  )}
+                  {isEditingDocuments ? (
+                    <div className="flex items-center gap-2">
+                      <input type="file" id={`formularioConsuladoDoc-${stepId}`} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, 'formularioConsuladoDoc', stepId); }} />
+                      <Button variant="outline" size="sm" onClick={() => document.getElementById(`formularioConsuladoDoc-${stepId}`)?.click()} disabled={uploadingFiles[`formularioConsuladoDoc-${stepId}`]}>
+                        {uploadingFiles[`formularioConsuladoDoc-${stepId}`] ? <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /> : <Upload className="w-4 h-4" />}
+                        Upload Formulário
+                      </Button>
+                    </div>
+                  ) : null}
                   {renderDocLinks('formularioConsuladoDoc')}
                 </div>
               </div>
