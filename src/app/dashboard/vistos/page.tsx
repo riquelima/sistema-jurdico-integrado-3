@@ -283,6 +283,7 @@ export default function VistosPage() {
   const getFinalStatusOrder = (type: string) => {
     const t = (type || "").toLowerCase();
     if (t.includes("turismo")) return ["Aprovado", "Negado", "Aguardando"];
+    if (t.includes("trabalho") && t.includes("brasil")) return ["Deferido", "Indeferido", "Aguardando", "Outro"];
     return ["Deferido", "Indeferido", "Outro"];
   };
 

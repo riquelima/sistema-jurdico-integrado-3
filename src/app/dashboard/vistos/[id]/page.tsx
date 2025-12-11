@@ -638,7 +638,7 @@ export default function VistoDetailsPage() {
 
   switch (stepId) {
       case 0: // Cadastro de Documentos
-        const renderField = (label: string, fieldKey?: string, docKey?: string) => (
+        const renderField = (label: string, fieldKey?: string, docKey?: string, hideReadView?: boolean) => (
           <div className="space-y-2">
             {isEditingDocuments ? (
               <Label htmlFor={`${(fieldKey || docKey || '').replace(/Doc$/, '')}-${stepId}`}>{label}</Label>
@@ -652,9 +652,11 @@ export default function VistoDetailsPage() {
                   placeholder={"Status ou informações do documento"}
                 />
               ) : (
-                <div className="text-sm">
-                  <span className="font-medium">{label}:</span> {String((visto || {})[fieldKey] || '') || '-'}
-                </div>
+                hideReadView ? null : (
+                  <div className="text-sm">
+                    <span className="font-medium">{label}:</span> {String((visto || {})[fieldKey] || '') || '-'}
+                  </div>
+                )
               )
             ) : null}
             {docKey ? (
@@ -768,21 +770,24 @@ export default function VistoDetailsPage() {
                       <SelectTrigger id={`statusFinal-${stepId}`} className="h-9 w-full border-2 focus:border-cyan-500">
                         <SelectValue placeholder="Selecione o status" />
                       </SelectTrigger>
-                      <SelectContent>
-                        {String((visto?.type || caseData?.type || '')).toLowerCase().includes('turismo') ? (
-                          <>
-                            <SelectItem value="Aprovado">Aprovado</SelectItem>
-                            <SelectItem value="Negado">Negado</SelectItem>
+                    <SelectContent>
+                      {String((visto?.type || caseData?.type || '')).toLowerCase().includes('turismo') ? (
+                        <>
+                          <SelectItem value="Aprovado">Aprovado</SelectItem>
+                          <SelectItem value="Negado">Negado</SelectItem>
+                          <SelectItem value="Aguardando">Aguardando</SelectItem>
+                        </>
+                      ) : (
+                        <>
+                          <SelectItem value="Deferido">Deferido</SelectItem>
+                          <SelectItem value="Indeferido">Indeferido</SelectItem>
+                          {t.includes('trabalho') && t.includes('brasil') ? (
                             <SelectItem value="Aguardando">Aguardando</SelectItem>
-                          </>
-                        ) : (
-                          <>
-                            <SelectItem value="Deferido">Deferido</SelectItem>
-                            <SelectItem value="Indeferido">Indeferido</SelectItem>
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
+                          ) : null}
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
                   ) : (
                     <div className="text-sm"><span className="font-medium">Status Final:</span> {String((visto as any)?.statusFinal || '-')}</div>
                   )}
@@ -1252,9 +1257,9 @@ export default function VistoDetailsPage() {
                     ) : null}
                   </div>
                   <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
-                    {renderField('Passaporte', 'passaporte', 'passaporteDoc')}
-                    {renderField('Certidão de Nascimento', 'certidaoNascimento', 'certidaoNascimentoDoc')}
-                    {renderField('Declaração de Compreensão', 'declaracaoCompreensao', 'declaracaoCompreensaoDoc')}
+                    {renderField('Passaporte', 'passaporte', 'passaporteDoc', true)}
+                    {renderField('Certidão de Nascimento', 'certidaoNascimento', 'certidaoNascimentoDoc', true)}
+                    {renderField('Declaração de Compreensão', 'declaracaoCompreensao', 'declaracaoCompreensaoDoc', true)}
                   </div>
                 </div>
 
@@ -1266,13 +1271,13 @@ export default function VistoDetailsPage() {
                     ) : null}
                   </div>
                   <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
-                    {renderField('Contrato Social', 'contratoEmpresa', 'contratoEmpresaDoc')}
-                    {renderField('CNPJ', 'cartaoCnpj', 'cartaoCnpjDoc')}
-                    {renderField('Declarações da Empresa', 'declaracoesEmpresa', 'declaracoesEmpresaDoc')}
-                    {renderField('Procuração da empresa', 'procuracaoEmpresa', 'procuracaoEmpresaDoc')}
-                    {renderField('Formulário RN 01', 'formularioRn01', 'formularioRn01Doc')}
-                    {renderField('Guia paga', 'guiaPaga', 'guiaPagaDoc')}
-                    {renderField('Publicação no DOU', 'publicacaoDou', 'publicacaoDouDoc')}
+                    {renderField('Contrato Social', 'contratoEmpresa', 'contratoEmpresaDoc', true)}
+                    {renderField('CNPJ', 'cartaoCnpj', 'cartaoCnpjDoc', true)}
+                    {renderField('Declarações da Empresa', 'declaracoesEmpresa', 'declaracoesEmpresaDoc', true)}
+                    {renderField('Procuração da empresa', 'procuracaoEmpresa', 'procuracaoEmpresaDoc', true)}
+                    {renderField('Formulário RN 01', 'formularioRn01', 'formularioRn01Doc', true)}
+                    {renderField('Guia paga', 'guiaPaga', 'guiaPagaDoc', true)}
+                    {renderField('Publicação no DOU', 'publicacaoDou', 'publicacaoDouDoc', true)}
                   </div>
                 </div>
 
@@ -1284,9 +1289,9 @@ export default function VistoDetailsPage() {
                     ) : null}
                   </div>
                   <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
-                    {renderField('Contrato de trabalho', 'contratoTrabalho', 'contratoTrabalhoDoc')}
-                    {renderField('Folha de pagamento (últimas)', 'folhaPagamento', 'folhaPagamentoDoc')}
-                    {renderField('Comprovante de vínculo anterior (se houver)', 'comprovanteVinculoAnterior', 'comprovanteVinculoAnteriorDoc')}
+                    {renderField('Contrato de trabalho', 'contratoTrabalho', 'contratoTrabalhoDoc', true)}
+                    {renderField('Folha de pagamento (últimas)', 'folhaPagamento', 'folhaPagamentoDoc', true)}
+                    {renderField('Comprovante de vínculo anterior (se houver)', 'comprovanteVinculoAnterior', 'comprovanteVinculoAnteriorDoc', true)}
                   </div>
                 </div>
 
@@ -1298,8 +1303,8 @@ export default function VistoDetailsPage() {
                     ) : null}
                   </div>
                   <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
-                    {renderField('Antecedentes Criminais', 'antecedentesCriminais', 'antecedentesCriminaisDoc')}
-                    {renderField('Declaração de Antecedentes Criminais', 'declaracaoAntecedentesCriminais', 'declaracaoAntecedentesCriminaisDoc')}
+                    {renderField('Antecedentes Criminais', 'antecedentesCriminais', 'antecedentesCriminaisDoc', true)}
+                    {renderField('Declaração de Antecedentes Criminais', 'declaracaoAntecedentesCriminais', 'declaracaoAntecedentesCriminaisDoc', true)}
                   </div>
                 </div>
 
@@ -1311,7 +1316,7 @@ export default function VistoDetailsPage() {
                     ) : null}
                   </div>
                   <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
-                    {renderField('Diploma', 'diploma', 'diplomaDoc')}
+                    {renderField('Diploma', 'diploma', 'diplomaDoc', true)}
                   </div>
                 </div>
               </div>
