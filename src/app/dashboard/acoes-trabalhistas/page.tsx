@@ -148,6 +148,23 @@ export default function AcoesTrabalhistasPage() {
     return status;
   };
 
+  const STEP_TITLES = [
+    "Análise Inicial",
+    "Petição Inicial",
+    "Citação",
+    "Contestação",
+    "Audiência Inicial",
+    "Instrução Processual",
+    "Alegações Finais",
+    "Sentença",
+    "Execução/Recurso",
+  ];
+
+  const getStepTitle = (idx?: number) => {
+    const i = typeof idx === 'number' ? idx : 0;
+    return STEP_TITLES[i] || `Etapa ${i + 1}`;
+  };
+
   const handleDelete = async (id: number) => {
     try {
       const response = await fetch(`/api/acoes-trabalhistas/${id}`, {
@@ -377,32 +394,36 @@ export default function AcoesTrabalhistasPage() {
                         </Badge>
                       </div>
 
-                      <div className="flex items-center gap-6 text-sm flex-wrap">
-                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                          <div className="p-1.5 bg-purple-100 dark:bg-purple-900 rounded">
-                            <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                          </div>
-                          <span className="font-medium">Tipo: {caseItem.type || "Trabalhista"}</span>
+                      <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Tipo de ação:</span>
+                          <span>{caseItem.type || "Trabalhista"}</span>
                         </div>
-                        
-                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900 rounded">
-                            <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <span className="font-medium">Passo {caseItem.currentStep || 1}</span>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Fluxo atual:</span>
+                          <span>{getStepTitle(caseItem.currentStep)}</span>
                         </div>
-                        
-                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                          <div className="p-1.5 bg-slate-100 dark:bg-slate-700 rounded">
-                            <Clock className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                          </div>
-                          <span>
-                            {new Date(caseItem.createdAt).toLocaleDateString("pt-BR", {
-                              day: "2-digit",
-                              month: "long",
-                              year: "numeric"
-                            })}
-                          </span>
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Responsável:</span>
+                          <span>{caseItem.responsavelName || "—"}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar h-4 w-4 text-slate-600 dark:text-slate-400"><path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" /></svg>
+                          <span className="font-medium">Prazo:</span>
+                          <span>{caseItem.responsavelDate ? new Date(caseItem.responsavelDate).toLocaleDateString("pt-BR") : "—"}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Nº do processo:</span>
+                          <span>{caseItem.numeroProcesso || "—"}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Réu:</span>
+                          <span>{caseItem.reuName || "—"}</span>
                         </div>
                       </div>
 

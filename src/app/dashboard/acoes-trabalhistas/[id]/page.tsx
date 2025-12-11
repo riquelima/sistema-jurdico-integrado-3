@@ -40,18 +40,13 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-// Workflow steps for Ações Trabalhistas
+// Workflow sections para Ações Trabalhistas
 const WORKFLOWS = {
   "Ação Trabalhista": [
-    "Análise Inicial",
-    "Petição Inicial",
-    "Citação",
-    "Contestação",
-    "Audiência Inicial",
-    "Instrução Processual",
-    "Alegações Finais",
-    "Sentença",
-    "Execução/Recurso",
+    "Cadastro de Documentos",
+    "Resumo",
+    "Acompanhamento",
+    "Processo Finalizado",
   ],
 };
 
@@ -64,6 +59,14 @@ interface CaseData {
   createdAt: string;
   updatedAt: string;
   notes?: string;
+  autorName?: string | null;
+  reuName?: string | null;
+  numeroProcesso?: string | null;
+  responsavelName?: string | null;
+  responsavelDate?: string | null;
+  resumo?: string | null;
+  acompanhamento?: string | null;
+  contratado?: string | null;
   // Trabalhista specific fields
   documentosIniciais?: string;
   documentosIniciaisFile?: string;
@@ -122,6 +125,44 @@ export default function AcaoTrabalhistaDetailPage() {
   const [editingDocumentName, setEditingDocumentName] = useState("");
   const [uploadingFields, setUploadingFields] = useState<Record<string, boolean>>({});
   const [assignments, setAssignments] = useState<Record<number, { responsibleName?: string; dueDate?: string }>>({});
+  const [isEditingGeral, setIsEditingGeral] = useState(false);
+  const [isEditingCadastro, setIsEditingCadastro] = useState(false);
+  const [isEditingResumo, setIsEditingResumo] = useState(false);
+  const [isEditingAcompanhamento, setIsEditingAcompanhamento] = useState(false);
+  const [isEditingFinalizado, setIsEditingFinalizado] = useState(false);
+  const CASE_TYPES = [
+    "Rescisão Indireta",
+    "Horas Extras",
+    "Adicional Noturno",
+    "Insalubridade",
+    "Periculosidade",
+    "FGTS",
+    "Seguro Desemprego",
+    "Acidente de Trabalho",
+    "Assédio Moral",
+    "Discriminação",
+    "Outros"
+  ];
+
+  const handleCaseFieldChange = (key: keyof CaseData, value: any) => {
+    setCaseData(prev => prev ? { ...prev, [key]: value } as CaseData : prev);
+  };
+
+  const saveCaseFields = async () => {
+    if (!caseData) return;
+    try {
+      const response = await fetch(`/api/acoes-trabalhistas?id=${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientName: caseData.clientName, type: caseData.type, status }),
+      });
+      if (response.ok) {
+        setIsEditingGeral(false);
+      }
+    } catch (error) {
+      console.error("Erro ao salvar campos gerais:", error);
+    }
+  };
 
   // Load case data
   useEffect(() => {
@@ -474,6 +515,266 @@ export default function AcaoTrabalhistaDetailPage() {
         </ul>
       </div>
     );
+  };
+
+  const renderSectionContent = (sectionIndex: number) => {
+    if (!caseData) return null;
+    const isCurrent = sectionIndex === caseData.currentStep;
+    const isCompleted = sectionIndex < caseData.currentStep;
+    if (!isCurrent && !isCompleted) return null;
+    if (sectionIndex === 0) {
+      return (
+        <div className="space-y-4 p-4 rounded-lg">
+          <div className="flex items-center justify-between">
+            <h4 className="font-semibold text-slate-900">Dados iniciais</h4>
+            <div className="flex items-center gap-2">
+              {!isEditingCadastro && (
+                <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setIsEditingCadastro(true)}>Editar</Button>
+              )}
+              {isEditingCadastro && (
+                <>
+                  <Button size="sm" variant="secondary" onClick={async () => {
+                    await fetch(`/api/acoes-trabalhistas?id=${id}`, {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ reuName: caseData.reuName, numeroProcesso: caseData.numeroProcesso, responsavelName: caseData.responsavelName, responsavelDate: caseData.responsavelDate }),
+                    });
+                    setIsEditingCadastro(false);
+                  }}>
+                    <Save className="w-4 h-4" />
+                    Salvar
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setIsEditingCadastro(false)}>Cancelar</Button>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="grid gap-3">
+              <div className="grid md:grid-cols-2 gap-4 p-4 bg-white rounded-md border">
+                <div className="space-y-1">
+                  <Label>Autor</Label>
+                  <div className="text-sm">{String(caseData.autorName || caseData.clientName || "-")}</div>
+                </div>
+              <div className="space-y-1">
+                <Label>Réu</Label>
+                {isEditingCadastro ? (
+                  <Input value={caseData.reuName || ""} onChange={(e) => setCaseData({ ...caseData, reuName: e.target.value })} />
+                ) : (
+                  <div className="text-sm">{String(caseData.reuName || "-")}</div>
+                )}
+              </div>
+              <div className="space-y-1">
+                <Label>Nº do Processo</Label>
+                {isEditingCadastro ? (
+                  <Input value={caseData.numeroProcesso || ""} onChange={(e) => setCaseData({ ...caseData, numeroProcesso: e.target.value })} />
+                ) : (
+                  <div className="text-sm">{String(caseData.numeroProcesso || "-")}</div>
+                )}
+              </div>
+              <div className="space-y-1">
+                <Label>Responsável</Label>
+                {isEditingCadastro ? (
+                  <Input value={caseData.responsavelName || ""} onChange={(e) => setCaseData({ ...caseData, responsavelName: e.target.value })} />
+                ) : (
+                  <div className="text-sm">{String(caseData.responsavelName || "-")}</div>
+                )}
+              </div>
+              <div className="space-y-1">
+                <Label>Prazo</Label>
+                {isEditingCadastro ? (
+                  <Input type="date" value={String(caseData.responsavelDate || "")} onChange={(e) => setCaseData({ ...caseData, responsavelDate: e.target.value })} />
+                ) : (
+                  <div className="text-sm">{caseData.responsavelDate ? (() => { try { return new Date(String(caseData.responsavelDate)).toLocaleDateString("pt-BR"); } catch { return String(caseData.responsavelDate); } })() : "-"}</div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Upload</Label>
+              <div className="flex items-center gap-2">
+                <Input type="file" onChange={(e) => handleFileUpload(e, "cadastroDocumentosDoc")} disabled={uploadingFields.cadastroDocumentosDoc} className="flex-1" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                {uploadingFields.cadastroDocumentosDoc && (
+                  <Upload className="h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
+              {renderDocLinks("cadastroDocumentosDoc")}
+            </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    if (sectionIndex === 1) {
+      return (
+        <div className="space-y-4 p-4 rounded-lg">
+          <div className="flex items-center justify-between">
+            <h4 className="font-semibold text-slate-900">Resumo</h4>
+            <div className="flex items-center gap-2">
+              {!isEditingResumo && (
+                <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setIsEditingResumo(true)}>Editar</Button>
+              )}
+              {isEditingResumo && (
+                <>
+                  <Button size="sm" variant="secondary" onClick={async () => {
+                    await fetch(`/api/acoes-trabalhistas?id=${id}`, {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ resumo: caseData.resumo, contratado: caseData.contratado }),
+                    });
+                    setIsEditingResumo(false);
+                  }}>
+                    <Save className="w-4 h-4" />
+                    Salvar
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setIsEditingResumo(false)}>Cancelar</Button>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Observações</Label>
+            {isEditingResumo ? (
+              <Textarea value={caseData.resumo || ""} onChange={(e) => setCaseData({ ...caseData, resumo: e.target.value })} rows={4} className="bg-white" />
+            ) : (
+              <div className="text-sm p-3 bg-white rounded-md border">{String(caseData.resumo || "-")}</div>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label>Contratado</Label>
+            {isEditingResumo ? (
+              <div className="flex items-center gap-3">
+                <Button type="button" variant={String(caseData.contratado || "Não") === "Sim" ? "default" : "outline"} onClick={() => setCaseData({ ...caseData, contratado: "Sim" })}>Sim</Button>
+                <Button type="button" variant={String(caseData.contratado || "Não") === "Não" ? "default" : "outline"} onClick={() => setCaseData({ ...caseData, contratado: "Não" })}>Não</Button>
+              </div>
+            ) : (
+              <div className="text-sm">{String(caseData.contratado || "Não")}</div>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label>Upload</Label>
+            <div className="flex items-center gap-2">
+              <Input type="file" onChange={(e) => handleFileUpload(e, "resumoDoc")} disabled={uploadingFields.resumoDoc} className="flex-1" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+              {uploadingFields.resumoDoc && (
+                <Upload className="h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
+            {renderDocLinks("resumoDoc")}
+          </div>
+        </div>
+      );
+    }
+    if (sectionIndex === 2) {
+      return (
+        <div className="space-y-4 p-4 rounded-lg">
+          <div className="flex items-center justify-between">
+            <h4 className="font-semibold text-slate-900">Acompanhamento</h4>
+            <div className="flex items-center gap-2">
+              {!isEditingAcompanhamento && (
+                <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setIsEditingAcompanhamento(true)}>Editar</Button>
+              )}
+              {isEditingAcompanhamento && (
+                <>
+                  <Button size="sm" variant="secondary" onClick={async () => {
+                    await fetch(`/api/acoes-trabalhistas?id=${id}`, {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ acompanhamento: caseData.acompanhamento }),
+                    });
+                    setIsEditingAcompanhamento(false);
+                  }}>
+                    <Save className="w-4 h-4" />
+                    Salvar
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setIsEditingAcompanhamento(false)}>Cancelar</Button>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Observações</Label>
+            {isEditingAcompanhamento ? (
+              <Textarea value={caseData.acompanhamento || ""} onChange={(e) => setCaseData({ ...caseData, acompanhamento: e.target.value })} rows={4} className="bg-white" />
+            ) : (
+              <div className="text-sm p-3 bg-white rounded-md border">{String(caseData.acompanhamento || "-")}</div>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label>Upload</Label>
+            <div className="flex items-center gap-2">
+              <Input type="file" onChange={(e) => handleFileUpload(e, "acompanhamentoDoc")} disabled={uploadingFields.acompanhamentoDoc} className="flex-1" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+              {uploadingFields.acompanhamentoDoc && (
+                <Upload className="h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
+            {renderDocLinks("acompanhamentoDoc")}
+          </div>
+        </div>
+      );
+    }
+    if (sectionIndex === 3) {
+      return (
+        <div className="space-y-4 p-4 rounded-lg">
+          <div className="flex items-center justify-between">
+            <h4 className="font-semibold text-slate-900">Processo Finalizado</h4>
+            <div className="flex items-center gap-2">
+              {!isEditingFinalizado && (
+                <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setIsEditingFinalizado(true)}>Editar</Button>
+              )}
+              {isEditingFinalizado && (
+                <>
+                  <Button size="sm" variant="secondary" onClick={async () => {
+                    const existing = String(caseData.notes || "");
+                    const obs = localStorage.getItem(`finalizado-${id}-obs`) || "";
+                    const blockHeader = "[Processo Finalizado]";
+                    const newBlock = `${blockHeader}\n- Observações: ${obs}`;
+                    const newNotes = existing.includes(blockHeader)
+                      ? existing.replace(new RegExp(`${blockHeader}[\s\S]*?($|\n\[)`, "m"), `${newBlock}\n$1`).replace("\n$1", "")
+                      : `${existing}\n${newBlock}`;
+                    await fetch(`/api/acoes-trabalhistas?id=${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ notes: newNotes }) });
+                    setIsEditingFinalizado(false);
+                  }}>
+                    <Save className="w-4 h-4" />
+                    Salvar
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setIsEditingFinalizado(false)}>Cancelar</Button>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Observações</Label>
+            {isEditingFinalizado ? (
+              <Textarea defaultValue={(caseData.notes || "").includes("[Processo Finalizado]") ? (() => {
+                const parts = String(caseData.notes || "").split("[Processo Finalizado]");
+                const tail = parts[1] || "";
+                const line = (tail.split("\n").find((l) => l.trim().startsWith("- Observações:")) || "").replace("- Observações:", "").trim();
+                localStorage.setItem(`finalizado-${id}-obs`, line);
+                return line;
+              })() : ""} onChange={(e) => localStorage.setItem(`finalizado-${id}-obs`, e.target.value)} rows={4} className="bg-white" />
+            ) : (
+              <div className="text-sm p-3 bg-white rounded-md border">{(() => {
+                const s = String(caseData.notes || "");
+                if (!s.includes("[Processo Finalizado]")) return "-";
+                const tail = s.split("[Processo Finalizado]")[1] || "";
+                const line = (tail.split("\n").find((l) => l.trim().startsWith("- Observações:")) || "").replace("- Observações:", "").trim();
+                return line || "-";
+              })()}</div>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label>Upload</Label>
+            <div className="flex items-center gap-2">
+              <Input type="file" onChange={(e) => handleFileUpload(e, "finalizadoDoc")} disabled={uploadingFields.finalizadoDoc} className="flex-1" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+              {uploadingFields.finalizadoDoc && (
+                <Upload className="h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
+            {renderDocLinks("finalizadoDoc")}
+          </div>
+        </div>
+      );
+    }
+    return null;
   };
 
   const renderStepContent = (stepIndex: number) => {
@@ -1110,6 +1411,21 @@ export default function AcaoTrabalhistaDetailPage() {
         onDelete={handleDelete}
         left={
           <div className="space-y-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-end">
+                {isEditingGeral ? (
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="secondary" onClick={saveCaseFields}>
+                      <Save className="w-4 h-4" />
+                      Salvar
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setIsEditingGeral(false)}>
+                      Cancelar
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+            </div>
             {workflow.map((step, index) => (
               <StepItem
                 key={index}
@@ -1124,7 +1440,7 @@ export default function AcaoTrabalhistaDetailPage() {
                 assignment={assignments[index]}
                 onSaveAssignment={(a) => handleSaveAssignment(index, a.responsibleName, a.dueDate)}
               >
-                {renderStepContent(index)}
+                {renderSectionContent(index)}
               </StepItem>
             ))}
           </div>

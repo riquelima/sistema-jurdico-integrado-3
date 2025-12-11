@@ -8,9 +8,18 @@ function mapDbFieldsToFrontend(record: any) {
   return {
     id: record.id,
     clientName: record.client_name,
-    currentStep: record.current_step,
+    type: record.type || 'Ação Trabalhista',
+    currentStep: record.current_step ?? 0,
     status: record.status,
     notes: record.notes,
+    autorName: record.autor_name || null,
+    reuName: record.reu_name || null,
+    numeroProcesso: record.numero_processo || null,
+    responsavelName: record.responsavel_name || null,
+    responsavelDate: record.responsavel_date || null,
+    resumo: record.resumo || null,
+    acompanhamento: record.acompanhamento || null,
+    contratado: record.contratado || null,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
   };
@@ -113,7 +122,20 @@ export async function POST(request: NextRequest) {
     );
 
     const body = await request.json();
-    const { clientName, status, notes, currentStep } = body;
+    const { 
+      clientName, 
+      status, 
+      notes, 
+      currentStep,
+      reuName,
+      autorName,
+      numeroProcesso,
+      responsavelName,
+      responsavelDate,
+      resumo,
+      acompanhamento,
+      contratado
+    } = body;
 
     // Validate required fields
     if (!clientName || clientName.trim() === '') {
@@ -127,12 +149,20 @@ export async function POST(request: NextRequest) {
     const insertData: any = {
       client_name: clientName.trim(),
       status: status || 'Em Andamento',
-      current_step: currentStep !== undefined ? currentStep : 0,
     };
 
     if (notes !== undefined) {
       insertData.notes = notes;
     }
+
+    if (reuName !== undefined) insertData.reu_name = reuName;
+    if (autorName !== undefined) insertData.autor_name = autorName;
+    if (numeroProcesso !== undefined) insertData.numero_processo = numeroProcesso;
+    if (responsavelName !== undefined) insertData.responsavel_name = responsavelName;
+    if (responsavelDate !== undefined) insertData.responsavel_date = responsavelDate;
+    if (resumo !== undefined) insertData.resumo = resumo;
+    if (acompanhamento !== undefined) insertData.acompanhamento = acompanhamento;
+    if (contratado !== undefined) insertData.contratado = contratado;
 
     const { data: newRecord, error } = await supabase
       .from('acoes_trabalhistas')
@@ -190,7 +220,21 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { clientName, status, notes, currentStep } = body;
+    const {
+      clientName,
+      status,
+      notes,
+      currentStep,
+      type,
+      reuName,
+      autorName,
+      numeroProcesso,
+      responsavelName,
+      responsavelDate,
+      resumo,
+      acompanhamento,
+      contratado,
+    } = body;
 
     // Check if record exists
     const { data: existing, error: existingError } = await supabase
@@ -227,9 +271,19 @@ export async function PUT(request: NextRequest) {
       updateData.notes = notes;
     }
 
-    if (currentStep !== undefined) {
-      updateData.current_step = currentStep;
+    if (type !== undefined) {
+      updateData.type = type;
     }
+    if (reuName !== undefined) updateData.reu_name = reuName;
+    if (autorName !== undefined) updateData.autor_name = autorName;
+    if (numeroProcesso !== undefined) updateData.numero_processo = numeroProcesso;
+    if (responsavelName !== undefined) updateData.responsavel_name = responsavelName;
+    if (responsavelDate !== undefined) updateData.responsavel_date = responsavelDate;
+    if (resumo !== undefined) updateData.resumo = resumo;
+    if (acompanhamento !== undefined) updateData.acompanhamento = acompanhamento;
+    if (contratado !== undefined) updateData.contratado = contratado;
+
+    // Ignore current_step updates when column is absent in schema
 
     // Perform update
     const { data: updated, error } = await supabase
