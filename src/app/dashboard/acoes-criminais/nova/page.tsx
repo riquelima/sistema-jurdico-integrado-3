@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save, Upload, FileText, X, Info, Moon, Sun } from "lucide-react";
 
-export default function NovaAcaoTrabalhistaPage() {
+export default function NovaAcaoCriminalPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     clientName: "",
@@ -24,12 +24,9 @@ export default function NovaAcaoTrabalhistaPage() {
     finalizado: false,
     fotoNotificacaoDoc: "",
   });
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [createdSuccess, setCreatedSuccess] = useState(false);
   const [uploadingDocs, setUploadingDocs] = useState<Record<string, boolean>>({});
   const [extraUploads, setExtraUploads] = useState<Record<string, string[]>>({});
+  const [saving, setSaving] = useState(false);
 
   const handleChange = (key: keyof typeof formData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -37,86 +34,48 @@ export default function NovaAcaoTrabalhistaPage() {
 
   useEffect(() => {
     const inputs = document.querySelectorAll('input[type="file"]');
-    inputs.forEach((el) => {
-      try {
-        el.setAttribute('multiple', '');
-      } catch {}
-    });
+    inputs.forEach((el) => { try { el.setAttribute('multiple', ''); } catch {} });
   }, []);
 
-  const handleDocumentUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    field: string
-  ) => {
+  const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (files.length === 0) return;
-
     setUploadingDocs((prev) => ({ ...prev, [field]: true }));
-
     try {
       const uploadedUrls: string[] = [];
       for (const file of files) {
-        const formDataUpload = new FormData();
-        formDataUpload.append("file", file);
-
-        const response = await fetch("/api/documents/upload", {
-          method: "POST",
-          body: formDataUpload,
-        });
-
-        if (response.ok) {
-          const data = await response.json();
+        const fd = new FormData();
+        fd.append("file", file);
+        const resp = await fetch("/api/documents/upload", { method: "POST", body: fd });
+        if (resp.ok) {
+          const data = await resp.json();
           uploadedUrls.push(data.fileUrl);
         } else {
-          const errorData = await response.json();
-          console.error("Upload error:", errorData);
-          alert(errorData.error || "Erro ao enviar documento");
+          const err = await resp.json();
+          alert(err.error || "Erro ao enviar documento");
         }
       }
-
       if (uploadedUrls.length) {
         const currentPrimary = (formData as any)[field] as string | undefined;
         if (!currentPrimary) {
           handleChange(field as any, uploadedUrls[0]);
           const rest = uploadedUrls.slice(1);
-          if (rest.length) {
-            setExtraUploads((prev) => ({
-              ...prev,
-              [field]: [...(prev[field] || []), ...rest],
-            }));
-          }
+          if (rest.length) setExtraUploads((prev) => ({ ...prev, [field]: [...(prev[field] || []), ...rest] }));
         } else {
-          setExtraUploads((prev) => ({
-            ...prev,
-            [field]: [...(prev[field] || []), ...uploadedUrls],
-          }));
+          setExtraUploads((prev) => ({ ...prev, [field]: [...(prev[field] || []), ...uploadedUrls] }));
         }
       }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      alert("Erro ao enviar documento");
-    } finally {
-      setUploadingDocs((prev) => ({ ...prev, [field]: false }));
-    }
+    } catch {}
+    finally { setUploadingDocs((prev) => ({ ...prev, [field]: false })); }
   };
 
   const handleRemoveFile = (docField: string, fileUrl: string) => {
-    if ((formData as any)[docField] === fileUrl) {
-      handleChange(docField as any, "");
-    }
-    if (extraUploads[docField]) {
-      setExtraUploads(prev => ({
-        ...prev,
-        [docField]: prev[docField].filter(url => url !== fileUrl)
-      }));
-    }
+    if ((formData as any)[docField] === fileUrl) handleChange(docField as any, "");
+    if (extraUploads[docField]) setExtraUploads(prev => ({ ...prev, [docField]: prev[docField].filter(url => url !== fileUrl) }));
   };
 
   const convertTemporaryUploads = async (caseId: number) => {
-    const documentFields = [
-      "fotoNotificacaoDoc",
-    ];
-
+    const documentFields = ["fotoNotificacaoDoc"];
     const documentsToConvert: { fieldName: string; fileUrl: string }[] = [];
     for (const field of documentFields) {
       const urls = new Set<string>();
@@ -124,54 +83,26 @@ export default function NovaAcaoTrabalhistaPage() {
       if (single) urls.add(single);
       const extras = extraUploads[field] || [];
       for (const u of extras) urls.add(u);
-      for (const u of urls) {
-        documentsToConvert.push({ fieldName: field, fileUrl: u });
-      }
+      for (const u of urls) documentsToConvert.push({ fieldName: field, fileUrl: u });
     }
-
     if (documentsToConvert.length > 0) {
       try {
         await fetch("/api/documents/convert-temporary", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            caseId,
-            moduleType: "acoes_trabalhistas",
-            clientName: formData.clientName,
-            documents: documentsToConvert,
-          }),
+          body: JSON.stringify({ caseId, moduleType: "acoes_criminais", clientName: formData.clientName, documents: documentsToConvert }),
         });
-      } catch (error) {
-        console.error("Erro ao converter uploads temporários:", error);
-      }
+      } catch {}
     }
-  };
-
-  const formatDateBR = (iso: string) => {
-    if (!iso) return "";
-    const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (m) return `${m[3]}/${m[2]}/${m[1]}`;
-    try {
-      const d = new Date(iso);
-      return isNaN(d.getTime()) ? "" : d.toLocaleDateString("pt-BR");
-    } catch { return ""; }
   };
 
   const handleSubmit = async () => {
     if (!formData.clientName.trim()) return;
     setSaving(true);
-    const lines: string[] = [];
-    if (formData.reuName) lines.push(`Réu: ${formData.reuName}`);
-    if (formData.numeroProcesso) lines.push(`Número do processo: ${formData.numeroProcesso}`);
-    if (formData.responsavelName) lines.push(`Responsável: ${formData.responsavelName}`);
-    if (formData.responsavelDate) lines.push(`Data: ${formatDateBR(formData.responsavelDate)}`);
-    lines.push(`Contratado: ${formData.contratado}`);
-    if (formData.resumo) lines.push(`Resumo: ${formData.resumo}`);
-    if (formData.acompanhamento) lines.push(`Acompanhamento: ${formData.acompanhamento}`);
-    const notesBlock = `\n[Dados Iniciais]\n${lines.map((l) => `- ${l}`).join("\n")}\n`;
+    const notesBlock = `\n[Dados Iniciais]\n- Réu: ${formData.reuName}\n- Número do processo: ${formData.numeroProcesso}\n- Responsável: ${formData.responsavelName}\n- Data: ${formData.responsavelDate}\n- Contratado: ${formData.contratado}\n- Resumo: ${formData.resumo}\n- Acompanhamento: ${formData.acompanhamento}\n`;
     const status = formData.finalizado ? "Finalizado" : "Em andamento";
     try {
-      const res = await fetch("/api/acoes-trabalhistas", {
+      const res = await fetch("/api/acoes-criminais", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -186,17 +117,12 @@ export default function NovaAcaoTrabalhistaPage() {
           resumo: formData.resumo,
           acompanhamento: formData.acompanhamento,
           contratado: formData.contratado,
-          fotoNotificacaoDoc: (formData as any)["fotoNotificacaoDoc"] || null,
-        })
+        }),
       });
       if (res.ok) {
         const created = await res.json();
         await convertTemporaryUploads(created.id);
-        setCreatedSuccess(true);
-        setSaving(false);
-        setTimeout(() => {
-          router.push("/dashboard/acoes-trabalhistas");
-        }, 1500);
+        router.push("/dashboard/acoes-criminais");
         return;
       }
     } catch {}
@@ -207,9 +133,7 @@ export default function NovaAcaoTrabalhistaPage() {
     const attachedFiles: string[] = [];
     const mainFile = (formData as any)[docField] as string | undefined;
     if (mainFile) attachedFiles.push(mainFile);
-    if (extraUploads[docField] && extraUploads[docField].length > 0) {
-      attachedFiles.push(...extraUploads[docField]);
-    }
+    if (extraUploads[docField] && extraUploads[docField].length > 0) attachedFiles.push(...extraUploads[docField]);
     return (
       <div className="space-y-2">
         <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{label}</Label>
@@ -221,26 +145,11 @@ export default function NovaAcaoTrabalhistaPage() {
               </span>
             </div>
           ) : (
-            <Input
-              value={field ? (formData[field as keyof typeof formData] as string) : ""}
-              onChange={(e) => field && handleChange(field as any, e.target.value)}
-              className="flex-1 rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5"
-              placeholder={placeholder}
-            />
+            <Input value={field ? (formData[field as keyof typeof formData] as string) : ""} onChange={(e) => field && handleChange(field as any, e.target.value)} className="flex-1 rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5" placeholder={placeholder} />
           )}
           <div className="relative">
-            <input
-              type="file"
-              id={`upload-${docField}`}
-              className="hidden"
-              onChange={(e) => handleDocumentUpload(e, docField)}
-            />
-            <Button
-              type="button"
-              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-sm font-medium text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors whitespace-nowrap shadow-sm"
-              onClick={() => document.getElementById(`upload-${docField}`)?.click()}
-              disabled={uploadingDocs[docField]}
-            >
+            <input type="file" id={`upload-${docField}`} className="hidden" onChange={(e) => handleDocumentUpload(e, docField)} />
+            <Button type="button" className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-sm font-medium text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors whitespace-nowrap shadow-sm" onClick={() => document.getElementById(`upload-${docField}`)?.click()} disabled={uploadingDocs[docField]}>
               <Upload className="h-5 w-5 text-slate-500" />
               {uploadingDocs[docField] ? "Enviando..." : "Upload"}
             </Button>
@@ -253,22 +162,11 @@ export default function NovaAcaoTrabalhistaPage() {
               const decodedName = decodeURIComponent(fileName);
               return (
                 <div key={idx} className="relative group">
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center p-2 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:border-sky-200 dark:hover:border-sky-800 transition-all"
-                    title={decodedName}
-                  >
+                  <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center p-2 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:border-sky-200 dark:hover:border-sky-800 transition-all" title={decodedName}>
                     <FileText className="h-5 w-5 text-slate-500 group-hover:text-sky-600 dark:text-slate-400 dark:group-hover:text-sky-400" />
                   </a>
                   {!readOnly && (
-                    <button
-                      type="button"
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRemoveFile(docField, url); }}
-                      className="absolute -top-1.5 -right-1.5 p-0.5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-600"
-                      title="Remover arquivo"
-                    >
+                    <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleRemoveFile(docField, url); }} className="absolute -top-1.5 -right-1.5 p-0.5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-600" title="Remover arquivo">
                       <X className="h-3 w-3" />
                     </button>
                   )}
@@ -286,20 +184,17 @@ export default function NovaAcaoTrabalhistaPage() {
       <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/dashboard/acoes-trabalhistas">
+            <Link href="/dashboard/acoes-criminais">
               <button className="text-slate-400 dark:text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">
                 <ArrowLeft className="h-6 w-6" />
               </button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Nova Ação Trabalhista</h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Cadastre e gerencie ações trabalhistas</p>
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Nova Ação Criminal</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Cadastre e gerencie ações criminais</p>
             </div>
           </div>
-          <button
-            className="p-2 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-            onClick={() => document.documentElement.classList.toggle('dark')}
-          >
+          <button className="p-2 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors" onClick={() => document.documentElement.classList.toggle('dark')}>
             <Moon className="h-5 w-5 hidden dark:block" />
             <Sun className="h-5 w-5 dark:hidden" />
           </button>
@@ -392,7 +287,7 @@ export default function NovaAcaoTrabalhistaPage() {
           </div>
 
           <div className="flex items-center justify-end gap-4 pt-4 border-t border-slate-200 dark:border-slate-700 mt-8">
-            <Button type="button" variant="outline" className="px-6 py-3 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors h-auto" onClick={() => router.push("/dashboard/acoes-trabalhistas")}>Cancelar</Button>
+            <Button type="button" variant="outline" className="px-6 py-3 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors h-auto" onClick={() => router.push("/dashboard/acoes-criminais")}>Cancelar</Button>
             <Button type="submit" className="px-8 py-3 rounded-md bg-slate-800 text-white font-semibold hover:bg-slate-900 shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 h-auto" disabled={saving}>
               <Save className="h-4 w-4" />
               {saving ? "Salvando..." : "Criar Ação"}

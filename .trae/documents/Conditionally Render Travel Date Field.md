@@ -1,0 +1,1 @@
+I will wrap the "Período da Viagem" field (lines 450-540 in `src/app/dashboard/vistos/novo/page.tsx`) in a conditional block `{formData.type === "Turismo" && ( ... )}` so that it only appears when the visa type is "Turismo".

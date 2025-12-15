@@ -11,7 +11,7 @@ export async function GET(
   context: any
 ) {
   try {
-    const { caseId } = context.params;
+    const { caseId } = await context.params;
     const { searchParams } = new URL(request.url);
     const moduleType = searchParams.get('moduleType') || 'acoes_civeis';
 

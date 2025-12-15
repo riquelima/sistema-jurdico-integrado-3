@@ -125,21 +125,28 @@ export async function POST(request: NextRequest) {
     const originalName = file.name;
     const extension = originalName.split('.').pop();
     
-    // Build file name based on original file name
-    const originalBaseName = originalName.replace(/\.[^/.]+$/, '');
-    const sanitizedOriginalBase = originalBaseName
+    // Build file name based on original file name - CLEAN AND PRESERVED
+    // User requirement: "Ao anexar um documento o nome deve ficar o mesmo do original, nada deve ser incluído"
+    // To ensure uniqueness while keeping the original name, we will put it in a timestamped folder
+    
+    const sanitizedOriginalBase = originalName.replace(/\.[^/.]+$/, '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-zA-Z0-9.-]/g, '_')
       .toLowerCase();
-    const sanitizedFileName = `${sanitizedOriginalBase}_${timestamp}.${extension}`;
+
+    // The stored filename in the bucket will still be sanitized to avoid S3/Supabase issues, 
+    // but the 'document_name' in DB will be the exact original.
+    // We will use a unique folder structure to avoid collisions.
+    const uniqueFolderId = `${timestamp}_${Math.random().toString(36).substring(2, 9)}`;
+    const safeFileName = `${sanitizedOriginalBase}.${extension}`;
     
     // Construct file path based on upload type
     let filePath: string;
     
     if (isTemporaryUpload) {
       // For temporary uploads, use a simple path with timestamp
-      filePath = `temp/${timestamp}_${sanitizedFileName}`;
+      filePath = `temp/${uniqueFolderId}/${safeFileName}`;
     } else {
       // Get step folder from field name
       const stepFolder = FIELD_TO_STEP_MAP[fieldName] || 'outros';
@@ -147,19 +154,21 @@ export async function POST(request: NextRequest) {
       // Use clientName or fallback to 'cliente_desconhecido'
       const clientNameForPath = clientName || 'cliente_desconhecido';
       
+      // Use unique folder structure to preserve filename "purity" as much as possible in the final segment
+      // Pattern: module/client_id/step/timestamp_id/filename.ext
       if (moduleType === 'compra_venda_imoveis') {
-        filePath = getFilePath.compraVenda(parseInt(recordId), clientNameForPath, sanitizedFileName);
+        filePath = `compra-venda/${sanitizeClientName(clientNameForPath)}_${recordId}/${uniqueFolderId}/${safeFileName}`;
       } else if (moduleType === 'perda_nacionalidade') {
-        filePath = getFilePath.perdaNacionalidade(parseInt(recordId), clientNameForPath, stepFolder, sanitizedFileName);
+        filePath = `perda-nacionalidade/${sanitizeClientName(clientNameForPath)}_${recordId}/${stepFolder}/${uniqueFolderId}/${safeFileName}`;
       } else if (moduleType === 'vistos') {
-        filePath = getFilePath.vistos(parseInt(recordId), clientNameForPath, stepFolder, sanitizedFileName);
+        filePath = `vistos/${sanitizeClientName(clientNameForPath)}_${recordId}/${stepFolder}/${uniqueFolderId}/${safeFileName}`;
       } else if (moduleType === 'acoes_trabalhistas') {
-        filePath = getFilePath.acoesTrabalhistas(parseInt(recordId), clientNameForPath, sanitizedFileName);
+        filePath = `acoes-trabalhistas/${sanitizeClientName(clientNameForPath)}_${recordId}/${uniqueFolderId}/${safeFileName}`;
       } else if (moduleType === 'acoes_criminais') {
-        filePath = getFilePath.acoesCriminais(parseInt(recordId), clientNameForPath, sanitizedFileName);
+        filePath = `acoes-criminais/${sanitizeClientName(clientNameForPath)}_${recordId}/${uniqueFolderId}/${safeFileName}`;
       } else {
         // Default to acoesCiveis for backward compatibility
-        filePath = getFilePath.acoesCiveis(parseInt(recordId), clientNameForPath, stepFolder, sanitizedFileName);
+        filePath = `acoes-civeis/${sanitizeClientName(clientNameForPath)}_${recordId}/${stepFolder}/${uniqueFolderId}/${safeFileName}`;
       }
     }
 
@@ -209,7 +218,7 @@ export async function POST(request: NextRequest) {
     if (isTemporaryUpload) {
       return NextResponse.json({
         success: true,
-        fileName: originalName,
+        fileName: originalName, // Return exact original name
         fileUrl: publicUrl,
         filePath: filePath,
         temporary: true
@@ -225,8 +234,8 @@ export async function POST(request: NextRequest) {
         record_id: parseInt(recordId),
         client_name: finalClientName || 'Cliente Desconhecido',
         field_name: fieldName,
-        document_name: originalName,
-        file_name: originalName,
+        document_name: originalName, // Exact original name
+        file_name: originalName,     // Exact original name
         file_path: publicUrl,
         file_type: contentType,
         file_size: file.size,
@@ -234,6 +243,7 @@ export async function POST(request: NextRequest) {
       })
       .select('*')
       .single();
+
 
     if (insertError) {
       console.error('❌ Erro ao salvar metadados:', insertError);

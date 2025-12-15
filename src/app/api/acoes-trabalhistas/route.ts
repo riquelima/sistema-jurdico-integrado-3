@@ -20,6 +20,7 @@ function mapDbFieldsToFrontend(record: any) {
     resumo: record.resumo || null,
     acompanhamento: record.acompanhamento || null,
     contratado: record.contratado || null,
+    fotoNotificacaoDoc: record.foto_notificacao_doc || null,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
   };
@@ -282,8 +283,7 @@ export async function PUT(request: NextRequest) {
     if (resumo !== undefined) updateData.resumo = resumo;
     if (acompanhamento !== undefined) updateData.acompanhamento = acompanhamento;
     if (contratado !== undefined) updateData.contratado = contratado;
-
-    // Ignore current_step updates when column is absent in schema
+    if (currentStep !== undefined) updateData.current_step = currentStep;
 
     // Perform update
     const { data: updated, error } = await supabase

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Modal de Notas do Processo</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#2563eb", // Using a rich blue similar to the 'Fechar' button
+                        "background-light": "#f3f4f6", // Light gray background for the page
+                        "background-dark": "#111827", // Dark mode background
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1f2937",
+                        "card-light": "#f9fafb", // Very light gray for note cards
+                        "card-dark": "#374151",
+                        "text-primary-light": "#111827",
+                        "text-primary-dark": "#f9fafb",
+                        "text-secondary-light": "#6b7280",
+                        "text-secondary-dark": "#9ca3af",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                    },
+                    boxShadow: {
+                        'modal': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                    }
+                },
+            },
+        };
+    </script>
+<style>.custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #d1d5db;border-radius: 20px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #4b5563;}.backdrop-blur-sm {
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-body min-h-screen flex items-center justify-center p-4 antialiased transition-colors duration-200">
+<div class="fixed inset-0 bg-gray-900/40 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+<div class="bg-surface-light dark:bg-surface-dark w-full max-w-4xl rounded-xl shadow-modal flex flex-col max-h-[90vh] overflow-hidden transform transition-all duration-300">
+<div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800">
+<h2 class="text-xl font-bold text-text-primary-light dark:text-text-primary-dark tracking-tight">
+                    Notas do Processo
+                </h2>
+<button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+<span class="material-icons-round">close</span>
+</button>
+</div>
+<div class="p-6 overflow-y-auto custom-scrollbar flex-grow bg-white dark:bg-gray-800">
+<div class="space-y-4">
+<div class="bg-card-light dark:bg-card-dark border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-sm">
+<div class="text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">
+                            24/05/2024 15:30 - <span class="text-gray-900 dark:text-white font-semibold">Adriana Roder</span> (Advogada)
+                        </div>
+<p class="text-sm text-text-primary-light dark:text-text-primary-dark leading-relaxed">
+                            Entrei em contato com o cliente para solicitar o envio do comprovante de residência atualizado. Aguardando resposta.
+                        </p>
+</div>
+<div class="bg-card-light dark:bg-card-dark border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-sm">
+<div class="text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">
+                            23/05/2024 11:45 - <span class="text-gray-900 dark:text-white font-semibold">Jailda Silva</span> (Assistente)
+                        </div>
+<p class="text-sm text-text-primary-light dark:text-text-primary-dark leading-relaxed">
+                            Documentação inicial revisada. Faltam os extratos bancários e a carta de recomendação. Encaminhado e-mail para o cliente.
+                        </p>
+</div>
+<div class="bg-card-light dark:bg-card-dark border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-sm">
+<div class="text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">
+                            22/05/2024 09:00 - <span class="text-gray-900 dark:text-white font-semibold">Carlos Mendes</span> (Gerente)
+                        </div>
+<p class="text-sm text-text-primary-light dark:text-text-primary-dark leading-relaxed">
+                            Processo de visto de trabalho iniciado com base nas informações fornecidas. Prazo estimado para agendamento: 20 dias.
+                        </p>
+</div>
+<div class="bg-card-light dark:bg-card-dark border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-sm">
+<div class="text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">
+                            24/05/2024 15:45 - <span class="text-gray-900 dark:text-white font-semibold">Adriana Roder</span> (Advogada)
+                        </div>
+<p class="text-sm text-text-primary-light dark:text-text-primary-dark leading-relaxed">
+                            Entrei em contato com o cliente srutar o envio do comprovante de residência atualizado. Aguardando resposta.
+                        </p>
+</div>
+<div class="bg-card-light dark:bg-card-dark border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-sm">
+<div class="text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">
+                            22/05/2024 09:00 - <span class="text-gray-900 dark:text-white font-semibold">Carlos Mendes</span> (Gerente)
+                        </div>
+<p class="text-sm text-text-primary-light dark:text-text-primary-dark leading-relaxed">
+                            Processo de visto de trabalho iniciado com base nas informações fornecidas. Prazo estimado e-mail.
+                        </p>
+</div>
+<div class="bg-card-light dark:bg-card-dark border border-gray-200 dark:border-gray-600 rounded-lg p-4 shadow-sm opacity-50">
+<div class="text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark mb-2">
+                            23/05/2024 09:45 - <span class="text-gray-900 dark:text-white font-semibold">Jailda Silva</span> (Assistente)
+                        </div>
+<p class="text-sm text-text-primary-light dark:text-text-primary-dark leading-relaxed">
+                           Aguardando a confirmação do pagamento das taxas administrativas para prosseguir com o agendamento no consulado.
+                        </p>
+</div>
+</div>
+</div>
+<div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex justify-end items-center rounded-b-xl">
+<button class="bg-primary hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900">
+                    Fechar
+                </button>
+</div>
+</div>
+</div>
+<div class="fixed inset-0 -z-10 grid grid-cols-[250px_1fr] h-full pointer-events-none opacity-20 dark:opacity-5 blur-sm">
+<div class="bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 space-y-4">
+<div class="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-8"></div>
+<div class="h-4 w-full bg-gray-100 dark:bg-gray-600 rounded"></div>
+<div class="h-4 w-3/4 bg-gray-100 dark:bg-gray-600 rounded"></div>
+<div class="h-4 w-5/6 bg-gray-100 dark:bg-gray-600 rounded"></div>
+</div>
+<div class="bg-background-light dark:bg-background-dark p-8">
+<div class="flex justify-between mb-8">
+<div class="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
+<div class="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+</div>
+<div class="grid grid-cols-3 gap-6">
+<div class="h-32 bg-white dark:bg-gray-800 rounded shadow"></div>
+<div class="h-32 bg-white dark:bg-gray-800 rounded shadow"></div>
+<div class="h-32 bg-white dark:bg-gray-800 rounded shadow"></div>
+</div>
+</div>
+</div>
+
+</body></html>

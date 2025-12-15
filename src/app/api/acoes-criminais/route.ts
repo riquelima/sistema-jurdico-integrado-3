@@ -128,9 +128,7 @@ export async function POST(request: NextRequest) {
       status: status || 'Em andamento',
     };
 
-    if (notes !== undefined) {
-      insertData.notes = notes;
-    }
+    if (notes !== undefined) insertData.notes = notes;
 
     const { data: newRecord, error } = await supabase
       .from('acoes_criminais')
@@ -208,9 +206,7 @@ export async function PUT(request: NextRequest) {
       updateData.status = status;
     }
 
-    if (notes !== undefined) {
-      updateData.notes = notes;
-    }
+    if (notes !== undefined) updateData.notes = notes;
 
     // Perform update
     const { data: updated, error } = await supabase

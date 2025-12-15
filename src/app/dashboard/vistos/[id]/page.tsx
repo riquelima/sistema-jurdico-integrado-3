@@ -26,7 +26,8 @@ import {
   AlertCircle,
   ChevronRight,
   X,
-  Plus
+  Plus,
+  Mail
 } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,9 +40,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -49,11 +52,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import "react-day-picker/dist/style.css";
 import { DetailLayout } from "@/components/detail/DetailLayout";
-import { StepItem } from "@/components/detail/StepItem";
 import { StatusPanel } from "@/components/detail/StatusPanel";
-import { DocumentPanel } from "@/components/detail/DocumentPanel";
-import { NotesPanel } from "@/components/detail/NotesPanel";
+import { formatDateBR } from "@/lib/date";
+import { subscribeTable, unsubscribe } from "@/lib/realtime";
 
 // Definindo os workflows para Vistos
 const WORKFLOWS = {
@@ -156,6 +161,41 @@ export default function VistoDetailsPage() {
   const [fileUploads, setFileUploads] = useState<{ [key: string]: File | null }>({});
   const [assignments, setAssignments] = useState<Record<number, { responsibleName?: string; dueDate?: string }>>({});
   const [saveMessages, setSaveMessages] = useState<{ [key: number]: string }>({});
+  const [assignOpenStep, setAssignOpenStep] = useState<number | null>(null);
+  const [assignResp, setAssignResp] = useState<string>("");
+  const [assignDue, setAssignDue] = useState<string>("");
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const parseNotesArray = (notesStr?: string) => {
+    try {
+      const v = (notesStr || '').trim();
+      if (!v) return [] as Array<{ id: string; stepId?: number; content: string; timestamp: string }>;
+      const arr = JSON.parse(v);
+      if (Array.isArray(arr)) return arr as any;
+      return [] as any;
+    } catch { return [] as any; }
+  };
+  const notesArray = parseNotesArray(visto?.notes);
+  const deleteNote = async (noteId: string) => {
+    const next = (notesArray || []).filter((n) => n.id !== noteId);
+    try {
+      await fetch(`/api/vistos?id=${params.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: JSON.stringify(next) })
+      });
+      setVisto((prev: any) => ({ ...(prev || {}), notes: JSON.stringify(next) }));
+      setCaseData((prev) => prev ? { ...prev, updatedAt: new Date().toISOString() } : prev);
+      console.log('Nota excluída', { noteId });
+    } catch (e) { console.error('Erro ao excluir nota:', e); }
+  };
+  const RESPONSAVEIS = [
+    "Secretária – Jessica Cavallaro",
+    "Advogada – Jailda Silva",
+    "Advogada – Adriana Roder",
+    "Advogado – Fábio Ferrari",
+    "Advogado – Guilherme Augusto",
+    "Estagiário – Wendel Macriani",
+  ];
 
   useEffect(() => {
     if (params.id) {
@@ -175,6 +215,41 @@ export default function VistoDetailsPage() {
         }
       };
       loadAssignments();
+
+      const idNum = Number(params.id);
+      const chVistos = subscribeTable({
+        channelName: `rt-vistos-${idNum}`,
+        table: 'vistos',
+        events: ['update'],
+        filter: `id=eq.${idNum}`,
+        onChange: (payload) => {
+          const next = payload?.new;
+          if (next && next.id === idNum) {
+            setVisto((prev: any) => ({ ...(prev || {}), ...next }));
+            setCaseData((prev) => prev ? { ...prev, ...(next || {}) } : prev);
+          }
+        }
+      });
+      const chDocsInsert = subscribeTable({
+        channelName: `rt-docs-insert-${idNum}`,
+        table: 'documents',
+        events: ['insert'],
+        filter: `record_id=eq.${idNum}`,
+        onChange: () => { fetchDocuments(); }
+      });
+      const chDocsDelete = subscribeTable({
+        channelName: `rt-docs-delete-${idNum}`,
+        table: 'documents',
+        events: ['delete'],
+        filter: `record_id=eq.${idNum}`,
+        onChange: () => { fetchDocuments(); }
+      });
+
+      return () => {
+        unsubscribe(chVistos);
+        unsubscribe(chDocsInsert);
+        unsubscribe(chDocsDelete);
+      };
     }
   }, [params.id]);
 
@@ -383,17 +458,29 @@ export default function VistoDetailsPage() {
     const list = (documents || []).filter((d: any) => (d.field_name || d.fieldName) === fieldKey);
     if (!list.length) return null as any;
     return (
-      <div className="mt-2">
-        <div className="text-sm"><span className="font-medium">Documento anexado:</span></div>
-        <ul className="list-disc pl-5">
-          {list.map((doc: any) => (
-            <li key={String(doc.id)}>
-              <a href={doc.file_path || doc.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                {doc.document_name || doc.name || doc.file_name || 'Documento'}
-              </a>
-            </li>
-          ))}
-        </ul>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {list.map((doc: any) => (
+          <div key={String(doc.id)} className="group relative w-8 h-8">
+            <a
+              href={doc.file_path || doc.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={doc.document_name || doc.name || doc.file_name || 'Documento'}
+              className="block w-full h-full rounded-md border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50"
+            >
+              <FileText className="h-4 w-4 text-blue-600" />
+            </a>
+            <button
+              type="button"
+              aria-label="Excluir"
+              title="Excluir"
+              className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition bg-white border border-gray-300 rounded-full p-0.5 shadow"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteDocument(doc as any); }}
+            >
+              <X className="h-3 w-3 text-gray-600" />
+            </button>
+          </div>
+        ))}
       </div>
     );
   };
@@ -440,18 +527,26 @@ export default function VistoDetailsPage() {
     if (!caseData) return;
     setCaseData(prev => {
       if (!prev) return prev;
-      const updatedSteps = prev.steps.map(step => 
-        step.id === stepId 
-          ? { 
-              ...step, 
-              completed: !step.completed,
-              completedAt: !step.completed ? new Date().toISOString() : undefined
-            }
-          : step
-      );
-      const completedCount = updatedSteps.filter(s => s.completed).length;
-      const newCurrent = Math.min(completedCount, updatedSteps.length - 1);
+      const isCurrentlyCompleted = prev.steps.find(s => s.id === stepId)?.completed;
+      const updatedSteps = prev.steps.map(step => {
+        if (isCurrentlyCompleted) {
+          // Desfazer conclusão a partir desta etapa: manter prefixo concluído
+          if (step.id >= stepId) {
+            return { ...step, completed: false, completedAt: undefined };
+          }
+          return step;
+        } else {
+          // Concluir etapa e todas anteriores para garantir continuidade
+          if (step.id <= stepId) {
+            return { ...step, completed: true, completedAt: step.completed ? step.completedAt : new Date().toISOString() };
+          }
+          return step;
+        }
+      });
       const completedStepsArr = updatedSteps.filter(s => s.completed).map(s => s.id);
+      const newCurrent = isCurrentlyCompleted 
+        ? Math.min(stepId, updatedSteps.length - 1)
+        : Math.min(stepId + 1, updatedSteps.length - 1);
       (async () => {
         try {
           await fetch(`/api/vistos?id=${params.id}`, {
@@ -459,6 +554,7 @@ export default function VistoDetailsPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ currentStep: newCurrent, completedSteps: completedStepsArr })
           });
+          setCaseData((prev2) => prev2 ? { ...prev2, updatedAt: new Date().toISOString() } : prev2);
           try {
             await fetch(`/api/step-assignments`, {
               method: 'POST',
@@ -484,7 +580,10 @@ export default function VistoDetailsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stepData: next })
       });
-      if (res.ok) setSaveMessages(prev => ({ ...prev, [stepId]: 'Salvo' }));
+      if (res.ok) {
+        setSaveMessages(prev => ({ ...prev, [stepId]: 'Salvo' }));
+        setCaseData((prev) => prev ? { ...prev, updatedAt: new Date().toISOString() } : prev);
+      }
     } catch (e) {
       console.error('Erro ao salvar stepData:', e);
     }
@@ -501,6 +600,7 @@ export default function VistoDetailsPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ notes: `${block}` })
         });
+        setCaseData((prev) => prev ? { ...prev, updatedAt: new Date().toISOString() } : prev);
       } catch (e) {
         console.error('Erro ao persistir dados da etapa:', e);
       }
@@ -516,6 +616,7 @@ export default function VistoDetailsPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
+        setCaseData((prev) => prev ? { ...prev, updatedAt: new Date().toISOString() } : prev);
       }
     } catch (e) {
       console.error('Erro ao atualizar statusFinal do registro:', e);
@@ -523,17 +624,29 @@ export default function VistoDetailsPage() {
   };
 
   const saveStepNotes = async (stepId: number) => {
-    const typeKey = (caseData?.type || 'Visto de Trabalho') as VistoType;
-    const stepTitle = (WORKFLOWS[typeKey] || [])[stepId] || `Etapa ${stepId + 1}`;
-    const text = notes[stepId] || '';
-    const block = `\n[${stepTitle}]\n${text.trim()}\n`;
+    const text = (notes[stepId] || '').trim();
+    if (!text) return;
+    const iso = new Date().toISOString();
+    const id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const arr = parseNotesArray(visto?.notes);
+    const assigned = assignments[stepId] || assignments[currentStepIndex] || {};
+    const assignedName = assigned.responsibleName || '';
+    const suggestion = RESPONSAVEIS.find((r) => r.includes(assignedName || '')) || '';
+    const role = suggestion ? suggestion.split(' – ')[0] : '';
+    const next = [...arr, { id, stepId, content: text, timestamp: iso, authorName: assignedName || 'Equipe', authorRole: role }];
     try {
       const res = await fetch(`/api/vistos?id=${params.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes: `${block}` })
+        body: JSON.stringify({ notes: JSON.stringify(next) })
       });
-      if (res.ok) setSaveMessages(prev => ({ ...prev, [stepId]: 'Salvo' }));
+      if (res.ok) {
+        setSaveMessages(prev => ({ ...prev, [stepId]: 'Salvo' }));
+        setCaseData((prev) => prev ? { ...prev, updatedAt: new Date().toISOString() } : prev);
+        setVisto((prev: any) => ({ ...(prev || {}), notes: JSON.stringify(next) }));
+        setNotes((prev) => ({ ...prev, [stepId]: '' }));
+        console.log('Nota salva', { id, stepId, authorName: assignedName || 'Equipe', timestamp: iso });
+      }
     } catch (error) {
       console.error('Erro ao salvar notas da etapa:', error);
     }
@@ -547,6 +660,7 @@ export default function VistoDetailsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
       });
+      setCaseData((prev) => prev ? { ...prev, updatedAt: new Date().toISOString() } : prev);
     } catch (e) {
       console.error('Erro ao atualizar status:', e);
     }
@@ -563,6 +677,7 @@ export default function VistoDetailsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [field]: value })
       });
+      setCaseData((prev) => prev ? { ...prev, updatedAt: new Date().toISOString() } : prev);
     } catch (e) {
       console.error('Erro ao atualizar campo do visto:', e);
     }
@@ -577,6 +692,7 @@ export default function VistoDetailsPage() {
       });
       if (res.ok) {
         setAssignments(prev => ({ ...prev, [index]: { responsibleName, dueDate } }));
+        setCaseData((prev) => prev ? { ...prev, updatedAt: new Date().toISOString() } : prev);
         const typeKey = (caseData?.type || "Visto de Trabalho") as VistoType;
         const stepTitle = (caseData?.steps?.[index]?.title) || ((WORKFLOWS[typeKey] || [])[index]) || `Etapa ${index + 1}`;
         const dueBR = dueDate ? (() => { const [y, m, d] = dueDate.split("-"); return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`; })() : "—";
@@ -653,7 +769,7 @@ export default function VistoDetailsPage() {
                 />
               ) : (
                 hideReadView ? null : (
-                  <div className="text-sm">
+                  <div className="text-xs leading-snug">
                     <span className="font-medium">{label}:</span> {String((visto || {})[fieldKey] || '') || '-'}
                   </div>
                 )
@@ -669,7 +785,7 @@ export default function VistoDetailsPage() {
                   </Button>
                 </div>
               ) : (
-                <div className="text-sm">
+                <div className="text-xs leading-snug">
                   <span className="font-medium">{label}:</span> {((documents || []) as any[]).some((d: any) => (d.field_name || d.fieldName) === docKey) ? 'Anexado' : '-'}
                 </div>
               )
@@ -702,7 +818,7 @@ export default function VistoDetailsPage() {
         const isTurismo = t.includes('turismo');
 
         return (
-          <div className="space-y-6">
+          <div className="space-y-3">
             <div className="flex items-center justify-end">
               {isEditingDocuments ? (
                 <div className="flex items-center gap-2">
@@ -716,14 +832,16 @@ export default function VistoDetailsPage() {
                 </div>
               ) : null}
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <h4 className="font-semibold text-lg">Dados do Cliente</h4>
+                <h4 className="font-semibold text-base">Dados do Cliente</h4>
                 {!isEditingDocuments ? (
-                  <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setIsEditingDocuments(true)}>Editar</Button>
+                  <Button size="icon" variant="outline" className="h-7 w-7 p-0" onClick={() => setIsEditingDocuments(true)}>
+                    <Edit className="w-4 h-4" />
+                  </Button>
                 ) : null}
               </div>
-              <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+              <div className="grid gap-3 md:grid-cols-2 p-3 bg-white border rounded-lg shadow-xs">
                 <div className="space-y-2">
                   {isEditingDocuments ? (<Label htmlFor={`clientName-${stepId}`}>Nome do Cliente</Label>) : null}
                   {isEditingDocuments ? (
@@ -734,7 +852,7 @@ export default function VistoDetailsPage() {
                       placeholder="Nome completo"
                     />
                   ) : (
-                    <div className="text-sm"><span className="font-medium">Nome do Cliente:</span> {String(caseData?.clientName || visto?.clientName || (visto as any)?.client_name || '-')}</div>
+                    <div className="text-xs"><span className="font-medium">Nome do Cliente:</span> {String(caseData?.clientName || visto?.clientName || (visto as any)?.client_name || '-')}</div>
                   )}
                 </div>
 
@@ -756,7 +874,7 @@ export default function VistoDetailsPage() {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <div className="text-sm"><span className="font-medium">Tipo do Visto:</span> {String(visto?.type || caseData?.type || '-')}</div>
+                    <div className="text-xs"><span className="font-medium">Tipo do Visto:</span> {String(visto?.type || caseData?.type || '-')}</div>
                   )}
                 </div>
 
@@ -789,7 +907,7 @@ export default function VistoDetailsPage() {
                     </SelectContent>
                   </Select>
                   ) : (
-                    <div className="text-sm"><span className="font-medium">Status Final:</span> {String((visto as any)?.statusFinal || '-')}</div>
+                    <div className="text-xs"><span className="font-medium">Status Final:</span> {String((visto as any)?.statusFinal || '-')}</div>
                   )}
                 </div>
 
@@ -804,7 +922,7 @@ export default function VistoDetailsPage() {
                         onChange={(e) => handleVistoFieldChange('travelStartDate', e.target.value)}
                       />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Data Inicial da Viagem:</span> {String((visto as any)?.travelStartDate || '-')}</div>
+                      <div className="text-xs"><span className="font-medium">Data Inicial da Viagem:</span> {formatDateBR((visto as any)?.travelStartDate)}</div>
                     )}
                   </div>
                 ) : null}
@@ -820,21 +938,23 @@ export default function VistoDetailsPage() {
                         onChange={(e) => handleVistoFieldChange('travelEndDate', e.target.value)}
                       />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Data Final da Viagem:</span> {String((visto as any)?.travelEndDate || '-')}</div>
+                      <div className="text-xs"><span className="font-medium">Data Final da Viagem:</span> {formatDateBR((visto as any)?.travelEndDate)}</div>
                     )}
                   </div>
                 ) : null}
               </div>
             </div>
             {!showBrasil ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-semibold text-lg">Documentos Pessoais</h4>
+                  <h4 className="font-semibold text-base">Documentos Pessoais</h4>
                   {!isEditingDocuments ? (
-                    <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setIsEditingDocuments(true)}>Editar</Button>
+                    <Button size="icon" variant="outline" className="h-7 w-7 p-0" onClick={() => setIsEditingDocuments(true)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
                   ) : null}
                 </div>
-                <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                <div className="grid gap-3 md:grid-cols-2 p-3 bg-white border rounded-lg shadow-xs">
                   <div className="space-y-2">
                     {isEditingDocuments ? (<Label htmlFor={`country-${stepId}`}>País do Visto</Label>) : null}
                     {isEditingDocuments ? (
@@ -870,7 +990,7 @@ export default function VistoDetailsPage() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <div className="text-sm"><span className="font-medium">País do Visto:</span> {String(visto?.country || '') || '-'}</div>
+                      <div className="text-xs"><span className="font-medium">País do Visto:</span> {String(visto?.country || '') || '-'}</div>
                     )}
                   </div>
                   <div className="space-y-2">
@@ -883,7 +1003,7 @@ export default function VistoDetailsPage() {
                         placeholder="000.000.000-00"
                       />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">CPF:</span> {String(visto?.cpf || '') || '-'}</div>
+                      <div className="text-xs"><span className="font-medium">CPF:</span> {String(visto?.cpf || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -901,7 +1021,7 @@ export default function VistoDetailsPage() {
                     {isEditingDocuments ? (
                       <Input id={`rnm-${stepId}`} value={visto?.rnm || ""} onChange={(e) => handleVistoFieldChange('rnm', e.target.value)} placeholder="Número RNM" />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">RNM:</span> {String(visto?.rnm || '') || '-'}</div>
+                      <div className="text-xs"><span className="font-medium">RNM:</span> {String(visto?.rnm || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -919,7 +1039,7 @@ export default function VistoDetailsPage() {
                     {isEditingDocuments ? (
                       <Input id={`passaporte-${stepId}`} value={visto?.passaporte || ""} onChange={(e) => handleVistoFieldChange('passaporte', e.target.value)} placeholder="Número do passaporte" />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Passaporte:</span> {String(visto?.passaporte || '') || '-'}</div>
+                      <div className="text-xs"><span className="font-medium">Passaporte:</span> {String(visto?.passaporte || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -937,7 +1057,7 @@ export default function VistoDetailsPage() {
                     {isEditingDocuments ? (
                       <Input id={`comprovanteEndereco-${stepId}`} value={visto?.comprovanteEndereco || ""} onChange={(e) => handleVistoFieldChange('comprovanteEndereco', e.target.value)} placeholder="Informe endereço / declaração" />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Comprovante de Endereço:</span> {String(visto?.comprovanteEndereco || '') || '-'}</div>
+                      <div className="text-xs"><span className="font-medium">Comprovante de Endereço:</span> {String(visto?.comprovanteEndereco || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -968,7 +1088,7 @@ export default function VistoDetailsPage() {
                     {isEditingDocuments ? (
                       <Input id={`documentoChines-${stepId}`} value={visto?.documentoChines || ""} onChange={(e) => handleVistoFieldChange('documentoChines', e.target.value)} placeholder="Descrição do documento" />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Documento Chinês (quando aplicável):</span> {String(visto?.documentoChines || '') || '-'}</div>
+                      <div className="text-xs"><span className="font-medium">Documento Chinês (quando aplicável):</span> {String(visto?.documentoChines || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -987,7 +1107,7 @@ export default function VistoDetailsPage() {
                       {isEditingDocuments ? (
                         <Input id={`antecedentesCriminais-${stepId}`} value={visto?.antecedentesCriminais || ""} onChange={(e) => handleVistoFieldChange('antecedentesCriminais', e.target.value)} placeholder="Número/Status" />
                       ) : (
-                        <div className="text-sm"><span className="font-medium">Antecedentes Criminais:</span> {String(visto?.antecedentesCriminais || '') || '-'}</div>
+                        <div className="text-xs"><span className="font-medium">Antecedentes Criminais:</span> {String(visto?.antecedentesCriminais || '') || '-'}</div>
                       )}
                       {isEditingDocuments ? (
                         <div className="flex items-center gap-2">
@@ -1006,20 +1126,22 @@ export default function VistoDetailsPage() {
             ) : null}
 
             {!showBrasil ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-semibold text-lg">Comprovação Financeira PF</h4>
+                  <h4 className="font-semibold text-base">Comprovação Financeira PF</h4>
                   {!isEditingDocuments ? (
-                    <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setIsEditingDocuments(true)}>Editar</Button>
+                    <Button size="icon" variant="outline" className="h-7 w-7 p-0" onClick={() => setIsEditingDocuments(true)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
                   ) : null}
                 </div>
-                <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                <div className="grid gap-3 md:grid-cols-2 p-3 bg-white border rounded-lg shadow-xs">
                   <div className="space-y-2">
                     {isEditingDocuments ? (<Label htmlFor={`certidaoNascimentoFilhos-${stepId}`}>Filhos (Certidão de Nascimento)</Label>) : null}
                     {isEditingDocuments ? (
                       <Input id={`certidaoNascimentoFilhos-${stepId}`} value={visto?.certidaoNascimentoFilhos || ""} onChange={(e) => handleVistoFieldChange('certidaoNascimentoFilhos', e.target.value)} placeholder="Informações" />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Filhos (Certidão de Nascimento):</span> {String(visto?.certidaoNascimentoFilhos || '') || '-'}</div>
+                      <div className="text-xs"><span className="font-medium">Filhos (Certidão de Nascimento):</span> {String(visto?.certidaoNascimentoFilhos || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -1037,7 +1159,7 @@ export default function VistoDetailsPage() {
                     {isEditingDocuments ? (
                       <Input id={`cartaoCnpj-${stepId}`} value={visto?.cartaoCnpj || ""} onChange={(e) => handleVistoFieldChange('cartaoCnpj', e.target.value)} placeholder="CNPJ" />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Empresa: Cartão CNPJ:</span> {String(visto?.cartaoCnpj || '') || '-'}</div>
+                      <div className="text-xs"><span className="font-medium">Empresa: Cartão CNPJ:</span> {String(visto?.cartaoCnpj || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -1055,7 +1177,7 @@ export default function VistoDetailsPage() {
                     {isEditingDocuments ? (
                       <Input id={`contratoEmpresa-${stepId}`} value={visto?.contratoEmpresa || ""} onChange={(e) => handleVistoFieldChange('contratoEmpresa', e.target.value)} placeholder="Contrato Social" />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Contrato Social:</span> {String(visto?.contratoEmpresa || '') || '-'}</div>
+                      <div className="text-xs leading-snug"><span className="font-medium">Contrato Social:</span> {String(visto?.contratoEmpresa || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -1073,7 +1195,7 @@ export default function VistoDetailsPage() {
                     {isEditingDocuments ? (
                       <Input id={`escrituraImoveis-${stepId}`} value={visto?.escrituraImoveis || ""} onChange={(e) => handleVistoFieldChange('escrituraImoveis', e.target.value)} placeholder="Imóveis" />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Imóveis (Escritura/Matrícula):</span> {String(visto?.escrituraImoveis || '') || '-'}</div>
+                      <div className="text-xs leading-snug"><span className="font-medium">Imóveis (Escritura/Matrícula):</span> {String(visto?.escrituraImoveis || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -1091,7 +1213,7 @@ export default function VistoDetailsPage() {
                     {isEditingDocuments ? (
                       <Input id={`extratosBancarios-${stepId}`} value={visto?.extratosBancarios || ""} onChange={(e) => handleVistoFieldChange('extratosBancarios', e.target.value)} placeholder="Extratos" />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Últimos 3 extratos bancários:</span> {String(visto?.extratosBancarios || '') || '-'}</div>
+                      <div className="text-xs leading-snug"><span className="font-medium">Últimos 3 extratos bancários:</span> {String(visto?.extratosBancarios || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -1109,7 +1231,7 @@ export default function VistoDetailsPage() {
                     {isEditingDocuments ? (
                       <Input id={`impostoRenda-${stepId}`} value={visto?.impostoRenda || ""} onChange={(e) => handleVistoFieldChange('impostoRenda', e.target.value)} placeholder="IR" />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Imposto de Renda:</span> {String(visto?.impostoRenda || '') || '-'}</div>
+                      <div className="text-xs leading-snug"><span className="font-medium">Imposto de Renda:</span> {String(visto?.impostoRenda || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -1129,18 +1251,20 @@ export default function VistoDetailsPage() {
             {isTurismo ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-semibold text-lg">Outros Documentos</h4>
+                  <h4 className="font-semibold text-base">Outros Documentos</h4>
                   {!isEditingDocuments ? (
-                    <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setIsEditingDocuments(true)}>Editar</Button>
+                    <Button size="icon" variant="outline" className="h-7 w-7 p-0" onClick={() => setIsEditingDocuments(true)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
                   ) : null}
                 </div>
-                <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                <div className="grid gap-3 md:grid-cols-2 p-3 bg-white border rounded-lg shadow-xs">
                   <div className="space-y-2">
                     {isEditingDocuments ? (<Label htmlFor={`reservasPassagens-${stepId}`}>Reservas de Passagens</Label>) : null}
                     {isEditingDocuments ? (
                       <Input id={`reservasPassagens-${stepId}`} value={visto?.reservasPassagens || ""} onChange={(e) => handleVistoFieldChange('reservasPassagens', e.target.value)} placeholder="Detalhes" />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Reservas de Passagens:</span> {String(visto?.reservasPassagens || '') || '-'}</div>
+                      <div className="text-xs"><span className="font-medium">Reservas de Passagens:</span> {String(visto?.reservasPassagens || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -1158,7 +1282,7 @@ export default function VistoDetailsPage() {
                     {isEditingDocuments ? (
                       <Input id={`reservasHotel-${stepId}`} value={visto?.reservasHotel || ""} onChange={(e) => handleVistoFieldChange('reservasHotel', e.target.value)} placeholder="Detalhes" />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Reservas de Hotel:</span> {String(visto?.reservasHotel || '') || '-'}</div>
+                      <div className="text-xs"><span className="font-medium">Reservas de Hotel:</span> {String(visto?.reservasHotel || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -1176,7 +1300,7 @@ export default function VistoDetailsPage() {
                     {isEditingDocuments ? (
                       <Input id={`seguroViagem-${stepId}`} value={visto?.seguroViagem || ""} onChange={(e) => handleVistoFieldChange('seguroViagem', e.target.value)} placeholder="Detalhes" />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Seguro Viagem:</span> {String(visto?.seguroViagem || '') || '-'}</div>
+                      <div className="text-xs"><span className="font-medium">Seguro Viagem:</span> {String(visto?.seguroViagem || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -1194,7 +1318,7 @@ export default function VistoDetailsPage() {
                     {isEditingDocuments ? (
                       <Input id={`roteiroViagem-${stepId}`} value={visto?.roteiroViagem || ""} onChange={(e) => handleVistoFieldChange('roteiroViagem', e.target.value)} placeholder="Detalhes" />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Roteiro de Viagem Detalhado:</span> {String(visto?.roteiroViagem || '') || '-'}</div>
+                      <div className="text-xs"><span className="font-medium">Roteiro de Viagem Detalhado:</span> {String(visto?.roteiroViagem || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -1212,7 +1336,7 @@ export default function VistoDetailsPage() {
                     {isEditingDocuments ? (
                       <Input id={`taxa-${stepId}`} value={visto?.taxa || ""} onChange={(e) => handleVistoFieldChange('taxa', e.target.value)} placeholder="Valor/Status" />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Taxa Consular:</span> {String(visto?.taxa || '') || '-'}</div>
+                      <div className="text-xs"><span className="font-medium">Taxa Consular:</span> {String(visto?.taxa || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -1230,7 +1354,7 @@ export default function VistoDetailsPage() {
                     {isEditingDocuments ? (
                       <Input id={`formularioConsulado-${stepId}`} value={visto?.formularioConsulado || ""} onChange={(e) => handleVistoFieldChange('formularioConsulado', e.target.value)} placeholder="Detalhes" />
                     ) : (
-                      <div className="text-sm"><span className="font-medium">Formulário do Consulado preenchido:</span> {String(visto?.formularioConsulado || '') || '-'}</div>
+                      <div className="text-xs"><span className="font-medium">Formulário do Consulado preenchido:</span> {String(visto?.formularioConsulado || '') || '-'}</div>
                     )}
                     {isEditingDocuments ? (
                       <div className="flex items-center gap-2">
@@ -1248,15 +1372,17 @@ export default function VistoDetailsPage() {
             ) : null}
 
             {showBrasil ? (
-              <div className="space-y-8 mt-8">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-lg">Identificação</h4>
-                    {!isEditingDocuments ? (
-                      <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setIsEditingDocuments(true)}>Editar</Button>
-                    ) : null}
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+              <div className="space-y-6 mt-8">
+                <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold text-base">Identificação</h4>
+                  {!isEditingDocuments ? (
+                    <Button size="icon" variant="outline" className="h-7 w-7 p-0" onClick={() => setIsEditingDocuments(true)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  ) : null}
+                </div>
+                  <div className="grid gap-3 md:grid-cols-2 p-3 bg-white border rounded-lg shadow-xs">
                     {renderField('Passaporte', 'passaporte', 'passaporteDoc', true)}
                     {renderField('Certidão de Nascimento', 'certidaoNascimento', 'certidaoNascimentoDoc', true)}
                     {renderField('Declaração de Compreensão', 'declaracaoCompreensao', 'declaracaoCompreensaoDoc', true)}
@@ -1264,13 +1390,15 @@ export default function VistoDetailsPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-lg">Documentos da Empresa</h4>
-                    {!isEditingDocuments ? (
-                      <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setIsEditingDocuments(true)}>Editar</Button>
-                    ) : null}
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold text-base">Documentos da Empresa</h4>
+                  {!isEditingDocuments ? (
+                    <Button size="icon" variant="outline" className="h-7 w-7 p-0" onClick={() => setIsEditingDocuments(true)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  ) : null}
+                </div>
+                  <div className="grid gap-3 md:grid-cols-2 p-3 bg-white border rounded-lg shadow-xs">
                     {renderField('Contrato Social', 'contratoEmpresa', 'contratoEmpresaDoc', true)}
                     {renderField('CNPJ', 'cartaoCnpj', 'cartaoCnpjDoc', true)}
                     {renderField('Declarações da Empresa', 'declaracoesEmpresa', 'declaracoesEmpresaDoc', true)}
@@ -1282,13 +1410,15 @@ export default function VistoDetailsPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-lg">Documentos Trabalhistas</h4>
-                    {!isEditingDocuments ? (
-                      <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setIsEditingDocuments(true)}>Editar</Button>
-                    ) : null}
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold text-base">Documentos Trabalhistas</h4>
+                  {!isEditingDocuments ? (
+                    <Button size="icon" variant="outline" className="h-7 w-7 p-0" onClick={() => setIsEditingDocuments(true)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  ) : null}
+                </div>
+                  <div className="grid gap-3 md:grid-cols-2 p-3 bg-white border rounded-lg shadow-xs">
                     {renderField('Contrato de trabalho', 'contratoTrabalho', 'contratoTrabalhoDoc', true)}
                     {renderField('Folha de pagamento (últimas)', 'folhaPagamento', 'folhaPagamentoDoc', true)}
                     {renderField('Comprovante de vínculo anterior (se houver)', 'comprovanteVinculoAnterior', 'comprovanteVinculoAnteriorDoc', true)}
@@ -1296,26 +1426,30 @@ export default function VistoDetailsPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-lg">Histórico e Segurança</h4>
-                    {!isEditingDocuments ? (
-                      <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setIsEditingDocuments(true)}>Editar</Button>
-                    ) : null}
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold text-base">Histórico e Segurança</h4>
+                  {!isEditingDocuments ? (
+                    <Button size="icon" variant="outline" className="h-7 w-7 p-0" onClick={() => setIsEditingDocuments(true)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  ) : null}
+                </div>
+                  <div className="grid gap-3 md:grid-cols-2 p-3 bg-white border rounded-lg shadow-xs">
                     {renderField('Antecedentes Criminais', 'antecedentesCriminais', 'antecedentesCriminaisDoc', true)}
                     {renderField('Declaração de Antecedentes Criminais', 'declaracaoAntecedentesCriminais', 'declaracaoAntecedentesCriminaisDoc', true)}
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-lg">Formação Acadêmica</h4>
-                    {!isEditingDocuments ? (
-                      <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setIsEditingDocuments(true)}>Editar</Button>
-                    ) : null}
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold text-base">Formação Acadêmica</h4>
+                  {!isEditingDocuments ? (
+                    <Button size="icon" variant="outline" className="h-7 w-7 p-0" onClick={() => setIsEditingDocuments(true)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  ) : null}
+                </div>
+                  <div className="grid gap-3 md:grid-cols-2 p-3 bg-white border rounded-lg shadow-xs">
                     {renderField('Diploma', 'diploma', 'diplomaDoc', true)}
                   </div>
                 </div>
@@ -1325,12 +1459,14 @@ export default function VistoDetailsPage() {
               {showResidenciaPrevia ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-semibold text-lg">Residência Prévia</h4>
+                  <h4 className="font-semibold text-base">Residência Prévia</h4>
                   {!isEditingDocuments ? (
-                    <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setIsEditingDocuments(true)}>Editar</Button>
+                    <Button size="icon" variant="outline" className="h-7 w-7 p-0" onClick={() => setIsEditingDocuments(true)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
                   ) : null}
                 </div>
-                <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
+                <div className="grid gap-3 md:grid-cols-2 p-3 bg-white border rounded-lg shadow-xs">
                   {renderField('Formulário RN02', 'formularioRn02', 'formularioRn02Doc')}
                   {renderField('Comprovante Residência Prévia', 'comprovanteResidenciaPrevia', 'comprovanteResidenciaPreviaDoc')}
                   {renderField('Comprovante de Atividade', 'comprovanteAtividade', 'comprovanteAtividadeDoc')}
@@ -1341,9 +1477,11 @@ export default function VistoDetailsPage() {
               {showInvestidor ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-semibold text-lg">Investidor</h4>
+                  <h4 className="font-semibold text-base">Investidor</h4>
                   {!isEditingDocuments ? (
-                    <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setIsEditingDocuments(true)}>Editar</Button>
+                    <Button size="icon" variant="outline" className="h-7 w-7 p-0" onClick={() => setIsEditingDocuments(true)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
                   ) : null}
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
@@ -1358,9 +1496,11 @@ export default function VistoDetailsPage() {
             {(showTrabalhistas || showMudancaEmpregador) ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <h4 className="font-semibold text-lg">Trabalhistas</h4>
+                  <h4 className="font-semibold text-base">Trabalhistas</h4>
                   {!isEditingDocuments ? (
-                    <Button size="sm" variant="outline" className="h-7 px-2" onClick={() => setIsEditingDocuments(true)}>Editar</Button>
+                    <Button size="icon" variant="outline" className="h-7 w-7 p-0" onClick={() => setIsEditingDocuments(true)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
                   ) : null}
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 p-4 bg-muted rounded-lg">
@@ -1418,13 +1558,7 @@ export default function VistoDetailsPage() {
               </div>
             ) : null}
 
-            <Button onClick={() => saveStepData(stepId, currentStepData)} className="w-full">
-              <Save className="w-4 h-4 mr-2" />
-              Salvar Anotações da Etapa
-            </Button>
-            {saveMessages[stepId] ? (
-              <div className="text-green-600 text-sm mt-2">{saveMessages[stepId]}</div>
-            ) : null}
+            
           </div>
         );
 
@@ -1504,8 +1638,8 @@ export default function VistoDetailsPage() {
 
       case 1: // Agendar no Consulado
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-white border rounded-lg shadow-xs p-3">
               <div>
                 <Label htmlFor={`data-agendamento-${stepId}`}>Data do Agendamento</Label>
                 <Input
@@ -1882,11 +2016,11 @@ export default function VistoDetailsPage() {
   if (loading) {
     return (
       <div className="w-full p-6 space-y-6">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <Skeleton className="h-10 w-10" />
           <Skeleton className="h-8 w-64" />
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 space-y-4">
             {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-32 w-full" />
@@ -1936,80 +2070,385 @@ export default function VistoDetailsPage() {
   const currentStepIndex = getCurrentStepIndex();
 
   return (
-    <div className="w-full p-6 space-y-6">
-      <DetailLayout
-        backHref="/dashboard/vistos"
-        title={caseData.clientName}
-        subtitle={(visto?.type || caseData.type || '').replace(/:/g, ' - ')}
-        onDelete={handleDeleteCase}
-        left={
-          <div className="space-y-6">
-            {showWorkflow && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Fluxo do Processo
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {caseData.steps.map((step, index) => (
-                    <StepItem
-                      key={step.id}
-                      index={index}
-                      title={step.title}
-                      isCurrent={index === currentStepIndex}
-                      isCompleted={step.completed}
-                      isPending={index > currentStepIndex}
-                      expanded={expandedSteps[step.id] || false}
-                      onToggle={() => toggleStepExpansion(step.id)}
-                      onMarkComplete={() => handleStepCompletion(step.id)}
-                      onMarkIncomplete={() => handleStepCompletion(step.id)}
-                      assignment={assignments[index]}
-                      onSaveAssignment={(a) => handleSaveAssignment(index, a.responsibleName, a.dueDate)}
-                    >
-                      {renderStepContent(step)}
-                    </StepItem>
-                  ))}
-                </CardContent>
-              </Card>
+    <div className="w-full p-4 space-y-6 bg-gray-50">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Link href="/dashboard/vistos">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold">{caseData.clientName}</h1>
+            <p className="text-muted-foreground">{(visto?.type || caseData.type || '').replace(/:/g, ' - ')}</p>
+          </div>
+        </div>
+        <div className="flex-shrink-0">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700">
+                <Trash2 className="h-4 w-4 mr-2 text-red-600" />
+                Excluir
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tem certeza que deseja excluir esta ação? Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteCase} className="bg-white text-red-600 border border-red-500 hover:bg-red-50 hover:text-red-700">
+                  Excluir
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          {showWorkflow && (
+            <Card className="rounded-xl border-gray-200 shadow-sm min-h-[560px]">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Fluxo do Processo
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {caseData.steps.map((step, index) => {
+                  const isCurrent = index === currentStepIndex;
+                  const isCompleted = step.completed;
+                  const showConnector = index < caseData.steps.length - 1;
+                  return (
+                    <div key={step.id} className="flex group relative pb-10">
+                      {showConnector ? (
+                        <div className={`absolute left-6 top-8 bottom-0 w-0.5 ${isCompleted ? 'bg-green-500' : 'bg-gray-200'}`} />
+                      ) : null}
+                        <div className="flex-shrink-0 mr-4">
+                          {isCompleted ? (
+                            <div
+                              className="h-12 w-12 rounded-full bg-green-100 border-2 border-green-500 flex items-center justify-center z-10 cursor-pointer hover:scale-105 transition"
+                              onClick={() => handleStepCompletion(step.id)}
+                              role="button"
+                              aria-label="Desfazer conclusão"
+                              title="Desfazer conclusão"
+                            >
+                              <CheckCircle className="w-6 h-6 text-green-600" />
+                            </div>
+                          ) : isCurrent ? (
+                            <div
+                              className="h-12 w-12 rounded-full bg-white border-2 border-blue-500 flex items-center justify-center z-10 shadow-md cursor-pointer hover:scale-105 transition"
+                              onClick={() => handleStepCompletion(step.id)}
+                              role="button"
+                              aria-label="Marcar como concluído"
+                              title="Marcar como concluído"
+                            >
+                              <div className="h-4 w-4 rounded-full bg-blue-500" />
+                            </div>
+                          ) : (
+                            <div
+                              className="h-12 w-12 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center z-10 cursor-pointer hover:scale-105 transition"
+                              onClick={() => handleStepCompletion(step.id)}
+                              role="button"
+                              aria-label="Marcar como concluído"
+                              title="Marcar como concluído"
+                            >
+                              <Circle className="w-6 h-6 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                      <div className={`flex-grow pt-2 ${isCurrent ? 'p-4 bg-blue-50 rounded-lg border border-blue-100' : isCompleted ? '' : 'opacity-60'}`}>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className={`${isCurrent ? 'text-blue-600 font-bold' : 'font-semibold'} text-base`}>{step.title}</h3>
+                              {isCurrent ? (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Atual</span>
+                              ) : isCompleted ? (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Concluído</span>
+                              ) : null}
+                            </div>
+                            {assignments[index]?.responsibleName || assignments[index]?.dueDate ? (
+                              <div className="mt-1 text-xs text-gray-600">
+                                <span className="font-medium">Responsável:</span> {assignments[index]?.responsibleName || '—'}
+                                {assignments[index]?.dueDate ? (
+                                  <span> · Prazo: {(() => { const p = (assignments[index]?.dueDate || '').split('-'); return `${p[2]}/${p[1]}/${p[0]}`; })()}</span>
+                                ) : null}
+                              </div>
+                            ) : null}
+                            {isCurrent ? (
+                              <p className="text-sm text-gray-500 mt-1">Aguardando agendamento pelo cliente.</p>
+                            ) : null}
+                          </div>
+                          <div className="flex items-center gap-2">
+                          <Popover open={assignOpenStep === step.id} onOpenChange={(open) => setAssignOpenStep(open ? step.id : null)}>
+                              <PopoverTrigger asChild>
+                                <button className="text-xs text-gray-600 border border-gray-300 rounded px-3 py-1 bg-white">Definir Responsável</button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-[420px] max-w-[95vw]">
+                                <div className="space-y-3">
+                                  <div className="space-y-1">
+                                    <Label>Responsável</Label>
+                                    <Input
+                                      value={assignResp}
+                                      onChange={(e) => setAssignResp(e.target.value)}
+                                      placeholder="Selecione ou digite o responsável"
+                                    />
+                                    <div className="rounded-md border mt-2 bg-white">
+                                      {RESPONSAVEIS.map((r) => (
+                                        <button
+                                          key={r}
+                                          type="button"
+                                          className="w-full text-left px-2 py-1 text-sm hover:bg-slate-100"
+                                          onClick={() => setAssignResp(r)}
+                                        >
+                                          {r}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label>Data limite</Label>
+                                    <div className="rounded-md border p-2 overflow-hidden">
+                                      <CalendarPicker
+                                        mode="single"
+                                        selected={assignDue ? (() => { const p = assignDue.split('-').map((v)=>parseInt(v,10)); return new Date(p[0], (p[1]||1)-1, p[2]||1); })() : undefined}
+                                        onSelect={(date) => {
+                                          if (!date) { setAssignDue(''); return; }
+                                          const y = date.getFullYear();
+                                          const m = String(date.getMonth() + 1).padStart(2, '0');
+                                          const d = String(date.getDate()).padStart(2, '0');
+                                          setAssignDue(`${y}-${m}-${d}`);
+                                        }}
+                                        weekStartsOn={1}
+                                        captionLayout="label"
+                                      />
+                                    </div>
+                                    <Input
+                                      value={assignDue ? (() => { const p = assignDue.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; })() : ''}
+                                      readOnly
+                                      placeholder="Nenhuma data selecionada"
+                                    />
+                                  </div>
+                                  <div className="flex items-center justify-end gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => { setAssignResp(''); setAssignDue(''); setAssignOpenStep(null); }}>Cancelar</Button>
+                                    <Button size="sm" onClick={async () => {
+                                      await handleSaveAssignment(index, assignResp || undefined, assignDue || undefined);
+                                      setAssignOpenStep(null);
+                                    }}>Salvar</Button>
+                                  </div>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                            <button
+                              className="text-gray-500"
+                              onClick={() => toggleStepExpansion(step.id)}
+                              aria-label="Alternar conteúdo"
+                            >
+                              {expandedSteps[step.id] ? <ChevronRight className="w-5 h-5 rotate-90" /> : <ChevronRight className="w-5 h-5" />}
+                            </button>
+                          </div>
+                        </div>
+                        {expandedSteps[step.id] ? (
+                          <div className="mt-3">
+                            {renderStepContent(step)}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        <div className="lg:col-span-4 flex flex-col min-h-[560px] space-y-4">
+          <StatusPanel
+            status={status}
+            onStatusChange={handleStatusChange}
+            currentStep={currentStepIndex + 1}
+            totalSteps={caseData.steps.length}
+            currentStepTitle={caseData.steps[currentStepIndex]?.title}
+            createdAt={caseData.createdAt}
+            updatedAt={caseData.updatedAt}
+          />
+
+          <Card className="rounded-xl border-gray-200 shadow-sm flex-1 flex flex-col">
+            <CardHeader className="flex-shrink-0">
+              <CardTitle className="flex items-center w-full justify-between">
+                <span className="flex items-center">
+                  Observações
+                </span>
+                <button
+                  type="button"
+                  className="rounded-md border px-2 py-1 text-xs bg-white hover:bg-slate-100"
+                  onClick={() => setShowNotesModal(true)}
+                  title="Ver todas as notas"
+                >
+                  <img src="https://cdn-icons-png.flaticon.com/512/889/889648.png" alt="Notas" className="h-4 w-4" />
+                </button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col">
+              <Textarea rows={12} placeholder="Adicione observações..." value={notes[0] || ''} onChange={(e) => setNotes(prev => ({ ...prev, 0: e.target.value }))} className="flex-1 border-none bg-transparent" />
+              <div className="flex justify-end items-center px-3 py-2 mt-2">
+                <div className="flex flex-col items-end gap-1 w-full">
+                  <Button className="bg-slate-900 text-white" onClick={() => saveStepNotes(0)}>Salvar</Button>
+                  {saveMessages[0] ? (
+                    <span className="text-green-600 text-xs">Salvo com sucesso!</span>
+                  ) : null}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+    </div>
+
+    {/* Modal de Notas */}
+    <Dialog open={showNotesModal} onOpenChange={setShowNotesModal}>
+      <DialogContent showCloseButton={false}>
+        <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-white dark:bg-gray-800">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Notas do Processo</h2>
+          <DialogClose className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+            <X className="h-5 w-5" />
+            <span className="sr-only">Fechar</span>
+          </DialogClose>
+        </div>
+        <div className="p-6 overflow-y-auto flex-grow bg-white dark:bg-gray-800 max-h-[60vh]">
+          <div className="space-y-3">
+            {notesArray.length ? notesArray.map((n) => {
+              const d = new Date(n.timestamp);
+              const formatted = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+              return (
+                <div key={n.id} className="group relative bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-3 shadow-sm leading-snug">
+                  <button
+                    type="button"
+                    aria-label="Excluir"
+                    title="Excluir"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition bg-white border border-gray-300 rounded-full p-0.5 shadow"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteNote(n.id); }}
+                  >
+                    <X className="h-3 w-3 text-gray-600" />
+                  </button>
+                  <div className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2">
+                    {(() => {
+                      const name = String(n.authorName || '').trim();
+                      const showName = !!name && name.toLowerCase() !== 'equipe';
+                      return `${formatted}${showName ? ` - ${name}${n.authorRole ? ` (${n.authorRole})` : ''}` : ''}`;
+                    })()}
+                  </div>
+                  <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed whitespace-pre-wrap">{n.content}</p>
+                </div>
+              );
+            }) : (
+              <div className="text-sm text-gray-500 dark:text-gray-400">Nenhuma nota encontrada.</div>
             )}
           </div>
-        }
-        right={
-          <div className="space-y-6">
-            <StatusPanel
-              status={status}
-              onStatusChange={handleStatusChange}
-              currentStep={currentStepIndex + 1}
-              totalSteps={caseData.steps.length}
-              currentStepTitle={caseData.steps[currentStepIndex]?.title}
-              createdAt={caseData.createdAt}
-              updatedAt={caseData.updatedAt}
-            />
+        </div>
+        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex justify-end items-center rounded-b-xl">
+          <Button className="bg-slate-900 text-white shadow-md hover:bg-slate-800 hover:shadow-lg transform hover:scale-105 active:scale-95 h-9 px-4 py-2" onClick={() => setShowNotesModal(false)}>
+            Fechar
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+        <div className="lg:col-span-8">
+          <Card className="rounded-xl border-gray-200 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Documentos do Cliente
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className={`col-span-1 md:col-span-2 border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center ${uploadingFiles['general'] ? 'opacity-50 pointer-events-none' : ''} hover:bg-gray-50`}
+                     onDragOver={(e) => { e.preventDefault(); }}
+                     onDrop={(e) => { e.preventDefault(); const files = Array.from(e.dataTransfer.files); handleFileUpload(files as any); }}>
+                  <div className="p-3 bg-blue-50 rounded-full mb-3">
+                    <Upload className="h-6 w-6 text-blue-500" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-700">Arraste e solte arquivos aqui para anexar</p>
+                  <p className="text-xs text-gray-500 mt-1">Ou use os botões de envio nas etapas acima</p>
+                </div>
 
-            <DocumentPanel
-              onDropFiles={(files) => handleFileUpload(files)}
-              uploading={uploadingFiles['general'] || false}
-              documents={documents as any}
-              loadingDocuments={false}
-              onDocumentDownload={(doc) => { if ((doc as any)?.file_path) window.open((doc as any).file_path, '_blank') }}
-              onDocumentDelete={(doc) => handleDeleteDocument(doc as any)}
-              editingDocumentId={editingDocument?.id as any}
-              editingDocumentName={newDocumentName}
-              onDocumentNameChange={setNewDocumentName}
-              onDocumentNameSave={(documentId) => { /* no-op */ }}
-              onDocumentDoubleClick={(doc) => handleRenameDocument(doc as any)}
-            />
+                {(documents as any[]).length > 0 ? (
+                  <div className="flex flex-wrap gap-3">
+                    {(documents as any[]).map((doc: any) => (
+                      <div key={String(doc.id)} className="group relative w-10 h-10">
+                        <a
+                          href={doc.file_path || doc.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={doc.document_name || doc.file_name}
+                          className="block w-full h-full rounded-md border border-gray-200 bg-white flex items-center justify-center hover:bg-gray-50"
+                        >
+                          <FileText className="h-5 w-5 text-blue-600" />
+                        </a>
+                        <button
+                          type="button"
+                          aria-label="Excluir"
+                          title="Excluir"
+                          className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition bg-white border border-gray-300 rounded-full p-0.5 shadow"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteDocument(doc as any); }}
+                        >
+                          <X className="h-3 w-3 text-gray-600" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="col-span-1 md:col-span-2 text-center py-8 text-muted-foreground">
+                    <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Nenhum documento anexado ainda</p>
+                    <p className="text-xs mt-1">Arraste arquivos para esta área ou use os botões de upload nas etapas</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-            <NotesPanel
-              notes={notes[0] || ""}
-              onChange={(value) => setNotes(prev => ({ ...prev, 0: value }))}
-              onSave={() => saveStepNotes(0)}
-            />
-          </div>
-        }
-      />
+        <div className="lg:col-span-4">
+          <Card className="rounded-xl border-gray-200 shadow-sm h-full">
+            <CardHeader>
+              <CardTitle>Responsáveis</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col justify-between h-full">
+              <div className="space-y-4">
+                {(() => {
+                  const items = Object.entries(assignments)
+                    .filter(([_, v]) => v?.responsibleName)
+                    .map(([k, v]) => ({ key: k, name: v?.responsibleName as string, role: '', initials: String(v?.responsibleName || '').split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase() }));
+                  return items.map((m) => (
+                    <div key={m.key} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src="https://cdn-icons-png.flaticon.com/512/3177/3177440.png"
+                          alt={m.name}
+                          className="h-8 w-8 rounded-full border border-gray-200 object-cover"
+                        />
+                        <div>
+                          <p className="font-medium text-sm">{m.name}</p>
+                          <p className="text-xs text-gray-500">{m.role || ''}</p>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon">
+                        <Mail className="w-5 h-5 text-gray-500" />
+                      </Button>
+                    </div>
+                  ));
+                })()}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Delete Document Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

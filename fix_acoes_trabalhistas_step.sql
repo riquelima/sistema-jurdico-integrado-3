@@ -1,0 +1,1 @@
+ALTER TABLE acoes_trabalhistas ADD COLUMN IF NOT EXISTS current_step INTEGER DEFAULT 0;

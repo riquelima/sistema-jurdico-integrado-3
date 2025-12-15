@@ -130,7 +130,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Atualizar a tabela do caso com os URLs dos documentos
-    if (Object.keys(caseUpdateData).length > 0) {
+    // Para 'acoes_trabalhistas', evitamos atualizar colunas específicas
+    if (Object.keys(caseUpdateData).length > 0 && moduleType !== 'acoes_trabalhistas' && moduleType !== 'acoes_criminais') {
       let tableName: string;
       switch (moduleType) {
         case 'acoes_civeis':
