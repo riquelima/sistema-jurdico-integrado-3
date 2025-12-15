@@ -58,6 +58,15 @@ const FIELD_TO_STEP_MAP: Record<string, string> = {
   documentoFinalizacaoDoc: 'finalizacao',
 };
 
+// Helper function to sanitize client names for folder paths
+const sanitizeClientName = (name: string): string => {
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]/g, '_')
+    .toLowerCase();
+};
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
