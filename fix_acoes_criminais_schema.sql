@@ -1,0 +1,10 @@
+ALTER TABLE acoes_criminais ADD COLUMN IF NOT EXISTS current_step INTEGER DEFAULT 0;
+ALTER TABLE acoes_criminais ADD COLUMN IF NOT EXISTS reu_name TEXT;
+ALTER TABLE acoes_criminais ADD COLUMN IF NOT EXISTS autor_name TEXT;
+ALTER TABLE acoes_criminais ADD COLUMN IF NOT EXISTS numero_processo TEXT;
+ALTER TABLE acoes_criminais ADD COLUMN IF NOT EXISTS responsavel_name TEXT;
+ALTER TABLE acoes_criminais ADD COLUMN IF NOT EXISTS responsavel_date TEXT;
+ALTER TABLE acoes_criminais ADD COLUMN IF NOT EXISTS resumo TEXT;
+ALTER TABLE acoes_criminais ADD COLUMN IF NOT EXISTS acompanhamento TEXT;
+ALTER TABLE acoes_criminais ADD COLUMN IF NOT EXISTS contratado TEXT;
+ALTER TABLE acoes_criminais ADD COLUMN IF NOT EXISTS foto_notificacao_doc TEXT;

@@ -189,8 +189,8 @@ export default function AcoesTrabalhistasPage() {
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-amber-500 rounded-lg">
-                <Briefcase className="h-6 w-6 text-white" />
+              <div className="h-12 w-12 rounded-lg flex items-center justify-center overflow-hidden">
+                <img src="https://cdn-icons-png.flaticon.com/512/3135/3135687.png" alt="Ações Trabalhistas" className="h-full w-full object-contain" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-white">Ações Trabalhistas</h1>

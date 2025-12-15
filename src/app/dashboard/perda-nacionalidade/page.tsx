@@ -198,6 +198,7 @@ export default function PerdaNacionalidadePage() {
       <PageHeader
         title="Perda de Nacionalidade"
         description="Gerencie processos de perda de nacionalidade brasileira"
+        icon={<img src="https://cdn-icons-png.flaticon.com/512/4284/4284504.png" alt="Perda de Nacionalidade" className="h-full w-full object-contain" />}
         action={
           <Link href="/dashboard/perda-nacionalidade/novo">
             <Button size="lg" className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold shadow-lg">

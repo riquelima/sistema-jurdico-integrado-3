@@ -8,8 +8,19 @@ function mapDbFieldsToFrontend(record: any) {
   return {
     id: record.id,
     clientName: record.client_name,
+    type: record.type || 'Ação Criminal',
+    currentStep: record.current_step ?? 0,
     status: record.status,
     notes: record.notes,
+    autorName: record.autor_name || null,
+    reuName: record.reu_name || null,
+    numeroProcesso: record.numero_processo || null,
+    responsavelName: record.responsavel_name || null,
+    responsavelDate: record.responsavel_date || null,
+    resumo: record.resumo || null,
+    acompanhamento: record.acompanhamento || null,
+    contratado: record.contratado || null,
+    fotoNotificacaoDoc: record.foto_notificacao_doc || null,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
   };
@@ -112,7 +123,20 @@ export async function POST(request: NextRequest) {
     );
 
     const body = await request.json();
-    const { clientName, status, notes } = body;
+    const { 
+      clientName, 
+      status, 
+      notes, 
+      currentStep,
+      reuName,
+      autorName,
+      numeroProcesso,
+      responsavelName,
+      responsavelDate,
+      resumo,
+      acompanhamento,
+      contratado
+    } = body;
 
     // Validate required fields
     if (!clientName || clientName.trim() === '') {
@@ -129,6 +153,14 @@ export async function POST(request: NextRequest) {
     };
 
     if (notes !== undefined) insertData.notes = notes;
+    if (reuName !== undefined) insertData.reu_name = reuName;
+    if (autorName !== undefined) insertData.autor_name = autorName;
+    if (numeroProcesso !== undefined) insertData.numero_processo = numeroProcesso;
+    if (responsavelName !== undefined) insertData.responsavel_name = responsavelName;
+    if (responsavelDate !== undefined) insertData.responsavel_date = responsavelDate;
+    if (resumo !== undefined) insertData.resumo = resumo;
+    if (acompanhamento !== undefined) insertData.acompanhamento = acompanhamento;
+    if (contratado !== undefined) insertData.contratado = contratado;
 
     const { data: newRecord, error } = await supabase
       .from('acoes_criminais')
@@ -143,7 +175,20 @@ export async function POST(request: NextRequest) {
       }, { status: 500 });
     }
 
-    return NextResponse.json(newRecord, { status: 201 });
+    try {
+      await supabase
+        .from('alerts')
+        .insert({
+          module_type: 'acoes_criminais',
+          record_id: newRecord.id,
+          alert_for: 'admin',
+          message: `Nova ação criminal criada: ${clientName.trim()}`,
+          is_read: false,
+          created_at: new Date().toISOString()
+        });
+    } catch {}
+
+    return NextResponse.json(mapDbFieldsToFrontend(newRecord), { status: 201 });
 
   } catch (error) {
     console.error('POST error:', error);
@@ -173,12 +218,25 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { clientName, status, notes } = body;
+    const { 
+      clientName, 
+      status, 
+      notes, 
+      currentStep,
+      reuName,
+      autorName,
+      numeroProcesso,
+      responsavelName,
+      responsavelDate,
+      resumo,
+      acompanhamento,
+      contratado
+    } = body;
 
     // Check if record exists
     const { data: existing, error: existingError } = await supabase
       .from('acoes_criminais')
-      .select('id')
+      .select('id, current_step, client_name')
       .eq('id', parseInt(id))
       .single();
 
@@ -202,11 +260,17 @@ export async function PUT(request: NextRequest) {
       updateData.client_name = clientName.trim();
     }
 
-    if (status !== undefined) {
-      updateData.status = status;
-    }
-
+    if (status !== undefined) updateData.status = status;
     if (notes !== undefined) updateData.notes = notes;
+    if (reuName !== undefined) updateData.reu_name = reuName;
+    if (autorName !== undefined) updateData.autor_name = autorName;
+    if (numeroProcesso !== undefined) updateData.numero_processo = numeroProcesso;
+    if (responsavelName !== undefined) updateData.responsavel_name = responsavelName;
+    if (responsavelDate !== undefined) updateData.responsavel_date = responsavelDate;
+    if (resumo !== undefined) updateData.resumo = resumo;
+    if (acompanhamento !== undefined) updateData.acompanhamento = acompanhamento;
+    if (contratado !== undefined) updateData.contratado = contratado;
+    if (currentStep !== undefined) updateData.current_step = currentStep;
 
     // Perform update
     const { data: updated, error } = await supabase
@@ -223,7 +287,22 @@ export async function PUT(request: NextRequest) {
       }, { status: 500 });
     }
 
-    return NextResponse.json(updated, { status: 200 });
+    if (currentStep !== undefined && typeof existing?.current_step === 'number' && currentStep > existing.current_step) {
+      try {
+        await supabase
+          .from('alerts')
+          .insert({
+            module_type: 'acoes_criminais',
+            record_id: parseInt(id),
+            alert_for: 'admin',
+            message: `Passo ${currentStep} concluído para: ${existing.client_name}`,
+            is_read: false,
+            created_at: new Date().toISOString()
+          });
+      } catch {}
+    }
+
+    return NextResponse.json(mapDbFieldsToFrontend(updated), { status: 200 });
 
   } catch (error) {
     console.error('PUT error:', error);

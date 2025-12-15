@@ -210,6 +210,7 @@ export default function CompraVendaPage() {
       <PageHeader
         title="Compra e Venda de Imóveis"
         description="Gerencie transações imobiliárias"
+        icon={<img src="https://cdn-icons-png.flaticon.com/512/14523/14523054.png" alt="Compra e Venda" className="h-full w-full object-contain" />}
         action={
           <Link href="/dashboard/compra-venda/novo">
             <Button size="lg" className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold shadow-lg">

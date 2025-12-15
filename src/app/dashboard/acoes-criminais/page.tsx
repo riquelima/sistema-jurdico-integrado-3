@@ -7,21 +7,21 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { 
-  AlertCircle, 
+  Briefcase, 
   Search, 
   Plus, 
   FileText, 
   Eye, 
   Clock, 
   CheckCircle2, 
+  AlertCircle,
+  Users,
+  Trash2,
   Shield,
-  Gavel,
-  Trash2
+  Gavel
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingState } from "@/components/loading-state";
-import { useDataCache } from "@/hooks/useDataCache";
-import { usePrefetch } from "@/hooks/usePrefetch";
 import { OptimizedLink } from "@/components/optimized-link";
 import { prefetchAcaoCriminalById } from "@/utils/prefetch-functions";
 import {
@@ -42,6 +42,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useDataCache } from "@/hooks/useDataCache";
+import { usePrefetch } from "@/hooks/usePrefetch";
 
 const CASE_TYPES = [
   "Defesa Criminal",
@@ -53,17 +55,17 @@ const CASE_TYPES = [
 ];
 
 export default function AcoesCriminaisPage() {
-  const { data: casesData, isLoading, error, refetch } = useDataCache(
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+
+  const { data: cases, isLoading, error, refetch } = useDataCache(
     "acoes-criminais",
     async () => {
       const response = await fetch("/api/acoes-criminais?limit=100");
       return response.json();
     }
   );
-  const cases = Array.isArray(casesData) ? casesData : [];
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -92,43 +94,65 @@ export default function AcoesCriminaisPage() {
         window.removeEventListener('acoes-criminais-status-updated', handleCustomEvent as EventListener);
       };
     }
-  }, []);
+  }, [refetch]);
 
-  const filteredCases = cases.filter((c) => {
-    const matchesSearch = c.clientName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || c.status === statusFilter || (statusFilter === "Em andamento" && c.status === "Em Andamento");
+  const { prefetchData } = usePrefetch();
+
+  const casesList = Array.isArray(cases) ? cases : [];
+  const filteredCases = casesList.filter((c) => {
+    const matchesSearch = c.clientName.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "all" || (c.status || "").toLowerCase() === statusFilter.toLowerCase();
     const matchesType = typeFilter === "all" || c.type === typeFilter;
     return matchesSearch && matchesStatus && matchesType;
   });
 
   const stats = {
-    total: cases.length,
-    emAndamento: cases.filter(c => c.status === "Em andamento" || c.status === "Em Andamento").length,
-    finalizado: cases.filter(c => c.status === "Finalizado").length,
+    total: casesList.length,
+    emAndamento: casesList.filter(c => (c.status || "").toLowerCase() === "em andamento").length,
+    finalizado: casesList.filter(c => (c.status || "").toLowerCase() === "finalizado").length,
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Em andamento":
-      case "Em Andamento":
-        return "bg-blue-500 text-white";
-      case "Finalizado":
-        return "bg-green-500 text-white";
+    const s = (status || "").toLowerCase();
+    switch (s) {
+      case "em andamento":
+        return "bg-blue-500 text-white hover:bg-blue-600";
+      case "finalizado":
+        return "bg-emerald-500 text-white hover:bg-emerald-600";
       default:
-        return "bg-gray-500 text-white";
+        return "bg-slate-500 text-white hover:bg-slate-600";
     }
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "Em andamento":
-      case "Em Andamento":
-        return Clock;
-      case "Finalizado":
-        return CheckCircle2;
+    const s = (status || "").toLowerCase();
+    switch (s) {
+      case "em andamento":
+        return <Clock className="h-3 w-3" />;
+      case "finalizado":
+        return <CheckCircle2 className="h-3 w-3" />;
       default:
-        return FileText;
+        return <Clock className="h-3 w-3" />;
     }
+  };
+
+  const normalizeStatusLabel = (status: string) => {
+    const s = (status || "").toLowerCase();
+    if (s === "em andamento") return "Em andamento";
+    if (s === "finalizado") return "Finalizado";
+    return status;
+  };
+
+  const STEP_TITLES = [
+    "Cadastro de Documentos",
+    "Resumo",
+    "Acompanhamento",
+    "Processo Finalizado",
+  ];
+
+  const getStepTitle = (idx?: number) => {
+    const i = typeof idx === 'number' ? idx : 0;
+    return STEP_TITLES[i] || `Etapa ${i + 1}`;
   };
 
   const handleDelete = async (id: number) => {
@@ -138,7 +162,6 @@ export default function AcoesCriminaisPage() {
       });
       
       if (response.ok) {
-        // Atualiza via refetch
         refetch();
       } else {
         console.error('Failed to delete case');
@@ -155,8 +178,8 @@ export default function AcoesCriminaisPage() {
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-amber-500 rounded-lg">
-                <Shield className="h-6 w-6 text-white" />
+              <div className="h-12 w-12 rounded-lg flex items-center justify-center overflow-hidden">
+                <img src="https://cdn-icons-png.flaticon.com/512/929/929429.png" alt="Ações Criminais" className="h-full w-full object-contain" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-white">Ações Criminais</h1>
@@ -175,8 +198,8 @@ export default function AcoesCriminaisPage() {
         </div>
 
         {/* Cards de estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 items-stretch">
+          <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 h-full min-h-[140px]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-slate-400 text-sm font-medium">Total de Ações</p>
@@ -188,10 +211,10 @@ export default function AcoesCriminaisPage() {
             </div>
           </div>
 
-          <div className="bg-blue-900 rounded-lg p-4 border border-blue-700">
+          <div className="bg-blue-900 rounded-lg p-4 border border-blue-700 h-full min-h-[140px]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-300 text-sm font-medium">Em andamento</p>
+                <p className="text-blue-300 text-sm font-medium">Em Andamento</p>
                 <p className="text-3xl font-bold text-blue-400 mt-1">{stats.emAndamento}</p>
               </div>
               <div className="p-3 bg-blue-800 rounded-lg">
@@ -200,7 +223,7 @@ export default function AcoesCriminaisPage() {
             </div>
           </div>
 
-          <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700">
+          <div className="bg-emerald-900 rounded-lg p-4 border border-emerald-700 h-full min-h-[140px]">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-emerald-300 text-sm font-medium">Finalizadas</p>
@@ -228,21 +251,11 @@ export default function AcoesCriminaisPage() {
               <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
               <Input
                 placeholder="Buscar por cliente..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 className="pl-9 border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:ring-amber-500"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:ring-amber-500">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              <SelectItem value="Em andamento">Em andamento</SelectItem>
-              <SelectItem value="Finalizado">Finalizado</SelectItem>
-            </SelectContent>
-            </Select>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:ring-amber-500">
                 <SelectValue placeholder="Tipo de ação" />
@@ -256,12 +269,22 @@ export default function AcoesCriminaisPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="border-slate-300 dark:border-slate-600 focus:border-amber-500 focus:ring-amber-500">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="Em andamento">Em andamento</SelectItem>
+                <SelectItem value="Finalizado">Finalizado</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Lista de ações */}
-      <div className="grid gap-6">
+      {/* Lista de processos */}
+      <div className="grid gap-4">
         {isLoading ? (
           <LoadingState count={3} type="card" />
         ) : filteredCases.length === 0 ? (
@@ -274,7 +297,7 @@ export default function AcoesCriminaisPage() {
                 Nenhuma ação encontrada
               </p>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 mt-2">
-                {searchTerm || typeFilter !== "all" || statusFilter !== "all"
+                {search || typeFilter !== "all" || statusFilter !== "all"
                   ? "Tente ajustar os filtros de busca"
                   : "Comece criando uma nova ação criminal"}
               </p>
@@ -287,121 +310,115 @@ export default function AcoesCriminaisPage() {
             </CardContent>
           </Card>
         ) : (
-          filteredCases.map((caseItem) => {
-            const StatusIcon = getStatusIcon(caseItem.status);
-            return (
-              <Card 
-                key={caseItem.id} 
-                className="border-slate-200 dark:border-slate-700 hover:shadow-xl hover:border-amber-500/50 transition-all duration-200 bg-gradient-to-r from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 relative"
-              >
-                {/* Button Container - Alinhado horizontalmente */}
-                <div className="absolute top-2 right-2 flex items-center gap-2">
-                  {/* Ver Detalhes Button */}
-                  <OptimizedLink 
-                    href={`/dashboard/acoes-criminais/${caseItem.id}`}
-                    prefetchData={() => prefetchAcaoCriminalById(caseItem.id)}
+          filteredCases.map((caseItem) => (
+            <Card 
+              key={caseItem.id} 
+              className="border-slate-200 dark:border-slate-700 hover:shadow-xl hover:border-amber-500/50 transition-all duration-200 bg-gradient-to-r from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 relative"
+            >
+              {/* Button Container - Alinhado horizontalmente */}
+              <div className="absolute top-2 right-2 flex items-center gap-2">
+                {/* Ver Detalhes Button */}
+                <OptimizedLink 
+                  href={`/dashboard/acoes-criminais/${caseItem.id}`}
+                  prefetchData={() => prefetchAcaoCriminalById(caseItem.id)}
+                >
+                  <Button 
+                    size="sm"
+                    className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md h-8 px-3"
                   >
-                    <Button 
-                      size="sm"
-                      className="bg-slate-900 hover:bg-slate-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-900 text-white font-semibold shadow-md h-8 px-3"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </OptimizedLink>
-                  
-                  {/* Delete Button */}
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-red-600 hover:text-white hover:bg-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all duration-200"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Tem certeza que deseja excluir a ação criminal de {caseItem.clientName}? Esta ação não pode ser desfeita.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDelete(caseItem.id)}
-                          className="bg-white text-red-600 border border-red-500 hover:bg-red-50 hover:text-red-700"
-                        >
-                          Excluir
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </OptimizedLink>
                 
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-4 flex-1">
-                      {/* Ícone do processo */}
-                      <div className="p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg shadow-md flex-shrink-0">
-                        <Shield className="h-6 w-6 text-white" />
+                {/* Delete Button */}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-red-600 hover:text-white hover:bg-red-500 dark:text-red-400 dark:hover:text-white dark:hover:bg-red-600 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all duration-200"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir a ação criminal de {caseItem.clientName}? Esta ação não pode ser desfeita.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDelete(caseItem.id)}
+                        className="bg-white text-red-600 border border-red-500 hover:bg-red-50 hover:text-red-700"
+                      >
+                        Excluir
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+              
+              <CardContent className="pt-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4 flex-1">
+                    {/* Ícone do processo */}
+                    <div className="p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg shadow-md flex-shrink-0">
+                      <Shield className="h-6 w-6 text-white" />
+                    </div>
+
+                    {/* Informações do processo */}
+                    <div className="space-y-3 flex-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                          {caseItem.clientName}
+                        </h3>
+                        <Badge className={`${getStatusColor(caseItem.status)} flex items-center gap-1.5 px-3 py-1 shadow-md`}>
+                          {getStatusIcon(caseItem.status)}
+                          {normalizeStatusLabel(caseItem.status)}
+                        </Badge>
                       </div>
 
-                      {/* Informações do processo */}
-                      <div className="space-y-3 flex-1">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                            {caseItem.clientName}
-                          </h3>
-                          <Badge className={`${getStatusColor(caseItem.status)} flex items-center gap-1.5 px-3 py-1 shadow-md`}>
-                            <StatusIcon className="h-4 w-4" />
-                            {caseItem.status}
-                          </Badge>
+                      <div className="grid gap-2 text-sm text-slate-700 dark:text-slate-300">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Tipo de ação:</span>
+                          <span>{caseItem.type || "Ação Criminal"}</span>
                         </div>
-
-                        <div className="flex items-center gap-6 text-sm flex-wrap">
-                          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                            <div className="p-1.5 bg-purple-100 dark:bg-purple-900 rounded">
-                              <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                            </div>
-                            <span className="font-medium">Processo: {caseItem.processNumber || "Não informado"}</span>
-                          </div>
-                          
-                          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                            <div className="p-1.5 bg-blue-100 dark:bg-blue-900 rounded">
-                              <Gavel className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <span className="font-medium">Vara: {caseItem.court || "Não informado"}</span>
-                          </div>
-                          
-                          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                            <div className="p-1.5 bg-slate-100 dark:bg-slate-700 rounded">
-                              <AlertCircle className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                            </div>
-                            <span className="font-medium">Prioridade: {caseItem.priority || "Normal"}</span>
-                          </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Fluxo atual:</span>
+                          <span>{getStepTitle(caseItem.currentStep)}</span>
                         </div>
-
-                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
-                          <div className="p-1.5 bg-slate-100 dark:bg-slate-700 rounded">
-                            <Clock className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                          </div>
-                          <span>
-                            Criado em: {new Date(caseItem.createdAt).toLocaleDateString('pt-BR', {
-                              day: "2-digit",
-                              month: "long",
-                              year: "numeric"
-                            })}
-                          </span>
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Responsável:</span>
+                          <span>{caseItem.responsavelName || "—"}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar h-4 w-4 text-slate-600 dark:text-slate-400"><path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" /></svg>
+                          <span className="font-medium">Prazo:</span>
+                          <span>{caseItem.responsavelDate ? new Date(caseItem.responsavelDate).toLocaleDateString("pt-BR") : "—"}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Nº do processo:</span>
+                          <span>{caseItem.numeroProcesso || caseItem.processNumber || "—"}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                          <span className="font-medium">Réu:</span>
+                          <span>{caseItem.reuName || "—"}</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })
+                </div>
+              </CardContent>
+            </Card>
+          ))
         )}
       </div>
     </div>

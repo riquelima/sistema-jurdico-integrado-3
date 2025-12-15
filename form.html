@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cadastro de Ações de Visto</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#0f172a", // Dark navy blue as primary, suitable for legal/professional
+              secondary: "#3b82f6", // Accent blue
+              "background-light": "#f1f5f9", // Slate-100
+              "background-dark": "#0f172a", // Slate-900
+              "surface-light": "#ffffff",
+              "surface-dark": "#1e293b",
+              "border-light": "#e2e8f0",
+              "border-dark": "#334155",
+              "text-light": "#1e293b",
+              "text-dark": "#f8fafc",
+              "text-muted-light": "#64748b",
+              "text-muted-dark": "#94a3b8",
+            },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
+              body: ["Inter", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+            },
+          },
+        },
+      };
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark font-body antialiased transition-colors duration-200">
+<header class="sticky top-0 z-30 bg-surface-light/90 dark:bg-surface-dark/90 backdrop-blur border-b border-border-light dark:border-border-dark px-6 py-4 shadow-sm">
+<div class="max-w-6xl mx-auto flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-text-muted-light dark:text-text-muted-dark transition-colors">
+<span class="material-icons-outlined text-2xl">arrow_back</span>
+</button>
+<div>
+<h1 class="text-xl font-bold text-text-light dark:text-text-dark">Novo Visto</h1>
+<p class="text-sm text-text-muted-light dark:text-text-muted-dark">Gerencie processos de vistos internacionais</p>
+</div>
+</div>
+</header>
+<main class="max-w-6xl mx-auto px-6 py-8 pb-24">
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden mb-8">
+<div class="bg-blue-50 dark:bg-slate-800/50 px-6 py-4 border-b border-border-light dark:border-border-dark flex items-center gap-3">
+<span class="material-icons-outlined text-secondary">info</span>
+<h2 class="text-lg font-semibold text-text-light dark:text-text-dark">Informações do Visto</h2>
+</div>
+<div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="md:col-span-1">
+<label class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">
+                        Nome do Cliente <span class="text-red-500">*</span>
+</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted-light dark:text-text-muted-dark">
+<span class="material-icons-outlined text-[20px]">person</span>
+</span>
+<input class="pl-10 w-full rounded-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary dark:focus:ring-offset-slate-900 text-sm py-2.5" placeholder="Digite o nome completo do cliente" type="text"/>
+</div>
+</div>
+<div class="md:col-span-1">
+<label class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">
+                        País do Visto <span class="text-red-500">*</span>
+</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted-light dark:text-text-muted-dark">
+<span class="material-icons-outlined text-[20px]">public</span>
+</span>
+<select class="pl-10 w-full rounded-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5">
+<option disabled="" selected="" value="">Selecione o país</option>
+<option value="US">Estados Unidos</option>
+<option value="CA">Canadá</option>
+<option value="PT">Portugal</option>
+<option value="JP">Japão</option>
+</select>
+</div>
+</div>
+<div class="md:col-span-1">
+<label class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">
+                        Tipo de Visto <span class="text-red-500">*</span>
+</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted-light dark:text-text-muted-dark">
+<span class="material-icons-outlined text-[20px]">category</span>
+</span>
+<select class="pl-10 w-full rounded-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5">
+<option value="turismo">Turismo</option>
+<option value="estudos">Estudos</option>
+<option value="trabalho">Trabalho</option>
+<option value="permanente">Residência Permanente</option>
+</select>
+</div>
+</div>
+<div class="md:col-span-3">
+<label class="block text-sm font-medium text-text-light dark:text-text-dark mb-1">
+                        Período da Viagem
+                    </label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted-light dark:text-text-muted-dark">
+<span class="material-icons-outlined text-[20px]">date_range</span>
+</span>
+<input class="pl-10 w-full rounded-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Selecionar período (ex: 01/01/2024 - 15/01/2024)" type="text"/>
+<span class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-text-muted-light dark:text-text-muted-dark">
+<span class="material-icons-outlined text-[20px]">calendar_today</span>
+</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden mb-6">
+<details class="group" open="">
+<summary class="flex justify-between items-center px-6 py-4 bg-gray-50 dark:bg-slate-800/30 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors list-none border-b border-border-light dark:border-border-dark">
+<div class="flex items-center gap-3">
+<span class="flex items-center justify-center w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300">1</span>
+<h3 class="text-lg font-semibold text-text-light dark:text-text-dark">Documentos Pessoais</h3>
+</div>
+<span class="material-icons-outlined transition-transform duration-300 group-open:rotate-180">expand_more</span>
+</summary>
+<div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8 animate-fade-in">
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">CPF</label>
+</div>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">RNM</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Passaporte</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center mb-1">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Comprovante de Endereço / Declaração</label>
+</div>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+<div class="flex items-start mt-1">
+<div class="flex items-center h-5">
+<input class="focus:ring-secondary h-4 w-4 text-primary border-gray-300 rounded" id="chk-comprovante" type="checkbox"/>
+</div>
+<div class="ml-2 text-xs">
+<label class="font-medium text-text-muted-light dark:text-text-muted-dark" for="chk-comprovante">Comprovante não está no nome do solicitante</label>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Declaração de Residência</label>
+<div class="p-3 border-2 border-dashed border-border-light dark:border-border-dark rounded-lg flex flex-col items-center justify-center text-center cursor-pointer hover:border-secondary dark:hover:border-secondary transition-colors bg-slate-50 dark:bg-slate-800/50">
+<span class="material-icons-outlined text-text-muted-light dark:text-text-muted-dark mb-1">cloud_upload</span>
+<span class="text-sm text-text-muted-light dark:text-text-muted-dark">Clique para enviar ou arraste</span>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Foto digital 3x4</label>
+<div class="p-3 border-2 border-dashed border-border-light dark:border-border-dark rounded-lg flex flex-col items-center justify-center text-center cursor-pointer hover:border-secondary dark:hover:border-secondary transition-colors bg-slate-50 dark:bg-slate-800/50">
+<span class="material-icons-outlined text-text-muted-light dark:text-text-muted-dark mb-1">image</span>
+<span class="text-sm text-text-muted-light dark:text-text-muted-dark">Upload Foto</span>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Documento Chinês (quando aplicável)</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Antecedentes Criminais</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+</div>
+</details>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden mb-6">
+<details class="group">
+<summary class="flex justify-between items-center px-6 py-4 bg-gray-50 dark:bg-slate-800/30 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors list-none border-b border-border-light dark:border-border-dark">
+<div class="flex items-center gap-3">
+<span class="flex items-center justify-center w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300">2</span>
+<h3 class="text-lg font-semibold text-text-light dark:text-text-dark">Comprovação Financeira PF</h3>
+</div>
+<span class="material-icons-outlined transition-transform duration-300 group-open:rotate-180">expand_more</span>
+</summary>
+<div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8 animate-fade-in">
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Filhos (Certidão de Nascimento)</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Empresa: Cartão CNPJ</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Contrato Social</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Imóveis (Escritura/Matrícula)</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Últimos 3 extratos bancários</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Imposto de Renda</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+</div>
+</details>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden mb-6">
+<details class="group">
+<summary class="flex justify-between items-center px-6 py-4 bg-gray-50 dark:bg-slate-800/30 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors list-none border-b border-border-light dark:border-border-dark">
+<div class="flex items-center gap-3">
+<span class="flex items-center justify-center w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300">3</span>
+<h3 class="text-lg font-semibold text-text-light dark:text-text-dark">Outros Documentos</h3>
+</div>
+<span class="material-icons-outlined transition-transform duration-300 group-open:rotate-180">expand_more</span>
+</summary>
+<div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8 animate-fade-in">
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Reservas de Passagens</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Reservas de Hotel</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Seguro Viagem</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Roteiro de Viagem Detalhado</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Taxa Consular</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-text-light dark:text-text-dark">Formulário do Consulado preenchido</label>
+<div class="relative flex items-center">
+<input class="w-full rounded-l-DEFAULT border-border-light dark:border-border-dark bg-white dark:bg-slate-900 text-text-light dark:text-text-dark shadow-sm focus:border-secondary focus:ring-secondary text-sm py-2.5" placeholder="Status ou informações do documento" type="text"/>
+<button class="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-y border-r border-border-light dark:border-border-dark rounded-r-DEFAULT text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-text-light dark:text-text-dark whitespace-nowrap" type="button">
+<span class="material-icons-outlined text-[18px]">upload_file</span> Upload
+                            </button>
+</div>
+</div>
+</div>
+</details>
+</div>
+<div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-border-light dark:border-border-dark p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20">
+<div class="max-w-6xl mx-auto flex flex-col md:flex-row gap-4 justify-end">
+<button class="px-6 py-2.5 rounded-DEFAULT border border-border-light dark:border-border-dark text-text-light dark:text-text-dark font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                    Cancelar
+                </button>
+<button class="px-8 py-2.5 rounded-DEFAULT bg-primary text-white font-medium hover:opacity-90 transition-opacity shadow-md flex items-center justify-center gap-2">
+<span class="material-icons-outlined text-[18px]">save</span>
+                    Salvar Visto
+                </button>
+</div>
+</div>
+</main>
+
+</body></html>

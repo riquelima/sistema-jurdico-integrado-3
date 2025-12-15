@@ -118,7 +118,11 @@ function Sidebar({
                 : "text-slate-600 hover:bg-white/70 hover:text-slate-900 hover:shadow-sm"
             }`}
           >
-            <item.icon className="h-5 w-5" />
+            {typeof item.icon === 'string' ? (
+              <img src={item.icon} alt={item.title} className="h-5 w-5 object-contain" />
+            ) : (
+              <item.icon className="h-5 w-5" />
+            )}
             <div className="flex-1">
               <div className="text-sm font-medium">{item.title}</div>
               <div className="text-xs opacity-75">{item.description}</div>
@@ -127,27 +131,14 @@ function Sidebar({
         ))}
       </nav>
       <div className="p-4 border-t border-slate-200">
-        <Card className="p-3 bg-white/70 backdrop-blur-sm border-slate-200">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-blue-800 text-white">
-                {user?.name?.charAt(0)?.toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900 truncate">Administrador</p>
-              <p className="text-xs text-slate-500 truncate">{user?.email}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleLogout}
-              className="h-8 w-8 text-slate-400 hover:text-slate-600"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </Card>
+        <Button
+          variant="ghost"
+          onClick={handleLogout}
+          className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 gap-2"
+        >
+          <LogOut className="h-4 w-4" />
+          Sair
+        </Button>
       </div>
     </div>
   );
@@ -252,43 +243,43 @@ export default function DashboardLayout({
     {
       title: "Visão Geral",
       href: "/dashboard",
-      icon: LayoutDashboard,
+      icon: "https://cdn-icons-png.flaticon.com/512/15135/15135113.png",
       description: "Dashboard principal",
     },
     {
       title: "Ações Cíveis",
       href: "/dashboard/acoes-civeis",
-      icon: FileText,
+      icon: "https://cdn-icons-png.flaticon.com/512/1157/1157026.png",
       description: "Processos cíveis",
     },
     {
       title: "Ações Trabalhistas",
       href: "/dashboard/acoes-trabalhistas",
-      icon: Briefcase,
+      icon: "https://cdn-icons-png.flaticon.com/512/3135/3135687.png",
       description: "Processos trabalhistas",
     },
     {
       title: "Ações Criminais",
       href: "/dashboard/acoes-criminais",
-      icon: Shield,
+      icon: "https://cdn-icons-png.flaticon.com/512/929/929429.png",
       description: "Processos criminais",
     },
     {
       title: "Compra e Venda",
       href: "/dashboard/compra-venda",
-      icon: Home,
+      icon: "https://cdn-icons-png.flaticon.com/512/14523/14523054.png",
       description: "Transações imobiliárias",
     },
     {
       title: "Perda de Nacionalidade",
       href: "/dashboard/perda-nacionalidade",
-      icon: Globe,
+      icon: "https://cdn-icons-png.flaticon.com/512/4284/4284504.png",
       description: "Processos de nacionalidade",
     },
     {
       title: "Vistos",
       href: "/dashboard/vistos",
-      icon: Globe,
+      icon: "https://cdn-icons-png.flaticon.com/512/7082/7082001.png",
       description: "Processos de vistos",
     },
   ];
@@ -301,7 +292,7 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col border-r border-slate-200/50 w-80">
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col border-r border-slate-200/50 w-64">
         <Sidebar
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -314,7 +305,7 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main Content Area */}
-      <div className="lg:pl-80">
+      <div className="lg:pl-64">
         {pathname === "/dashboard" && (
           <header className="hidden lg:block sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
             <div className="grid grid-cols-3 items-center px-6 py-4">

@@ -350,8 +350,8 @@ export default function VistosPage() {
         <div className="flex items-center justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-amber-500 rounded-lg">
-                <Globe className="h-6 w-6 text-white" />
+              <div className="h-12 w-12 rounded-lg flex items-center justify-center overflow-hidden">
+                <img src="https://cdn-icons-png.flaticon.com/512/7082/7082001.png" alt="Vistos" className="h-full w-full object-contain" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-white">Vistos</h1>
