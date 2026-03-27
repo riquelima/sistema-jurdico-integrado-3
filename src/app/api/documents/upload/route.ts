@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFilePath, BUCKET_NAME, FIELD_TO_DOCUMENT_NAME } from '@/lib/supabase';
 import { getSupabaseAdminClient } from '@/lib/supabase-server';
+import { updatePendingDocuments } from '@/lib/pending-documents-server';
 
 // Map field names to organized folder structure
 const FIELD_TO_STEP_MAP: Record<string, string> = {
@@ -466,6 +467,16 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('✅ Completo!');
+
+    // Sync Pending Documents
+    const pRecordId = parseInt(recordId);
+    if (!isNaN(pRecordId) && moduleType) {
+      console.log(`⏳ Triggering pending documents update for ${moduleType}:${pRecordId}...`);
+      // Run in background
+      updatePendingDocuments(moduleType, pRecordId).catch(err => {
+        console.error('❌ Error syncing pending documents:', err);
+      });
+    }
 
     return NextResponse.json({
       success: true,

@@ -49,8 +49,8 @@ export function getVistosDocRequirements(input: { type?: string; country?: strin
   const isMudancaEmpregador = t.includes("mudan") && t.includes("empregador");
   const showInvestidor = t.includes("invest");
 
-  // Force showBrasil to true for Indeterminado, Mudanca de Empregador and Investidor
-  const showBrasil = isBrasilVisto(input.type, input.country) || isIndeterminado || isMudancaEmpregador || showInvestidor;
+  // Force showBrasil to true for Mudanca de Empregador and Investidor
+  const showBrasil = isBrasilVisto(input.type, input.country) || isMudancaEmpregador || showInvestidor;
 
   const showResidenciaPrevia = t.includes("trabalho") && (t.includes("resid") || t.includes("prévia") || t.includes("previ"));
   const showTrabalhistas = t.includes("trabalhistas");
@@ -162,9 +162,24 @@ export function getVistosDocRequirements(input: { type?: string; country?: strin
     ];
   }
 
-  const showRenovacao1Ano = (t.includes("renov") && t.includes("1 ano")) || t === "visto de trabalho - renovação 1 ano";
+  const showRenovacao1Ano = (t.includes("renov") && t.includes("1 ano")) || t === "visto de trabalho - renovação 1 ano" || isIndeterminado;
 
   if (showRenovacao1Ano) {
+    const protocoloFields = [
+      { key: "contratoEmpresaDoc", label: "Contrato Social" },
+      { key: "ctpsDoc", label: "CTPS" },
+      { key: "rnmDoc", label: "RNM" },
+      { key: "contratoTrabalhoAnteriorDoc", label: "Contrato de trabalho anterior" },
+      { key: "antecedentesCriminaisDoc", label: "Declaração de Antecedentes" },
+      { key: "formularioProrrogacaoDoc", label: "Formulário prorrogação" },
+      { key: "contratoTrabalhoDoc", label: isIndeterminado ? "Contrato de Trabalho Indeterminado" : "Contrato de trabalho atual" },
+      { key: "procuracaoEmpresaDoc", label: "Procuração empresa" },
+    ];
+
+    if (isIndeterminado) {
+      protocoloFields.push({ key: "guiaPagaDoc", label: "Guia Paga" });
+    }
+
     return [
       {
         title: "1. Identificação",
@@ -217,16 +232,7 @@ export function getVistosDocRequirements(input: { type?: string; country?: strin
       {
         title: "Protocolo",
         step: "Documentos para Protocolo",
-        fields: [
-          { key: "contratoEmpresaDoc", label: "Contrato Social" },
-          { key: "ctpsDoc", label: "CTPS" },
-          { key: "rnmDoc", label: "RNM" },
-          { key: "contratoTrabalhoAnteriorDoc", label: "Contrato de trabalho anterior" },
-          { key: "antecedentesCriminaisDoc", label: "Declaração de Antecedentes" },
-          { key: "formularioProrrogacaoDoc", label: "Formulário prorrogação" },
-          { key: "contratoTrabalhoDoc", label: "Contrato de trabalho atual" },
-          { key: "procuracaoEmpresaDoc", label: "Procuração empresa" },
-        ],
+        fields: protocoloFields,
       },
       {
         title: "Protocolo",
@@ -396,8 +402,29 @@ export function getVistosDocRequirements(input: { type?: string; country?: strin
   }
 
   docRequirements.push(
-    { title: "Agendamento", step: "Agendar no Consulado", fields: [{ key: "comprovante-agendamento", label: "Comprovante de Agendamento" }] },
-    { title: "Protocolo", step: "Protocolo", fields: [{ key: "comprovanteProtocolo", label: "Comprovante de Protocolo" }] },
+    {
+      title: "Agendamento",
+      step: "Agendar no Consulado",
+      fields: [{ key: "comprovante-agendamento", label: "Comprovante de Agendamento" }]
+    },
+    {
+      title: "Preencher Formulário",
+      step: "Preencher Formulário",
+      fields: [{ key: "formulario-visto", label: "Formulário de Visto" }],
+    },
+    {
+      title: "Preparar Documentação",
+      step: "Preparar Documentação",
+      fields: [
+        { key: "documentacao-original", label: "Documentação Original" },
+        { key: "documentacao-copia", label: "Cópia da Documentação" },
+      ],
+    },
+    {
+      title: "Aguardar Aprovação",
+      step: "Aguardar Aprovação",
+      fields: [{ key: "comprovante-aprovacao", label: "Comprovante de Aprovação" }],
+    },
     {
       title: "Processo Finalizado",
       step: "Processo Finalizado",
@@ -412,35 +439,47 @@ export function getVistosDocRequirements(input: { type?: string; country?: strin
 }
 
 export function getTurismoDocRequirements(): PendingDocGroup[] {
+  // Turismo follows the same "Consular Flow" as the default fallback above.
+  // We can reuse the same structure but ensuring specific fields are correct.
   return [
     {
-      title: "Cadastro de Documentos",
+      title: "Documentos Pessoais",
       step: "Cadastro de Documentos",
       fields: [
+        { key: "country", label: "País do Visto" },
         { key: "cpfDoc", label: "CPF" },
-        { key: "passaporteDoc", label: "Passaporte" },
-        { key: "declaracaoResidenciaDoc", label: "Declaração de Residência" },
-        { key: "documentoChinesDoc", label: "Documento Chinês" },
-        { key: "certidaoNascimentoFilhosDoc", label: "Certidão Nascimento Filhos" },
-        { key: "escrituraImoveisDoc", label: "Escritura/Matrícula" },
-        { key: "impostoRendaDoc", label: "Imposto de Renda" },
-        { key: "reservasHotelDoc", label: "Reservas de Hotel" },
-        { key: "roteiroViagemDoc", label: "Roteiro de Viagem" },
-        { key: "formularioConsuladoDoc", label: "Formulário do Consulado" },
         { key: "rnmDoc", label: "RNM" },
+        { key: "passaporteDoc", label: "Passaporte" },
         { key: "comprovanteEnderecoDoc", label: "Comprovante de Endereço" },
         { key: "foto3x4Doc", label: "Foto/Selfie" },
+        { key: "documentoChinesDoc", label: "Documento Chinês" },
         { key: "antecedentesCriminaisDoc", label: "Antecedentes Criminais" },
-        { key: "cartaoCnpjDoc", label: "CNPJ" },
-        { key: "extratosBancariosDoc", label: "Extratos Bancários" },
-        { key: "reservasPassagensDoc", label: "Reservas de Passagens" },
-        { key: "seguroViagemDoc", label: "Seguro Viagem" },
-        { key: "taxaDoc", label: "Taxa Consular" },
-        { key: "documentosAdicionaisDoc", label: "Documentos Adicionais" },
       ],
     },
     {
-      title: "Agendar no Consulado",
+      title: "Comprovação Financeira",
+      step: "Cadastro de Documentos",
+      fields: [
+        { key: "certidaoNascimentoFilhosDoc", label: "Filhos (Certidão de Nascimento)" },
+        { key: "cartaoCnpjDoc", label: "Empresa: Cartão CNPJ" },
+        { key: "contratoEmpresaDoc", label: "Contrato Social" },
+      ],
+    },
+    {
+      title: "Histórico e Segurança",
+      step: "Cadastro de Documentos",
+      fields: [
+        { key: "antecedentesCriminaisDoc", label: "Antecedentes Criminais" },
+        { key: "declaracaoAntecedentesCriminaisDoc", label: "Declaração de Antecedentes Criminais" },
+      ],
+    },
+    {
+      title: "Formação Acadêmica",
+      step: "Cadastro de Documentos",
+      fields: [{ key: "diplomaDoc", label: "Diploma" }],
+    },
+    {
+      title: "Agendamento",
       step: "Agendar no Consulado",
       fields: [{ key: "comprovante-agendamento", label: "Comprovante de Agendamento" }],
     },
@@ -453,9 +492,8 @@ export function getTurismoDocRequirements(): PendingDocGroup[] {
       title: "Preparar Documentação",
       step: "Preparar Documentação",
       fields: [
-        { key: "formulario-visto-preenchido", label: "Formulário de Visto Preenchido" },
-        { key: "documentos-traduzidos", label: "Documentos Traduzidos" },
-        { key: "documentos-autenticados", label: "Documentos Autenticados" },
+        { key: "documentacao-original", label: "Documentação Original" },
+        { key: "documentacao-copia", label: "Cópia da Documentação" },
       ],
     },
     {

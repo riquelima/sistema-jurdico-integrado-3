@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdminClient } from '@/lib/supabase-server';
+import { updatePendingDocuments } from '@/lib/pending-documents-server';
 
 export async function DELETE(
   request: Request,
@@ -27,7 +28,7 @@ export async function DELETE(
     // Primeiro, buscar o documento para obter o file_path
     const { data: document, error: fetchError } = await supabaseAdmin
       .from('documents')
-      .select('file_path')
+      .select('file_path, module_type, record_id')
       .eq('id', docIdNum)
       .single();
 
@@ -41,7 +42,7 @@ export async function DELETE(
     // Extrair o caminho do arquivo do storage
     const filePath = document.file_path;
     let storagePath = '';
-    
+
     if (filePath && filePath.includes('/storage/v1/object/public/')) {
       // Extrair o caminho após o bucket name
       const pathParts = filePath.split('/storage/v1/object/public/');
@@ -80,9 +81,19 @@ export async function DELETE(
       );
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Documento excluído com sucesso' 
+    // Sync Pending Documents (Background)
+    if (document.module_type && document.record_id) {
+      // We use catch to ensure we don't block the response if this fails, 
+      // though we are awaiting nothing here so it's effectively fire-and-forget 
+      // unless valid promise handling is strictly enforced.
+      updatePendingDocuments(document.module_type, document.record_id).catch(err => {
+        console.error('❌ Error syncing pending documents after delete:', err);
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Documento excluído com sucesso'
     });
 
   } catch (error) {
