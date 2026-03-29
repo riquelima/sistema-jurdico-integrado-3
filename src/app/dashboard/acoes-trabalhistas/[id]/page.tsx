@@ -290,7 +290,7 @@ export default function AcoesTrabalhistasDetailsPage() {
   const [isEditingDocuments, setIsEditingDocuments] = useState(false);
 
   const RESPONSAVEIS = [
-    "Secretária – Jessica Cavallaro",
+    "Administrativo - Jéssica Cavallaro",
     "Administrativo - Priscila Ribeiro",
     "Advogada – Jailda Silva",
     "Advogada – Adriana Roder",

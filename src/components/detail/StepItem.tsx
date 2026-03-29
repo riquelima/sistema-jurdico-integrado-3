@@ -35,7 +35,7 @@ export function StepItem({ index, title, isCurrent, isCompleted, isPending, expa
   const [saveError, setSaveError] = useState<string>("");
   const [assignOpen, setAssignOpen] = useState(false);
   const RESPONSAVEIS = [
-    "Secretária – Jessica Cavallaro",
+    "Administrativo - Jéssica Cavallaro",
     "Administrativo - Priscila Ribeiro",
     "Advogada – Jailda Silva",
     "Advogada – Adriana Roder",

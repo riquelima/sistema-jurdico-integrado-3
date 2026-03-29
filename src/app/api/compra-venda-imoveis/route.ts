@@ -30,6 +30,8 @@ function mapDbFieldsToFrontend(record: any) {
     cpfComprador: record.cpf_comprador,
     cpfCompradorDoc: record.cpf_comprador_doc,
     enderecoComprador: record.endereco_comprador,
+    nomeVendedores: record.nome_vendedores,
+    nomeCompradores: record.nome_compradores,
     currentStep: record.current_step,
     status: record.status,
     prazoSinal: record.prazo_sinal,
@@ -160,6 +162,8 @@ export async function POST(request: NextRequest) {
       rnm_comprador: toNullIfEmpty(body.rnmComprador),
       cpf_comprador: toNullIfEmpty(body.cpfComprador),
       endereco_comprador: toNullIfEmpty(body.enderecoComprador),
+      nome_vendedores: toNullIfEmpty(body.nomeVendedores),
+      nome_compradores: toNullIfEmpty(body.nomeCompradores),
       current_step: body.currentStep ?? 0,
       status: body.status ?? 'Em Andamento',
       prazo_sinal: toNullIfEmpty(body.prazoSinal),
@@ -251,6 +255,8 @@ export async function PUT(request: NextRequest) {
     if (body.rnmComprador !== undefined) updateData.rnm_comprador = toNullIfEmpty(body.rnmComprador);
     if (body.cpfComprador !== undefined) updateData.cpf_comprador = toNullIfEmpty(body.cpfComprador);
     if (body.enderecoComprador !== undefined) updateData.endereco_comprador = toNullIfEmpty(body.enderecoComprador);
+    if (body.nomeVendedores !== undefined) updateData.nome_vendedores = toNullIfEmpty(body.nomeVendedores);
+    if (body.nomeCompradores !== undefined) updateData.nome_compradores = toNullIfEmpty(body.nomeCompradores);
     if (body.currentStep !== undefined) updateData.current_step = body.currentStep;
     if (body.status !== undefined) updateData.status = body.status;
     if (body.prazoSinal !== undefined) updateData.prazo_sinal = toNullIfEmpty(body.prazoSinal);

@@ -225,7 +225,7 @@ export default function PerdaNacionalidadeDetailPage() {
   };
 
   const RESPONSAVEIS = [
-    "Secretária – Jessica Cavallaro",
+    "Administrativo - Jéssica Cavallaro",
     "Administrativo - Priscila Ribeiro",
     "Advogada – Jailda Silva",
     "Advogada – Adriana Roder",

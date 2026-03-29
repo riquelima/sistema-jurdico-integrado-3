@@ -47,14 +47,7 @@ export default function NovaPerdaNacionalidadePage() {
   const [uploadingDocs, setUploadingDocs] = useState<Record<string, boolean>>({});
   const [extraUploads, setExtraUploads] = useState<Record<string, string[]>>({});
 
-  useEffect(() => {
-    const inputs = document.querySelectorAll('input[type="file"]');
-    inputs.forEach((el) => {
-      try {
-        el.setAttribute('multiple', '');
-      } catch { }
-    });
-  }, []);
+
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -353,6 +346,7 @@ export default function NovaPerdaNacionalidadePage() {
               type="file"
               id={`upload-${docField}`}
               className="hidden"
+              multiple
               onChange={(e) => handleDocumentUpload(e, docField)}
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf"
             />

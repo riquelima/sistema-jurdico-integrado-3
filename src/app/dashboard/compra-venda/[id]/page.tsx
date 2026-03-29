@@ -109,6 +109,8 @@ interface CaseData {
   rnmComprador?: string;
   cpfComprador?: string;
   enderecoComprador?: string;
+  nomeVendedores?: string;
+  nomeCompradores?: string;
   prazoSinal?: string;
   prazoEscritura?: string;
   contractNotes?: string;
@@ -132,8 +134,8 @@ export default function CompraVendaDetailsPage() {
   const [isEditingDocuments, setIsEditingDocuments] = useState(false);
 
   // Specific lists
-  const [editableSellers, setEditableSellers] = useState<{ rg?: string; cpf?: string; dataNascimento?: string }[]>([]);
-  const [editableCompradores, setEditableCompradores] = useState<{ rnm?: string; cpf?: string; endereco?: string }[]>([]);
+  const [editableSellers, setEditableSellers] = useState<{ nome?: string; rg?: string; cpf?: string; dataNascimento?: string }[]>([]);
+  const [editableCompradores, setEditableCompradores] = useState<{ nome?: string; rnm?: string; cpf?: string; endereco?: string }[]>([]);
 
   const [assignments, setAssignments] = useState<Record<number, { responsibleName?: string; dueDate?: string }>>({});
   const [saveMessages, setSaveMessages] = useState<{ [key: number]: string }>({});
@@ -143,7 +145,7 @@ export default function CompraVendaDetailsPage() {
   const [showNotesModal, setShowNotesModal] = useState(false);
 
   const RESPONSAVEIS = [
-    "Secretária – Jessica Cavallaro",
+    "Administrativo - Jéssica Cavallaro",
     "Administrativo - Priscila Ribeiro",
     "Advogada – Jailda Silva",
     "Advogada – Adriana Roder",
@@ -222,22 +224,24 @@ export default function CompraVendaDetailsPage() {
           s.completed = completedFromServer.includes(s.id);
         });
 
+        const nomeVList = (record.nomeVendedores || "").split(",").filter(Boolean);
         const rgList = (record.rgVendedores || "").split(",").filter(Boolean);
         const cpfList = (record.cpfVendedores || "").split(",").filter(Boolean);
         const dobList = (record.dataNascimentoVendedores || "").split(",").filter(Boolean);
-        const maxLen = Math.max(rgList.length, cpfList.length, dobList.length);
+        const maxLen = Math.max(nomeVList.length, rgList.length, cpfList.length, dobList.length);
         const sellers = maxLen > 0
-          ? Array.from({ length: maxLen }, (_, i) => ({ rg: rgList[i] || "", cpf: cpfList[i] || "", dataNascimento: dobList[i] || "" }))
-          : [{ rg: "", cpf: "", dataNascimento: "" }];
+          ? Array.from({ length: maxLen }, (_, i) => ({ nome: nomeVList[i] || "", rg: rgList[i] || "", cpf: cpfList[i] || "", dataNascimento: dobList[i] || "" }))
+          : [{ nome: "", rg: "", cpf: "", dataNascimento: "" }];
         setEditableSellers(sellers);
 
+        const nomeCList = (record.nomeCompradores || "").split(",").filter(Boolean);
         const rnmList = (record.rnmComprador || "").split(",").filter(Boolean);
         const cpfCList = (record.cpfComprador || "").split(",").filter(Boolean);
         const endList = (record.enderecoComprador || "").split(",").filter(Boolean);
-        const maxC = Math.max(rnmList.length, cpfCList.length, endList.length);
+        const maxC = Math.max(nomeCList.length, rnmList.length, cpfCList.length, endList.length);
         const compradores = maxC > 0
-          ? Array.from({ length: maxC }, (_, i) => ({ rnm: rnmList[i] || "", cpf: cpfCList[i] || "", endereco: endList[i] || "" }))
-          : [{ rnm: "", cpf: "", endereco: "" }];
+          ? Array.from({ length: maxC }, (_, i) => ({ nome: nomeCList[i] || "", rnm: rnmList[i] || "", cpf: cpfCList[i] || "", endereco: endList[i] || "" }))
+          : [{ nome: "", rnm: "", cpf: "", endereco: "" }];
         setEditableCompradores(compradores);
 
         const data: CaseData = {
@@ -329,8 +333,13 @@ export default function CompraVendaDetailsPage() {
     return true;
   };
 
-  const handleSpecificFileUpload = async (file: File, fieldKey: string, stepId: number) => {
-    if (!validateFile(file)) return;
+  const handleSpecificFileUpload = async (files: FileList | File[] | null, fieldKey: string, stepId: number) => {
+    const arr = !files ? [] : Array.isArray(files) ? files : Array.from(files);
+    if (!arr.length) return;
+
+    const validFiles = arr.filter(validateFile);
+    if (!validFiles.length) return;
+
 
     const uploadKey = `${fieldKey}-${stepId}`;
     setUploadingFiles(prev => ({ ...prev, [uploadKey]: true }));
@@ -344,77 +353,79 @@ export default function CompraVendaDetailsPage() {
         }
       };
 
-      const MAX_DIRECT_SIZE = 4 * 1024 * 1024; // 4MB
+      for (const file of validFiles) {
+        const MAX_DIRECT_SIZE = 4 * 1024 * 1024; // 4MB
 
-      if (file.size > MAX_DIRECT_SIZE) {
-        // Signed Upload
-        const signRes = await fetch("/api/documents/upload/sign", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fileName: file.name,
-            fileType: file.type,
-            caseId: String(params.id),
-            moduleType: 'compra_venda_imoveis', // Fixed module type
-            fieldName: fieldKey,
-            clientName: caseData?.clientName || 'Cliente'
-          })
-        });
+        if (file.size > MAX_DIRECT_SIZE) {
+          // Signed Upload
+          const signRes = await fetch("/api/documents/upload/sign", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fileName: file.name,
+              fileType: file.type,
+              caseId: String(params.id),
+              moduleType: 'compra_venda_imoveis', // Fixed module type
+              fieldName: fieldKey,
+              clientName: caseData?.clientName || 'Cliente'
+            })
+          });
 
-        if (!signRes.ok) throw new Error(await getErrorMessage(signRes, "Falha ao gerar URL assinada"));
+          if (!signRes.ok) throw new Error(await getErrorMessage(signRes, "Falha ao gerar URL assinada"));
 
-        const { signedUrl, publicUrl } = await signRes.json();
+          const { signedUrl, publicUrl } = await signRes.json();
 
-        const uploadRes = await fetch(signedUrl, {
-          method: "PUT",
-          body: file,
-          headers: { "Content-Type": file.type }
-        });
+          const uploadRes = await fetch(signedUrl, {
+            method: "PUT",
+            body: file,
+            headers: { "Content-Type": file.type }
+          });
 
-        if (!uploadRes.ok) throw new Error("Falha no upload do arquivo");
+          if (!uploadRes.ok) throw new Error("Falha no upload do arquivo");
 
-        // Register
-        const regRes = await fetch("/api/documents/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            isRegisterOnly: true,
-            fileUrl: publicUrl,
-            fileName: file.name,
-            fileType: file.type,
-            fileSize: file.size,
-            fieldName: fieldKey,
-            moduleType: "compra_venda_imoveis",
-            caseId: String(params.id),
-            clientName: caseData?.clientName || 'Cliente'
-          })
-        });
+          // Register
+          const regRes = await fetch("/api/documents/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              isRegisterOnly: true,
+              fileUrl: publicUrl,
+              fileName: file.name,
+              fileType: file.type,
+              fileSize: file.size,
+              fieldName: fieldKey,
+              moduleType: "compra_venda_imoveis",
+              caseId: String(params.id),
+              clientName: caseData?.clientName || 'Cliente'
+            })
+          });
 
-        if (!regRes.ok) throw new Error(await getErrorMessage(regRes, "Erro ao registrar document"));
+          if (!regRes.ok) throw new Error(await getErrorMessage(regRes, "Erro ao registrar document"));
 
-        const payload = await regRes.json();
-        const newDoc = payload?.document;
-        if (newDoc) setDocuments(prev => [newDoc, ...prev]);
+          const payload = await regRes.json();
+          const newDoc = payload?.document;
+          if (newDoc) setDocuments(prev => [newDoc, ...prev]);
 
-      } else {
-        // Direct Upload
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('caseId', String(params.id));
-        fd.append('moduleType', 'compra_venda_imoveis');
-        fd.append('fieldName', fieldKey);
-        fd.append('clientName', caseData?.clientName || 'Cliente');
-        const res = await fetch('/api/documents/upload', { method: 'POST', body: fd });
-        if (!res.ok) throw new Error(await getErrorMessage(res, 'Erro ao fazer upload do documento'));
-        const payload = await res.json();
-        const newDoc = payload?.document;
-        if (newDoc) {
-          setDocuments(prev => [newDoc, ...prev]);
+        } else {
+          // Direct Upload
+          const fd = new FormData();
+          fd.append('file', file);
+          fd.append('caseId', String(params.id));
+          fd.append('moduleType', 'compra_venda_imoveis');
+          fd.append('fieldName', fieldKey);
+          fd.append('clientName', caseData?.clientName || 'Cliente');
+          const res = await fetch('/api/documents/upload', { method: 'POST', body: fd });
+          if (!res.ok) throw new Error(await getErrorMessage(res, 'Erro ao fazer upload do documento'));
+          const payload = await res.json();
+          const newDoc = payload?.document;
+          if (newDoc) {
+            setDocuments(prev => [newDoc, ...prev]);
+          }
         }
       }
 
       await fetchDocuments();
-      toast.success(`Upload concluído: ${file.name}`);
+      toast.success("Upload(s) concluído(s) com sucesso!");
     } catch (error) {
       console.error("Erro ao fazer upload:", error);
       toast.error(error instanceof Error ? error.message : "Erro ao realizar upload.");
@@ -513,9 +524,11 @@ export default function CompraVendaDetailsPage() {
         numeroMatricula: caseData?.numeroMatricula || "",
         cadastroContribuinte: caseData?.cadastroContribuinte || "",
         enderecoImovel: caseData?.enderecoImovel || "",
+        nomeVendedores: (editableSellers || []).map(s => s.nome || "").filter(Boolean).join(","),
         rgVendedores: (editableSellers || []).map(s => s.rg || "").filter(Boolean).join(","),
         cpfVendedores: (editableSellers || []).map(s => s.cpf || "").filter(Boolean).join(","),
         dataNascimentoVendedores: (editableSellers || []).map(s => s.dataNascimento || "").filter(Boolean).join(","),
+        nomeCompradores: (editableCompradores || []).map(c => c.nome || "").filter(Boolean).join(","),
         rnmComprador: (editableCompradores || []).map(c => c.rnm || "").filter(Boolean).join(","),
         cpfComprador: (editableCompradores || []).map(c => c.cpf || "").filter(Boolean).join(","),
         enderecoComprador: (editableCompradores || []).map(c => c.endereco || "").filter(Boolean).join(","),
@@ -624,7 +637,8 @@ export default function CompraVendaDetailsPage() {
                   <input
                     type="file"
                     className="hidden"
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleSpecificFileUpload(f, fileKey, stepId || 0); }}
+                    multiple
+                    onChange={(e) => { handleSpecificFileUpload(e.target.files, fileKey, stepId || 0); e.target.value = ""; }}
                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf"
                   />
                 </label>
@@ -707,7 +721,10 @@ export default function CompraVendaDetailsPage() {
                     {isEditingDocuments && editableSellers.length > 1 && (
                       <button onClick={() => setEditableSellers(prev => prev.filter((_, i) => i !== idx))} className="absolute top-2 right-2 text-red-500"><X className="w-3 h-3" /></button>
                     )}
-                    <div className="grid md:grid-cols-3 gap-4">
+                    <div className="grid md:grid-cols-4 gap-4">
+                      {renderRow("Nome", undefined, "", isEditingDocuments, undefined,
+                        isEditingDocuments ? <Input value={seller.nome || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, nome: e.target.value } : s))} className="h-9 bg-white" /> : <span className="text-sm font-medium">{seller.nome || '-'}</span>, stepId
+                      )}
                       {renderRow("RG", undefined, `rgVendedorDoc_${idx}`, isEditingDocuments, undefined,
                         isEditingDocuments ? <Input value={seller.rg || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, rg: e.target.value } : s))} className="h-9 bg-white" /> : <span className="text-sm font-medium">{seller.rg || '-'}</span>, stepId
                       )}
@@ -735,7 +752,10 @@ export default function CompraVendaDetailsPage() {
                     {isEditingDocuments && editableCompradores.length > 1 && (
                       <button onClick={() => setEditableCompradores(prev => prev.filter((_, i) => i !== idx))} className="absolute top-2 right-2 text-red-500"><X className="w-3 h-3" /></button>
                     )}
-                    <div className="grid md:grid-cols-3 gap-4">
+                    <div className="grid md:grid-cols-4 gap-4">
+                      {renderRow("Nome", undefined, "", isEditingDocuments, undefined,
+                        isEditingDocuments ? <Input value={comp.nome || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, nome: e.target.value } : s))} className="h-9 bg-white" /> : <span className="text-sm font-medium">{comp.nome || '-'}</span>, stepId
+                      )}
                       {renderRow("RNM", undefined, `rnmCompradorDoc_${idx}`, isEditingDocuments, undefined,
                         isEditingDocuments ? <Input value={comp.rnm || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, rnm: e.target.value } : s))} className="h-9 bg-white" /> : <span className="text-sm font-medium">{comp.rnm || '-'}</span>, stepId
                       )}

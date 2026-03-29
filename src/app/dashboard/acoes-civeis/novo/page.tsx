@@ -197,6 +197,7 @@ export default function NovaAcaoCivelPage() {
   });
 
   const [uploadingDocs, setUploadingDocs] = useState<Record<string, boolean>>({});
+  const [extraUploads, setExtraUploads] = useState<Record<string, string[]>>({});
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -238,112 +239,153 @@ export default function NovaAcaoCivelPage() {
   };
 
   const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!validateFile(file)) {
-      e.target.value = "";
-      return;
-    }
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
 
     setUploadingDocs((prev) => ({ ...prev, [field]: true }));
 
     try {
+      const uploadedUrls: string[] = [];
       const MAX_DIRECT_SIZE = 4 * 1024 * 1024; // 4MB
-      let fileUrl = "";
 
-      if (file.size > MAX_DIRECT_SIZE) {
-        // Signed Upload (Temporary)
-        try {
-          const signRes = await fetch("/api/documents/upload/sign", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              fileName: file.name,
-              fileType: file.type,
-              clientName: formData.clientName || "Novo Cliente",
-              moduleType: "acoes_civeis"
-            })
-          });
+      for (const file of files) {
+        if (!validateFile(file)) continue;
 
-          if (!signRes.ok) {
-            const err = await signRes.json();
-            throw new Error(err.error || "Falha ao gerar URL assinada");
+        let fileUrl = "";
+
+        // Standardize file name
+        const sanitizedFileName = file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]/g, "_");
+        const finalFile = new File([file], sanitizedFileName, { type: file.type });
+
+        if (file.size > MAX_DIRECT_SIZE) {
+          // Signed Upload (Temporary)
+          try {
+            const signRes = await fetch("/api/documents/upload/sign", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                fileName: sanitizedFileName,
+                fileType: file.type,
+                clientName: formData.clientName || "Novo Cliente",
+                moduleType: "acoes_civeis"
+              })
+            });
+
+            if (!signRes.ok) {
+              const err = await signRes.json();
+              throw new Error(err.error || "Falha ao gerar URL assinada");
+            }
+
+            const { signedUrl, publicUrl } = await signRes.json();
+
+            const uploadRes = await fetch(signedUrl, {
+              method: "PUT",
+              body: file,
+              headers: { "Content-Type": file.type }
+            });
+
+            if (!uploadRes.ok) throw new Error("Falha no upload do arquivo");
+
+            fileUrl = publicUrl;
+
+            // Register metadata (Register Only)
+            await fetch("/api/documents/upload", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                isRegisterOnly: true,
+                fileUrl,
+                fileName: sanitizedFileName,
+                fileType: file.type,
+                fileSize: file.size,
+                fieldName: field,
+                moduleType: "acoes_civeis",
+                clientName: formData.clientName
+              })
+            });
+          } catch (err: any) {
+            console.error("Upload assinado falhou:", err);
+            toast.error(`Erro ao enviar ${file.name}: ${err.message}`);
+            continue;
           }
-
-          const { signedUrl, publicUrl } = await signRes.json();
-
-          const uploadRes = await fetch(signedUrl, {
-            method: "PUT",
-            body: file,
-            headers: { "Content-Type": file.type }
-          });
-
-          if (!uploadRes.ok) throw new Error("Falha no upload do arquivo");
-
-          fileUrl = publicUrl;
-
-          // Register metadata (Register Only)
-          await fetch("/api/documents/upload", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              isRegisterOnly: true,
-              fileUrl,
-              fileName: file.name,
-              fileType: file.type,
-              fileSize: file.size,
-              fieldName: field,
-              moduleType: "acoes_civeis",
-              clientName: formData.clientName
-            })
-          });
-
-        } catch (err: any) {
-          console.error("Upload assinado falhou:", err);
-          toast.error(`Erro ao enviar ${file.name}: ${err.message}`);
-          return;
-        }
-      } else {
-        // Direct Upload
-        const formDataUpload = new FormData();
-        formDataUpload.append("file", file);
-        formDataUpload.append("moduleType", "acoes_civeis");
-        if (formData.clientName) formDataUpload.append("clientName", formData.clientName);
-
-        const response = await fetch("/api/documents/upload", {
-          method: "POST",
-          body: formDataUpload
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          fileUrl = data.fileUrl;
         } else {
-          const errorData = await response.json();
-          console.error("Upload error:", errorData);
-          toast.error(errorData.error || "Erro ao enviar documento");
-          return;
+          // Direct Upload
+          const formDataUpload = new FormData();
+          formDataUpload.append("file", finalFile);
+          formDataUpload.append("moduleType", "acoes_civeis");
+          if (formData.clientName) formDataUpload.append("clientName", formData.clientName);
+
+          const response = await fetch("/api/documents/upload", {
+            method: "POST",
+            body: formDataUpload
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            fileUrl = data.fileUrl;
+          } else {
+            const errorData = await response.json();
+            console.error("Upload error:", errorData);
+            toast.error(errorData.error || "Erro ao enviar documento");
+            continue;
+          }
+        }
+
+        if (fileUrl) {
+          uploadedUrls.push(fileUrl);
+          toast.success(`${file.name} enviado com sucesso!`);
         }
       }
 
-      if (fileUrl) {
-        handleChange(`${field}File`, fileUrl);
-        toast.success("Documento enviado com sucesso!");
+      if (uploadedUrls.length > 0) {
+        // First file goes to the main field if it's empty
+        const currentMain = formData[`${field}File`];
+        if (!currentMain) {
+          handleChange(`${field}File`, uploadedUrls[0]);
+          if (uploadedUrls.length > 1) {
+            const rest = uploadedUrls.slice(1);
+            setExtraUploads(prev => ({
+              ...prev,
+              [field]: [...(prev[field] || []), ...rest]
+            }));
+          }
+        } else {
+          // All go to extra if main is already filled
+          setExtraUploads(prev => ({
+            ...prev,
+            [field]: [...(prev[field] || []), ...uploadedUrls]
+          }));
+        }
       }
 
     } catch (error) {
-      console.error("Error uploading file:", error);
-      toast.error("Erro ao enviar documento");
+      console.error("Error uploading files:", error);
+      toast.error("Erro ao enviar documentos");
     } finally {
       setUploadingDocs((prev) => ({ ...prev, [field]: false }));
-      // Limpar o input
+      // Cleanup input
       e.target.value = "";
     }
   };
 
-  const removeDocument = (field: string) => {
-    handleChange(`${field}File`, "");
+  const removeDocument = (docField: string, fileUrl: string) => {
+    if (formData[`${docField}File`] === fileUrl) {
+      const extras = extraUploads[docField] || [];
+      if (extras.length > 0) {
+        handleChange(`${docField}File`, extras[0]);
+        setExtraUploads(prev => ({
+          ...prev,
+          [docField]: extras.slice(1)
+        }));
+      } else {
+        handleChange(`${docField}File`, "");
+      }
+    } else {
+      setExtraUploads(prev => ({
+        ...prev,
+        [docField]: (prev[docField] || []).filter(url => url !== fileUrl)
+      }));
+    }
     toast.success("Documento removido");
   };
 
@@ -359,8 +401,9 @@ export default function NovaAcaoCivelPage() {
       'passaportePaiFile', 'passaporteCriancaFile'
     ];
 
-    const documentsToConvert = [];
+    const documentsToConvert: { fieldName: string, fileUrl: string }[] = [];
 
+    // Main fields
     for (const field of documentFields) {
       const fileUrl = formData[field];
       if (fileUrl) {
@@ -370,6 +413,16 @@ export default function NovaAcaoCivelPage() {
         });
       }
     }
+
+    // Extra uploads
+    Object.entries(extraUploads).forEach(([field, urls]) => {
+      urls.forEach(url => {
+        documentsToConvert.push({
+          fieldName: field,
+          fileUrl: url
+        });
+      });
+    });
 
     if (documentsToConvert.length > 0) {
       try {
@@ -513,8 +566,13 @@ export default function NovaAcaoCivelPage() {
 
   // Helper component matching Vistos design
   const DocumentRow = ({ label, field, docField, placeholder = "Status ou informações do documento" }: { label: string; field?: string; docField: string; placeholder?: string }) => {
-    // Check if file is uploaded
-    const fileUrl = formData[`${docField}File`];
+    // Collect all attached files (main + extra)
+    const attachedFiles: string[] = [];
+    const mainFile = formData[`${docField}File`];
+    if (mainFile) attachedFiles.push(mainFile);
+    if (extraUploads[docField]) {
+      attachedFiles.push(...extraUploads[docField]);
+    }
 
     return (
       <div className="space-y-2">
@@ -530,8 +588,8 @@ export default function NovaAcaoCivelPage() {
           )}
           {!field && (
             <div className="flex-1 flex items-center p-2.5 rounded-md border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-sm">
-              <span className={`text-xs ${fileUrl ? "text-green-600 font-medium" : "italic"}`}>
-                {fileUrl ? "Documento anexado" : "Nenhum arquivo selecionado"}
+              <span className={`text-xs ${attachedFiles.length > 0 ? "text-green-600 font-medium" : "italic"}`}>
+                {attachedFiles.length > 0 ? `${attachedFiles.length} documento(s) anexado(s)` : "Nenhum arquivo selecionado"}
               </span>
             </div>
           )}
@@ -540,6 +598,7 @@ export default function NovaAcaoCivelPage() {
               type="file"
               id={`upload-${docField}`}
               className="hidden"
+              multiple
               onChange={(e) => handleDocumentUpload(e, docField)}
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf"
             />
@@ -556,14 +615,17 @@ export default function NovaAcaoCivelPage() {
         </div>
 
         {/* File Preview List - Vistos Style */}
-        {fileUrl && (
+        {attachedFiles.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
-            <DocumentChip
-              name={decodeURIComponent((fileUrl.split("/").pop() || "Documento"))}
-              href={fileUrl}
-              onDelete={() => removeDocument(docField)}
-              className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:border-sky-200 dark:hover:border-sky-800 transition-all"
-            />
+            {attachedFiles.map((url, idx) => (
+              <DocumentChip
+                key={idx}
+                name={decodeURIComponent((url.split("/").pop() || "Documento"))}
+                href={url}
+                onDelete={() => removeDocument(docField, url)}
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:border-sky-200 dark:hover:border-sky-800 transition-all"
+              />
+            ))}
           </div>
         )}
       </div>

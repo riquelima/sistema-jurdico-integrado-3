@@ -357,6 +357,7 @@ export default function NovaAcaoTrabalhistaPage() {
               type="file"
               id={`upload-${docField}`}
               className="hidden"
+              multiple
               onChange={(e) => handleDocumentUpload(e, docField)}
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf"
             />

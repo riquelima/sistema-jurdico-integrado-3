@@ -96,7 +96,7 @@ const CRIMINAL_TYPES = [
 ];
 
 const RESPONSAVEIS = [
-  "Secretária – Jessica Cavallaro",
+  "Administrativo - Jéssica Cavallaro",
   "Administrativo - Priscila Ribeiro",
   "Advogada – Jailda Silva",
   "Advogada – Adriana Roder",
@@ -285,109 +285,108 @@ export default function AcaoCriminalDetailPage() {
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!validateFile(file)) {
-      e.target.value = "";
-      return;
-    }
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
 
     setUploadingFields(prev => ({ ...prev, [fieldName]: true }));
 
     try {
       const MAX_DIRECT_SIZE = 4 * 1024 * 1024; // 4MB
-      let fileUrl = "";
-      let finalFileName = file.name;
 
-      // Standardize file name
-      const sanitizedFileName = file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]/g, "_");
-      const finalFile = new File([file], sanitizedFileName, { type: file.type });
-      finalFileName = sanitizedFileName;
+      for (const file of files) {
+        if (!validateFile(file)) continue;
 
-      if (file.size > MAX_DIRECT_SIZE) {
-        // Signed Upload (Temporary)
-        const signRes = await fetch("/api/documents/upload/sign", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fileName: sanitizedFileName,
-            fileType: file.type,
-            caseId: id,
-            moduleType: "acoes_criminais",
-            fieldName: fieldName,
-            clientName: caseData?.clientName || "Cliente"
-          })
-        });
+        let fileUrl = "";
+        let finalFileName = file.name;
 
-        if (!signRes.ok) {
-          const err = await signRes.json();
-          throw new Error(err.error || "Falha ao gerar URL assinada");
+        // Standardize file name
+        const sanitizedFileName = file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]/g, "_");
+        const finalFile = new File([file], sanitizedFileName, { type: file.type });
+        finalFileName = sanitizedFileName;
+
+        if (file.size > MAX_DIRECT_SIZE) {
+          // Signed Upload (Temporary)
+          const signRes = await fetch("/api/documents/upload/sign", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fileName: sanitizedFileName,
+              fileType: file.type,
+              caseId: id,
+              moduleType: "acoes_criminais",
+              fieldName: fieldName,
+              clientName: caseData?.clientName || "Cliente"
+            })
+          });
+
+          if (!signRes.ok) {
+            const err = await signRes.json();
+            throw new Error(err.error || "Falha ao gerar URL assinada");
+          }
+
+          const { signedUrl, publicUrl } = await signRes.json();
+
+          const uploadRes = await fetch(signedUrl, {
+            method: "PUT",
+            body: file,
+            headers: { "Content-Type": file.type }
+          });
+
+          if (!uploadRes.ok) throw new Error("Falha no upload do arquivo");
+
+          fileUrl = publicUrl;
+
+          // Register metadata
+          await fetch("/api/documents/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              isRegisterOnly: true,
+              fileUrl,
+              fileName: sanitizedFileName,
+              fileType: file.type,
+              fileSize: file.size,
+              caseId: id,
+              fieldName: fieldName,
+              moduleType: "acoes_criminais",
+              clientName: caseData?.clientName || "Cliente"
+            })
+          });
+
+        } else {
+          // Direct Upload
+          const formData = new FormData();
+          formData.append("file", finalFile);
+          formData.append("caseId", id);
+          formData.append("fieldName", fieldName);
+          formData.append("moduleType", "acoes_criminais");
+          formData.append("documentType", fieldName);
+
+          const response = await fetch("/api/documents/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Erro ao enviar documento");
+          }
+          const data = await response.json();
+          fileUrl = data.fileUrl;
+          finalFileName = data.fileName;
         }
 
-        const { signedUrl, publicUrl } = await signRes.json();
-
-        const uploadRes = await fetch(signedUrl, {
-          method: "PUT",
-          body: file,
-          headers: { "Content-Type": file.type }
-        });
-
-        if (!uploadRes.ok) throw new Error("Falha no upload do arquivo");
-
-        fileUrl = publicUrl;
-
-        // Register metadata
-        await fetch("/api/documents/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            isRegisterOnly: true,
-            fileUrl,
-            fileName: sanitizedFileName,
-            fileType: file.type,
-            fileSize: file.size,
-            caseId: id,
-            fieldName: fieldName,
-            moduleType: "acoes_criminais",
-            clientName: caseData?.clientName || "Cliente"
-          })
-        });
-
-      } else {
-        // Direct Upload
-        const formData = new FormData();
-        formData.append("file", finalFile);
-        formData.append("caseId", id);
-        formData.append("fieldName", fieldName);
-        formData.append("moduleType", "acoes_criminais");
-        formData.append("documentType", fieldName);
-
-        const response = await fetch("/api/documents/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Erro ao enviar documento");
+        if (fileUrl || finalFileName) {
+          // Update local state if needed (refetched below)
         }
-        const data = await response.json();
-        fileUrl = data.fileUrl;
-        finalFileName = data.fileName;
       }
 
-      if (fileUrl || finalFileName) {
-        // Update case data
-        setCaseData(prev => prev ? { ...prev, [fieldName]: finalFileName } : null);
-
-        // Refresh documents
-        const docsRes = await fetch(`/api/documents/${id}?moduleType=acoes_criminais`);
-        if (docsRes.ok) {
-          setDocuments(await docsRes.json());
-        }
-        alert("✅ Arquivo enviado com sucesso!");
+      // Refresh documents
+      const docsRes = await fetch(`/api/documents/${id}?moduleType=acoes_criminais`);
+      if (docsRes.ok) {
+        setDocuments(await docsRes.json());
       }
+      alert("✅ Upload(s) concluído(s) com sucesso!");
 
     } catch (error: any) {
       console.error("Error uploading file:", error);
@@ -396,6 +395,7 @@ export default function AcaoCriminalDetailPage() {
       setUploadingFields(prev => ({ ...prev, [fieldName]: false }));
       e.target.value = "";
     }
+
   };
 
   const handleStatusChange = async (newStatus: string) => {
@@ -605,6 +605,7 @@ export default function AcaoCriminalDetailPage() {
                   <input
                     type="file"
                     className="hidden"
+                    multiple
                     onChange={(e) => handleFileUpload(e, fileKey)}
                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf"
                   />
@@ -687,7 +688,7 @@ export default function AcaoCriminalDetailPage() {
                 <div className="flex items-center justify-between">
                   <Label className="text-base font-semibold">Documentos Cadastrados</Label>
                   <div className="flex items-center gap-2">
-                    <Input type="file" id="doc-upload-0" className="hidden" onChange={(e) => handleFileUpload(e, "documento_geral")} />
+                    <Input type="file" id="doc-upload-0" className="hidden" multiple onChange={(e) => handleFileUpload(e, "documento_geral")} />
                     <Button size="sm" variant="outline" onClick={() => document.getElementById('doc-upload-0')?.click()}>
                       <Plus className="h-4 w-4 mr-2" /> Adicionar Documento
                     </Button>

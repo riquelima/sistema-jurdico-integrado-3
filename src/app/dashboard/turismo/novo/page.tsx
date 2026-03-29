@@ -106,6 +106,7 @@ const DocumentRow = ({
             type="file"
             id={`upload-${docField}`}
             className="hidden"
+            multiple
             onChange={onUpload}
             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf"
           />
@@ -205,14 +206,7 @@ export default function NovoTurismoPage() {
   const [uploadingDocs, setUploadingDocs] = useState<Record<string, boolean>>({});
   const [extraUploads, setExtraUploads] = useState<Record<string, string[]>>({});
 
-  useEffect(() => {
-    const inputs = document.querySelectorAll('input[type="file"]');
-    inputs.forEach((el) => {
-      try {
-        el.setAttribute('multiple', '');
-      } catch { }
-    });
-  }, []);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -268,6 +262,14 @@ export default function NovoTurismoPage() {
   ) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (files.length === 0) return;
+
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    for (const file of files) {
+      if (file.size > maxSize) {
+        alert(`O arquivo ${file.name} excede o limite de 50MB.`);
+        return;
+      }
+    }
 
     setUploadingDocs((prev) => ({ ...prev, [field]: true }));
 
@@ -687,6 +689,7 @@ export default function NovoTurismoPage() {
                         type="file"
                         id="upload-comprovanteEnderecoDoc"
                         className="hidden"
+                        multiple
                         onChange={(e) => handleDocumentUpload(e, "comprovanteEnderecoDoc")}
                       />
                       <Button

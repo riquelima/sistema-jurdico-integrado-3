@@ -80,9 +80,8 @@ const DocumentRow = ({ label, field, docField, placeholder = "Status ou informa√
         )}
         <div className="relative">
           <input
-            type="file"
-            id={`upload-${docField}`}
             className="hidden"
+            multiple
             onChange={(e) => handleDocumentUpload(e, docField)}
             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf"
           />
@@ -243,14 +242,7 @@ export default function NovoVistoPage() {
   const [uploadingDocs, setUploadingDocs] = useState<Record<string, boolean>>({});
   const [extraUploads, setExtraUploads] = useState<Record<string, string[]>>({});
 
-  useEffect(() => {
-    const inputs = document.querySelectorAll('input[type="file"]');
-    inputs.forEach((el) => {
-      try {
-        el.setAttribute('multiple', '');
-      } catch { }
-    });
-  }, []);
+
 
   const validateFile = (file: File) => {
     // Lista expandida de tipos permitidos
@@ -908,6 +900,7 @@ export default function NovoVistoPage() {
                             type="file"
                             id="upload-comprovanteEnderecoDoc"
                             className="hidden"
+                            multiple
                             onChange={(e) => handleDocumentUpload(e, "comprovanteEnderecoDoc")}
                           />
                           <Button

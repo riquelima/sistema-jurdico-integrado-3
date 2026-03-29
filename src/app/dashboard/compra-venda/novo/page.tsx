@@ -27,12 +27,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { DocumentChip } from "@/components/ui/document-chip";
 
 interface Vendedor {
+  nome: string;
   rg: string;
   cpf: string;
   dataNascimento: string;
 }
 
 interface Comprador {
+  nome: string;
   rnm: string;
   cpf: string;
   endereco: string;
@@ -44,10 +46,10 @@ export default function NovaCompraVendaPage() {
 
   // State for dynamic lists
   const [vendedores, setVendedores] = useState<Vendedor[]>([
-    { rg: "", cpf: "", dataNascimento: "" }
+    { nome: "", rg: "", cpf: "", dataNascimento: "" }
   ]);
   const [compradores, setCompradores] = useState<Comprador[]>([
-    { rnm: "", cpf: "", endereco: "" }
+    { nome: "", rnm: "", cpf: "", endereco: "" }
   ]);
 
   const [formData, setFormData] = useState({
@@ -68,14 +70,7 @@ export default function NovaCompraVendaPage() {
   const [uploadingDocs, setUploadingDocs] = useState<Record<string, boolean>>({});
   const [extraUploads, setExtraUploads] = useState<Record<string, string[]>>({});
 
-  useEffect(() => {
-    const inputs = document.querySelectorAll('input[type="file"]');
-    inputs.forEach((el) => {
-      try {
-        el.setAttribute('multiple', '');
-      } catch { }
-    });
-  }, []);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,9 +86,11 @@ export default function NovaCompraVendaPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          nomeVendedores: vendedores.map(v => v.nome).filter(Boolean).join(","),
           rgVendedores: vendedores.map(v => v.rg).filter(Boolean).join(","),
           cpfVendedores: vendedores.map(v => v.cpf).filter(Boolean).join(","),
           dataNascimentoVendedores: vendedores.map(v => v.dataNascimento).filter(Boolean).join(","),
+          nomeCompradores: compradores.map(c => c.nome).filter(Boolean).join(","),
           rnmComprador: compradores.map(c => c.rnm).filter(Boolean).join(","),
           cpfComprador: compradores.map(c => c.cpf).filter(Boolean).join(","),
           enderecoComprador: compradores.map(c => c.endereco).filter(Boolean).join(","),
@@ -136,7 +133,7 @@ export default function NovaCompraVendaPage() {
   };
 
   const addVendedor = () => {
-    setVendedores([...vendedores, { rg: "", cpf: "", dataNascimento: "" }]);
+    setVendedores([...vendedores, { nome: "", rg: "", cpf: "", dataNascimento: "" }]);
   };
 
   const removeVendedor = (index: number) => {
@@ -146,7 +143,7 @@ export default function NovaCompraVendaPage() {
   };
 
   const addComprador = () => {
-    setCompradores([...compradores, { rnm: "", cpf: "", endereco: "" }]);
+    setCompradores([...compradores, { nome: "", rnm: "", cpf: "", endereco: "" }]);
   };
 
   const removeComprador = (index: number) => {
@@ -416,6 +413,7 @@ export default function NovaCompraVendaPage() {
               type="file"
               id={`upload-${docField}`}
               className="hidden"
+              multiple
               onChange={(e) => handleDocumentUpload(e, docField)}
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf"
             />
@@ -470,6 +468,7 @@ export default function NovaCompraVendaPage() {
               type="file"
               id={`upload-${docField}`}
               className="hidden"
+              multiple
               onChange={(e) => handleDocumentUpload(e, docField)}
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf"
             />
@@ -600,7 +599,16 @@ export default function NovaCompraVendaPage() {
                     </button>
                   )}
                   <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Vendedor {index + 1}</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div>
+                      <Label className="block text-sm font-medium mb-2">Nome Completo</Label>
+                      <Input
+                        value={vendedor.nome}
+                        onChange={(e) => handleVendedorChange(index, "nome", e.target.value)}
+                        className="w-full"
+                        placeholder="Nome do vendedor"
+                      />
+                    </div>
                     <div>
                       <Label className="block text-sm font-medium mb-2">RG / CNH</Label>
                       <Input
@@ -662,7 +670,16 @@ export default function NovaCompraVendaPage() {
                     </button>
                   )}
                   <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Comprador {index + 1}</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div>
+                      <Label className="block text-sm font-medium mb-2">Nome Completo</Label>
+                      <Input
+                        value={comprador.nome}
+                        onChange={(e) => handleCompradorChange(index, "nome", e.target.value)}
+                        className="w-full"
+                        placeholder="Nome do comprador"
+                      />
+                    </div>
                     <div>
                       <Label className="block text-sm font-medium mb-2">RNM</Label>
                       <Input

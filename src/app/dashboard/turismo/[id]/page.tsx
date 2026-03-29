@@ -542,6 +542,37 @@ export default function TurismoDetailsPage() {
     setShowEditDialog(true);
   };
 
+  const validateFile = (file: File) => {
+    const validTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/png',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/plain',
+      'application/rtf'
+    ];
+    const maxSize = 50 * 1024 * 1024; // 50MB
+
+    if (file.size === 0) {
+      toast.error(`Arquivo vazio: ${file.name}.`);
+      return false;
+    }
+
+    if (!validTypes.includes(file.type) && !file.name.match(/\.(pdf|jpg|jpeg|png|doc|docx|xls|xlsx|txt|rtf)$/i)) {
+      toast.error(`Formato inválido: ${file.name}.`);
+      return false;
+    }
+
+    if (file.size > maxSize) {
+      toast.error(`Arquivo muito grande: ${file.name}. Máximo 50MB.`);
+      return false;
+    }
+    return true;
+  };
+
   const confirmRenameDocument = async () => {
     if (!editingDocument || !newDocumentName.trim()) return;
     try {
@@ -565,17 +596,26 @@ export default function TurismoDetailsPage() {
     const arr = !files ? [] : Array.isArray(files) ? files : Array.from(files);
     if (!arr.length) return;
     const uploadKey = stepId !== undefined ? `step-${stepId}` : 'general';
+
+    const getErrorMessage = async (res: Response, fallback: string) => {
+      try {
+        const data = await res.json().catch(() => ({} as any));
+        return String(data?.error || data?.message || fallback);
+      } catch {
+        return fallback;
+      }
+    };
+
     setUploadingFiles(prev => ({ ...prev, [uploadKey]: true }));
+
     try {
-      const getErrorMessage = async (res: Response, fallback: string) => {
-        try {
-          const data = await res.json().catch(() => ({} as any));
-          return String(data?.error || data?.message || fallback);
-        } catch {
-          return fallback;
-        }
-      };
-      for (const file of arr) {
+      const validFiles = arr.filter(validateFile);
+      if (validFiles.length === 0) {
+        setUploadingFiles(prev => ({ ...prev, [uploadKey]: false }));
+        return;
+      }
+
+      for (const file of validFiles) {
         const isLargeFile = file.size > 4 * 1024 * 1024;
 
         if (isLargeFile) {
@@ -650,18 +690,21 @@ export default function TurismoDetailsPage() {
   };
 
   const handleSpecificFileUpload = async (file: File, fieldKey: string, stepId: number) => {
+    if (!validateFile(file)) return;
     const uploadKey = `${fieldKey}-${stepId}`;
-    setUploadingFiles(prev => ({ ...prev, [uploadKey]: true }));
-    try {
-      const getErrorMessage = async (res: Response, fallback: string) => {
-        try {
-          const data = await res.json().catch(() => ({} as any));
-          return String(data?.error || data?.message || fallback);
-        } catch {
-          return fallback;
-        }
-      };
 
+    const getErrorMessage = async (res: Response, fallback: string) => {
+      try {
+        const data = await res.json().catch(() => ({} as any));
+        return String(data?.error || data?.message || fallback);
+      } catch {
+        return fallback;
+      }
+    };
+
+    setUploadingFiles(prev => ({ ...prev, [uploadKey]: true }));
+
+    try {
       const isLargeFile = file.size > 4 * 1024 * 1024;
 
       if (isLargeFile) {

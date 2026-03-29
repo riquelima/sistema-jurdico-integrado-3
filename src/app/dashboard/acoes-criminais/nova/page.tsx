@@ -34,10 +34,7 @@ export default function NovaAcaoCriminalPage() {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  useEffect(() => {
-    const inputs = document.querySelectorAll('input[type="file"]');
-    inputs.forEach((el) => { try { el.setAttribute('multiple', ''); } catch { } });
-  }, []);
+
 
   const validateFile = (file: File) => {
     // Lista expandida de tipos permitidos
@@ -284,7 +281,7 @@ export default function NovaAcaoCriminalPage() {
             <Input value={field ? (formData[field as keyof typeof formData] as string) : ""} onChange={(e) => field && handleChange(field as any, e.target.value)} className="flex-1 rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5" placeholder={placeholder} />
           )}
           <div className="relative">
-            <input type="file" id={`upload-${docField}`} className="hidden" onChange={(e) => handleDocumentUpload(e, docField)} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf" />
+            <input type="file" id={`upload-${docField}`} className="hidden" multiple onChange={(e) => handleDocumentUpload(e, docField)} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf" />
             <Button type="button" className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-sm font-medium text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors whitespace-nowrap shadow-sm" onClick={() => document.getElementById(`upload-${docField}`)?.click()} disabled={uploadingDocs[docField]}>
               <Upload className="h-5 w-5 text-slate-500" />
               {uploadingDocs[docField] ? "Enviando..." : "Upload"}
