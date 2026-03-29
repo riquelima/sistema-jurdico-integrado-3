@@ -40,6 +40,172 @@ interface Comprador {
   endereco: string;
 }
 
+interface DocumentRowProps {
+  label: string;
+  field?: string;
+  docField: string;
+  placeholder?: string;
+  readOnly?: boolean;
+  formData: any;
+  extraUploads: Record<string, string[]>;
+  uploadingDocs: Record<string, boolean>;
+  handleChange: (field: string, value: any) => void;
+  handleDocumentUpload: (e: React.ChangeEvent<HTMLInputElement>, field: string) => void;
+  handleRemoveFile: (docField: string, fileUrl: string) => void;
+}
+
+const DocumentRow = ({
+  label,
+  field,
+  docField,
+  placeholder = "Informações",
+  readOnly = false,
+  formData,
+  extraUploads,
+  uploadingDocs,
+  handleChange,
+  handleDocumentUpload,
+  handleRemoveFile
+}: DocumentRowProps) => {
+  const attachedFiles: string[] = [];
+  if (field && Object.prototype.hasOwnProperty.call(formData, docField)) {
+    const mainFile = (formData as any)[docField] as string | undefined;
+    if (mainFile) attachedFiles.push(mainFile);
+  }
+
+  if (extraUploads[docField] && extraUploads[docField].length > 0) {
+    attachedFiles.push(...extraUploads[docField]);
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{label}</Label>
+      <div className="flex gap-3 items-start">
+        {readOnly ? (
+          <div className="flex-1 flex items-center p-2.5 rounded-md border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-sm">
+            <span className={`text-xs ${attachedFiles.length > 0 ? "text-green-600 font-medium" : "italic"}`}>
+              {attachedFiles.length > 0 ? `${attachedFiles.length} documento(s) anexado(s)` : "Nenhum arquivo selecionado"}
+            </span>
+          </div>
+        ) : (
+          <Input
+            value={field ? (formData[field as keyof typeof formData] as string) : ""}
+            onChange={(e) => field && handleChange(field, e.target.value)}
+            className="flex-1 rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5"
+            placeholder={placeholder}
+          />
+        )}
+        <div className="relative">
+          <input
+            type="file"
+            id={`upload-${docField}`}
+            className="hidden"
+            multiple
+            onChange={(e) => handleDocumentUpload(e, docField)}
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf"
+          />
+          <Button
+            type="button"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-sm font-medium text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors whitespace-nowrap shadow-sm"
+            onClick={() => document.getElementById(`upload-${docField}`)?.click()}
+            disabled={uploadingDocs[docField]}
+          >
+            <Upload className="h-5 w-5 text-slate-500" />
+            {uploadingDocs[docField] ? "Enviando..." : "Upload"}
+          </Button>
+        </div>
+      </div>
+
+      {attachedFiles.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {attachedFiles.map((url, idx) => {
+            const fileName = url.split('/').pop() || `Documento ${idx + 1}`;
+            const decodedName = decodeURIComponent(fileName);
+            return (
+              <DocumentChip
+                key={idx}
+                name={decodedName}
+                href={url}
+                onDelete={!readOnly ? () => handleRemoveFile(docField, url) : undefined}
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:border-sky-200 dark:hover:border-sky-800 transition-all"
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface DynamicDocumentRowProps {
+  label: string;
+  docField: string;
+  extraUploads: Record<string, string[]>;
+  uploadingDocs: Record<string, boolean>;
+  handleDocumentUpload: (e: React.ChangeEvent<HTMLInputElement>, field: string) => void;
+  handleRemoveFile: (docField: string, fileUrl: string) => void;
+}
+
+const DynamicDocumentRow = ({
+  label,
+  docField,
+  extraUploads,
+  uploadingDocs,
+  handleDocumentUpload,
+  handleRemoveFile
+}: DynamicDocumentRowProps) => {
+  const attachedFiles = extraUploads[docField] || [];
+
+  return (
+    <div className="space-y-2">
+      <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{label}</Label>
+      <div className="flex gap-3 items-center">
+        <div className="flex-1 flex items-center p-2.5 rounded-md border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-sm">
+          <span className={`text-xs ${attachedFiles.length > 0 ? "text-green-600 font-medium" : "italic"}`}>
+            {attachedFiles.length > 0 ? `${attachedFiles.length} documento(s) anexado(s)` : "Nenhum arquivo selecionado"}
+          </span>
+        </div>
+        <div className="relative">
+          <input
+            type="file"
+            id={`upload-${docField}`}
+            className="hidden"
+            multiple
+            onChange={(e) => handleDocumentUpload(e, docField)}
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf"
+          />
+          <Button
+            type="button"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-sm font-medium text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors whitespace-nowrap shadow-sm"
+            onClick={() => document.getElementById(`upload-${docField}`)?.click()}
+            disabled={uploadingDocs[docField]}
+          >
+            <Upload className="h-5 w-5 text-slate-500" />
+            {uploadingDocs[docField] ? "Enviando..." : "Upload"}
+          </Button>
+        </div>
+      </div>
+      {attachedFiles.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {attachedFiles.map((url, idx) => {
+            const fileName = url.split('/').pop() || `Documento ${idx + 1}`;
+            const decodedName = decodeURIComponent(fileName);
+            return (
+              <DocumentChip
+                key={idx}
+                name={decodedName}
+                href={url}
+                onDelete={() => handleRemoveFile(docField, url)}
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:border-sky-200 dark:hover:border-sky-800 transition-all"
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function NovaCompraVendaPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -379,130 +545,6 @@ export default function NovaCompraVendaPage() {
     }
   };
 
-  const DocumentRow = ({ label, field, docField, placeholder = "Informações", readOnly = false }: { label: string; field?: string; docField: string; placeholder?: string; readOnly?: boolean }) => {
-    const attachedFiles: string[] = [];
-    if (field && Object.prototype.hasOwnProperty.call(formData, docField)) {
-      const mainFile = (formData as any)[docField] as string | undefined;
-      if (mainFile) attachedFiles.push(mainFile);
-    }
-
-    if (extraUploads[docField] && extraUploads[docField].length > 0) {
-      attachedFiles.push(...extraUploads[docField]);
-    }
-
-    return (
-      <div className="space-y-2">
-        <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{label}</Label>
-        <div className="flex gap-3 items-start">
-          {readOnly ? (
-            <div className="flex-1 flex items-center p-2.5 rounded-md border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-sm">
-              <span className={`text-xs ${attachedFiles.length > 0 ? "text-green-600 font-medium" : "italic"}`}>
-                {attachedFiles.length > 0 ? `${attachedFiles.length} documento(s) anexado(s)` : "Nenhum arquivo selecionado"}
-              </span>
-            </div>
-          ) : (
-            <Input
-              value={field ? (formData[field as keyof typeof formData] as string) : ""}
-              onChange={(e) => field && handleChange(field, e.target.value)}
-              className="flex-1 rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5"
-              placeholder={placeholder}
-            />
-          )}
-          <div className="relative">
-            <input
-              type="file"
-              id={`upload-${docField}`}
-              className="hidden"
-              multiple
-              onChange={(e) => handleDocumentUpload(e, docField)}
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf"
-            />
-            <Button
-              type="button"
-              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-sm font-medium text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors whitespace-nowrap shadow-sm"
-              onClick={() => document.getElementById(`upload-${docField}`)?.click()}
-              disabled={uploadingDocs[docField]}
-            >
-              <Upload className="h-5 w-5 text-slate-500" />
-              {uploadingDocs[docField] ? "Enviando..." : "Upload"}
-            </Button>
-          </div>
-        </div>
-
-        {attachedFiles.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {attachedFiles.map((url, idx) => {
-              const fileName = url.split('/').pop() || `Documento ${idx + 1}`;
-              const decodedName = decodeURIComponent(fileName);
-              return (
-                <DocumentChip
-                  key={idx}
-                  name={decodedName}
-                  href={url}
-                  onDelete={!readOnly ? () => handleRemoveFile(docField, url) : undefined}
-                  className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:border-sky-200 dark:hover:border-sky-800 transition-all"
-                />
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Simplified DocumentRow for dynamic lists (no text input, just label + upload)
-  const DynamicDocumentRow = ({ label, docField }: { label: string; docField: string }) => {
-    const attachedFiles = extraUploads[docField] || [];
-
-    return (
-      <div className="space-y-2">
-        <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{label}</Label>
-        <div className="flex gap-3 items-center">
-          <div className="flex-1 flex items-center p-2.5 rounded-md border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-sm">
-            <span className={`text-xs ${attachedFiles.length > 0 ? "text-green-600 font-medium" : "italic"}`}>
-              {attachedFiles.length > 0 ? `${attachedFiles.length} documento(s) anexado(s)` : "Nenhum arquivo selecionado"}
-            </span>
-          </div>
-          <div className="relative">
-            <input
-              type="file"
-              id={`upload-${docField}`}
-              className="hidden"
-              multiple
-              onChange={(e) => handleDocumentUpload(e, docField)}
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf"
-            />
-            <Button
-              type="button"
-              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-sm font-medium text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors whitespace-nowrap shadow-sm"
-              onClick={() => document.getElementById(`upload-${docField}`)?.click()}
-              disabled={uploadingDocs[docField]}
-            >
-              <Upload className="h-5 w-5 text-slate-500" />
-              {uploadingDocs[docField] ? "Enviando..." : "Upload"}
-            </Button>
-          </div>
-        </div>
-        {attachedFiles.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {attachedFiles.map((url, idx) => {
-              const fileName = url.split('/').pop() || `Documento ${idx + 1}`;
-              const decodedName = decodeURIComponent(fileName);
-              return (
-                <DocumentChip
-                  key={idx}
-                  name={decodedName}
-                  href={url}
-                  onDelete={() => handleRemoveFile(docField, url)}
-                  className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:border-sky-200 dark:hover:border-sky-800 transition-all"
-                />
-              );
-            })}
-          </div>
-        )}
-      </div>
-    )
-  }
 
   return (
     <div className="bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 min-h-screen flex flex-col font-sans">
@@ -558,6 +600,12 @@ export default function NovaCompraVendaPage() {
                   field="enderecoImovel"
                   docField="comprovanteEnderecoImovelDoc"
                   placeholder="Endereço completo"
+                  formData={formData}
+                  extraUploads={extraUploads}
+                  uploadingDocs={uploadingDocs}
+                  handleChange={handleChange}
+                  handleDocumentUpload={handleDocumentUpload}
+                  handleRemoveFile={handleRemoveFile}
                 />
               </div>
 
@@ -565,12 +613,24 @@ export default function NovaCompraVendaPage() {
                 label="Nº Matrícula"
                 field="numeroMatricula"
                 docField="numeroMatriculaDoc"
+                formData={formData}
+                extraUploads={extraUploads}
+                uploadingDocs={uploadingDocs}
+                handleChange={handleChange}
+                handleDocumentUpload={handleDocumentUpload}
+                handleRemoveFile={handleRemoveFile}
               />
 
               <DocumentRow
                 label="Cadastro Contribuinte"
                 field="cadastroContribuinte"
                 docField="cadastroContribuinteDoc"
+                formData={formData}
+                extraUploads={extraUploads}
+                uploadingDocs={uploadingDocs}
+                handleChange={handleChange}
+                handleDocumentUpload={handleDocumentUpload}
+                handleRemoveFile={handleRemoveFile}
               />
             </div>
           </div>
@@ -617,7 +677,14 @@ export default function NovaCompraVendaPage() {
                         className="w-full"
                       />
                       <div className="mt-2">
-                        <DynamicDocumentRow label="Documento RG" docField={`rgVendedorDoc_${index}`} />
+                        <DynamicDocumentRow
+                          label="Documento RG"
+                          docField={`rgVendedorDoc_${index}`}
+                          extraUploads={extraUploads}
+                          uploadingDocs={uploadingDocs}
+                          handleDocumentUpload={handleDocumentUpload}
+                          handleRemoveFile={handleRemoveFile}
+                        />
                       </div>
                     </div>
                     <div>
@@ -628,7 +695,14 @@ export default function NovaCompraVendaPage() {
                         className="w-full"
                       />
                       <div className="mt-2">
-                        <DynamicDocumentRow label="Documento CPF" docField={`cpfVendedorDoc_${index}`} />
+                        <DynamicDocumentRow
+                          label="Documento CPF"
+                          docField={`cpfVendedorDoc_${index}`}
+                          extraUploads={extraUploads}
+                          uploadingDocs={uploadingDocs}
+                          handleDocumentUpload={handleDocumentUpload}
+                          handleRemoveFile={handleRemoveFile}
+                        />
                       </div>
                     </div>
                     <div>
@@ -688,7 +762,14 @@ export default function NovaCompraVendaPage() {
                         className="w-full"
                       />
                       <div className="mt-2">
-                        <DynamicDocumentRow label="Documento RNM" docField={`rnmCompradorDoc_${index}`} />
+                        <DynamicDocumentRow
+                          label="Documento RNM"
+                          docField={`rnmCompradorDoc_${index}`}
+                          extraUploads={extraUploads}
+                          uploadingDocs={uploadingDocs}
+                          handleDocumentUpload={handleDocumentUpload}
+                          handleRemoveFile={handleRemoveFile}
+                        />
                       </div>
                     </div>
                     <div>
@@ -699,7 +780,14 @@ export default function NovaCompraVendaPage() {
                         className="w-full"
                       />
                       <div className="mt-2">
-                        <DynamicDocumentRow label="Documento CPF" docField={`cpfCompradorDoc_${index}`} />
+                        <DynamicDocumentRow
+                          label="Documento CPF"
+                          docField={`cpfCompradorDoc_${index}`}
+                          extraUploads={extraUploads}
+                          uploadingDocs={uploadingDocs}
+                          handleDocumentUpload={handleDocumentUpload}
+                          handleRemoveFile={handleRemoveFile}
+                        />
                       </div>
                     </div>
                     <div>
