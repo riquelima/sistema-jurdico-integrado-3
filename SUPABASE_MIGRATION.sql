@@ -123,6 +123,7 @@ CREATE INDEX idx_acoes_criminais_created_at ON acoes_criminais(created_at DESC);
 -- ========================================
 CREATE TABLE compra_venda_imoveis (
   id BIGSERIAL PRIMARY KEY,
+  client_name VARCHAR(500),
   
   -- Dados do Imóvel
   numero_matricula VARCHAR(100),
@@ -132,6 +133,7 @@ CREATE TABLE compra_venda_imoveis (
   endereco_imovel TEXT,
   
   -- Dados dos Vendedores
+  nome_vendedores TEXT,
   rg_vendedores TEXT,
   rg_vendedores_doc VARCHAR(500),
   cpf_vendedores TEXT,
@@ -139,6 +141,7 @@ CREATE TABLE compra_venda_imoveis (
   data_nascimento_vendedores TEXT,
   
   -- Dados do Comprador
+  nome_compradores TEXT,
   rnm_comprador VARCHAR(255),
   rnm_comprador_doc VARCHAR(500),
   cpf_comprador VARCHAR(20),

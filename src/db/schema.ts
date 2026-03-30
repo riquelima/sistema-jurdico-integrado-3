@@ -64,6 +64,7 @@ export const acoesCiveis = pgTable('acoes_civeis', {
 // Compra Venda Imoveis table
 export const compraVendaImoveis = pgTable('compra_venda_imoveis', {
   id: serial('id').primaryKey(),
+  clientName: text('client_name'),
   numeroMatricula: text('numero_matricula'),
   cadastroContribuinte: text('cadastro_contribuinte'),
   enderecoImovel: text('endereco_imovel'),
@@ -73,6 +74,8 @@ export const compraVendaImoveis = pgTable('compra_venda_imoveis', {
   rnmComprador: text('rnm_comprador'),
   cpfComprador: text('cpf_comprador'),
   enderecoComprador: text('endereco_comprador'),
+  nomeVendedores: text('nome_vendedores'),
+  nomeCompradores: text('nome_compradores'),
   currentStep: integer('current_step').default(0),
   status: text('status').notNull().default('Em Andamento'),
   prazoSinal: text('prazo_sinal'),
