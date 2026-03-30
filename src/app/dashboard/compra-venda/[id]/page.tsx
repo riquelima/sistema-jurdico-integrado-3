@@ -224,23 +224,33 @@ export default function CompraVendaDetailsPage() {
           s.completed = completedFromServer.includes(s.id);
         });
 
-        const nomeVList = (record.nomeVendedores || "").split(",").filter(Boolean);
-        const rgList = (record.rgVendedores || "").split(",").filter(Boolean);
-        const cpfList = (record.cpfVendedores || "").split(",").filter(Boolean);
-        const dobList = (record.dataNascimentoVendedores || "").split(",").filter(Boolean);
+        const nomeVList = (record.nomeVendedores || "").split(",");
+        const rgList = (record.rgVendedores || "").split(",");
+        const cpfList = (record.cpfVendedores || "").split(",");
+        const dobList = (record.dataNascimentoVendedores || "").split(",");
         const maxLen = Math.max(nomeVList.length, rgList.length, cpfList.length, dobList.length);
         const sellers = maxLen > 0
-          ? Array.from({ length: maxLen }, (_, i) => ({ nome: nomeVList[i] || "", rg: rgList[i] || "", cpf: cpfList[i] || "", dataNascimento: dobList[i] || "" }))
+          ? Array.from({ length: maxLen }, (_, i) => ({ 
+              nome: nomeVList[i] || "", 
+              rg: rgList[i] || "", 
+              cpf: cpfList[i] || "", 
+              dataNascimento: dobList[i] || "" 
+            }))
           : [{ nome: "", rg: "", cpf: "", dataNascimento: "" }];
         setEditableSellers(sellers);
 
-        const nomeCList = (record.nomeCompradores || "").split(",").filter(Boolean);
-        const rnmList = (record.rnmComprador || "").split(",").filter(Boolean);
-        const cpfCList = (record.cpfComprador || "").split(",").filter(Boolean);
-        const endList = (record.enderecoComprador || "").split(",").filter(Boolean);
+        const nomeCList = (record.nomeCompradores || "").split(",");
+        const rnmList = (record.rnmComprador || "").split(",");
+        const cpfCList = (record.cpfComprador || "").split(",");
+        const endList = (record.enderecoComprador || "").split(",");
         const maxC = Math.max(nomeCList.length, rnmList.length, cpfCList.length, endList.length);
         const compradores = maxC > 0
-          ? Array.from({ length: maxC }, (_, i) => ({ nome: nomeCList[i] || "", rnm: rnmList[i] || "", cpf: cpfCList[i] || "", endereco: endList[i] || "" }))
+          ? Array.from({ length: maxC }, (_, i) => ({ 
+              nome: nomeCList[i] || "", 
+              rnm: rnmList[i] || "", 
+              cpf: cpfCList[i] || "", 
+              endereco: endList[i] || "" 
+            }))
           : [{ nome: "", rnm: "", cpf: "", endereco: "" }];
         setEditableCompradores(compradores);
 
@@ -518,31 +528,41 @@ export default function CompraVendaDetailsPage() {
   };
 
   const saveStep1Fields = async () => {
-    try {
+    const promise = async () => {
       const body = {
         clientName: caseData?.clientName || "",
         numeroMatricula: caseData?.numeroMatricula || "",
         cadastroContribuinte: caseData?.cadastroContribuinte || "",
         enderecoImovel: caseData?.enderecoImovel || "",
-        nomeVendedores: (editableSellers || []).map(s => s.nome || "").filter(Boolean).join(","),
-        rgVendedores: (editableSellers || []).map(s => s.rg || "").filter(Boolean).join(","),
-        cpfVendedores: (editableSellers || []).map(s => s.cpf || "").filter(Boolean).join(","),
-        dataNascimentoVendedores: (editableSellers || []).map(s => s.dataNascimento || "").filter(Boolean).join(","),
-        nomeCompradores: (editableCompradores || []).map(c => c.nome || "").filter(Boolean).join(","),
-        rnmComprador: (editableCompradores || []).map(c => c.rnm || "").filter(Boolean).join(","),
-        cpfComprador: (editableCompradores || []).map(c => c.cpf || "").filter(Boolean).join(","),
-        enderecoComprador: (editableCompradores || []).map(c => c.endereco || "").filter(Boolean).join(","),
+        nomeVendedores: (editableSellers || []).map(s => s.nome || "").join(","),
+        rgVendedores: (editableSellers || []).map(s => s.rg || "").join(","),
+        cpfVendedores: (editableSellers || []).map(s => s.cpf || "").join(","),
+        dataNascimentoVendedores: (editableSellers || []).map(s => s.dataNascimento || "").join(","),
+        nomeCompradores: (editableCompradores || []).map(c => c.nome || "").join(","),
+        rnmComprador: (editableCompradores || []).map(c => c.rnm || "").join(","),
+        cpfComprador: (editableCompradores || []).map(c => c.cpf || "").join(","),
+        enderecoComprador: (editableCompradores || []).map(c => c.endereco || "").join(","),
       };
-      await fetch(`/api/compra-venda-imoveis?id=${params.id}`, {
+
+      const res = await fetch(`/api/compra-venda-imoveis?id=${params.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      fetchCaseData();
-      setSaveMessages(prev => ({ ...prev, 1: 'Dados salvos' }));
-    } catch (e) {
-      console.error(e);
-    }
+
+      if (!res.ok) {
+        throw new Error("Erro ao salvar os dados no servidor");
+      }
+
+      await fetchCaseData();
+      return true;
+    };
+
+    toast.promise(promise(), {
+      loading: 'Salvando alterações...',
+      success: 'Dados salvos com sucesso!',
+      error: 'Erro ao salvar alterações.',
+    });
   };
 
   const savePrazos = async () => {
@@ -698,7 +718,10 @@ export default function CompraVendaDetailsPage() {
           {renderHeader("Dados Iniciais",
             () => setIsEditingDocuments(true),
             isEditingDocuments,
-            () => { saveStep1Fields(); setIsEditingDocuments(false); },
+            async () => { 
+              await saveStep1Fields(); 
+              setIsEditingDocuments(false); 
+            },
             () => setIsEditingDocuments(false)
           )}
           <div className="p-4 md:p-6 space-y-6">
