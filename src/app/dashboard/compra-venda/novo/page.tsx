@@ -31,6 +31,7 @@ interface Vendedor {
   rg: string;
   cpf: string;
   dataNascimento: string;
+  estadoCivil: string;
 }
 
 interface Comprador {
@@ -38,6 +39,7 @@ interface Comprador {
   rnm: string;
   cpf: string;
   endereco: string;
+  estadoCivil: string;
 }
 
 interface DocumentRowProps {
@@ -212,10 +214,10 @@ export default function NovaCompraVendaPage() {
 
   // State for dynamic lists
   const [vendedores, setVendedores] = useState<Vendedor[]>([
-    { nome: "", rg: "", cpf: "", dataNascimento: "" }
+    { nome: "", rg: "", cpf: "", dataNascimento: "", estadoCivil: "" }
   ]);
   const [compradores, setCompradores] = useState<Comprador[]>([
-    { nome: "", rnm: "", cpf: "", endereco: "" }
+    { nome: "", rnm: "", cpf: "", endereco: "", estadoCivil: "" }
   ]);
 
   const [formData, setFormData] = useState({
@@ -260,6 +262,8 @@ export default function NovaCompraVendaPage() {
           rnmComprador: compradores.map(c => c.rnm).filter(Boolean).join(","),
           cpfComprador: compradores.map(c => c.cpf).filter(Boolean).join(","),
           enderecoComprador: compradores.map(c => c.endereco).filter(Boolean).join(","),
+          estado_civil_vendedores: vendedores.map(v => v.estadoCivil).join(","),
+          estado_civil_compradores: compradores.map(c => c.estadoCivil).join(","),
           currentStep: 1, // Start at step 1
           status: "Em Andamento",
         }),
@@ -299,7 +303,7 @@ export default function NovaCompraVendaPage() {
   };
 
   const addVendedor = () => {
-    setVendedores([...vendedores, { nome: "", rg: "", cpf: "", dataNascimento: "" }]);
+    setVendedores([...vendedores, { nome: "", rg: "", cpf: "", dataNascimento: "", estadoCivil: "" }]);
   };
 
   const removeVendedor = (index: number) => {
@@ -309,7 +313,7 @@ export default function NovaCompraVendaPage() {
   };
 
   const addComprador = () => {
-    setCompradores([...compradores, { nome: "", rnm: "", cpf: "", endereco: "" }]);
+    setCompradores([...compradores, { nome: "", rnm: "", cpf: "", endereco: "", estadoCivil: "" }]);
   };
 
   const removeComprador = (index: number) => {
@@ -508,8 +512,10 @@ export default function NovaCompraVendaPage() {
       // Add dynamic fields
       ...vendedores.map((_, i) => `rgVendedorDoc_${i}`),
       ...vendedores.map((_, i) => `cpfVendedorDoc_${i}`),
+      ...vendedores.map((_, i) => `certidaoEstadoCivilVendedorDoc_${i}`),
       ...compradores.map((_, i) => `rnmCompradorDoc_${i}`),
       ...compradores.map((_, i) => `cpfCompradorDoc_${i}`),
+      ...compradores.map((_, i) => `certidaoEstadoCivilCompradorDoc_${i}`),
     ];
 
     const documentsToConvert: { fieldName: string; fileUrl: string }[] = [];
@@ -714,6 +720,33 @@ export default function NovaCompraVendaPage() {
                         className="w-full"
                       />
                     </div>
+                    <div>
+                      <Label className="block text-sm font-medium mb-2">Estado Civil</Label>
+                      <Select
+                        value={vendedor.estadoCivil}
+                        onValueChange={(val) => handleVendedorChange(index, "estadoCivil", val)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Solteiro">Solteiro</SelectItem>
+                          <SelectItem value="Casado">Casado</SelectItem>
+                          <SelectItem value="Divorciado">Divorciado</SelectItem>
+                          <SelectItem value="Viúvo">Viúvo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="md:col-span-4 mt-2">
+                       <DynamicDocumentRow
+                        label="Certidão de Estado Civil"
+                        docField={`certidaoEstadoCivilVendedorDoc_${index}`}
+                        extraUploads={extraUploads}
+                        uploadingDocs={uploadingDocs}
+                        handleDocumentUpload={handleDocumentUpload}
+                        handleRemoveFile={handleRemoveFile}
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
@@ -796,6 +829,33 @@ export default function NovaCompraVendaPage() {
                         value={comprador.endereco}
                         onChange={(e) => handleCompradorChange(index, "endereco", e.target.value)}
                         className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <Label className="block text-sm font-medium mb-2">Estado Civil</Label>
+                      <Select
+                        value={comprador.estadoCivil}
+                        onValueChange={(val) => handleCompradorChange(index, "estadoCivil", val)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Solteiro">Solteiro</SelectItem>
+                          <SelectItem value="Casado">Casado</SelectItem>
+                          <SelectItem value="Divorciado">Divorciado</SelectItem>
+                          <SelectItem value="Viúvo">Viúvo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="md:col-span-4 mt-2">
+                       <DynamicDocumentRow
+                        label="Certidão de Estado Civil"
+                        docField={`certidaoEstadoCivilCompradorDoc_${index}`}
+                        extraUploads={extraUploads}
+                        uploadingDocs={uploadingDocs}
+                        handleDocumentUpload={handleDocumentUpload}
+                        handleRemoveFile={handleRemoveFile}
                       />
                     </div>
                   </div>

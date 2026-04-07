@@ -138,6 +138,8 @@ interface CaseData {
   enderecoComprador?: string;
   nomeVendedores?: string;
   nomeCompradores?: string;
+  estado_civil_vendedores?: string;
+  estado_civil_compradores?: string;
   prazoSinal?: string;
   prazoEscritura?: string;
   contractNotes?: string;
@@ -174,8 +176,8 @@ export default function CompraVendaDetailsPage() {
   const [newDocumentName, setNewDocumentName] = useState("");
 
   // Specific lists
-  const [editableSellers, setEditableSellers] = useState<{ nome?: string; rg?: string; cpf?: string; dataNascimento?: string }[]>([]);
-  const [editableCompradores, setEditableCompradores] = useState<{ nome?: string; rnm?: string; cpf?: string; endereco?: string }[]>([]);
+  const [editableSellers, setEditableSellers] = useState<{ nome?: string; rg?: string; cpf?: string; dataNascimento?: string; estadoCivil?: string }[]>([]);
+  const [editableCompradores, setEditableCompradores] = useState<{ nome?: string; rnm?: string; cpf?: string; endereco?: string; estadoCivil?: string }[]>([]);
 
   const [assignments, setAssignments] = useState<Record<number, { responsibleName?: string; dueDate?: string }>>({});
   const [saveMessages, setSaveMessages] = useState<{ [key: number]: string }>({});
@@ -295,30 +297,34 @@ export default function CompraVendaDetailsPage() {
         const rgList = (record.rgVendedores || "").split(",");
         const cpfList = (record.cpfVendedores || "").split(",");
         const dobList = (record.dataNascimentoVendedores || "").split(",");
-        const maxLen = Math.max(nomeVList.length, rgList.length, cpfList.length, dobList.length);
+        const ecVList = (record.estado_civil_vendedores || "").split(",");
+        const maxLen = Math.max(nomeVList.length, rgList.length, cpfList.length, dobList.length, ecVList.length);
         const sellers = maxLen > 0
           ? Array.from({ length: maxLen }, (_, i) => ({ 
               nome: nomeVList[i] || "", 
               rg: rgList[i] || "", 
               cpf: cpfList[i] || "", 
-              dataNascimento: dobList[i] || "" 
+              dataNascimento: dobList[i] || "",
+              estadoCivil: ecVList[i] || ""
             }))
-          : [{ nome: "", rg: "", cpf: "", dataNascimento: "" }];
+          : [{ nome: "", rg: "", cpf: "", dataNascimento: "", estadoCivil: "" }];
         setEditableSellers(sellers);
 
         const nomeCList = (record.nomeCompradores || "").split(",");
         const rnmList = (record.rnmComprador || "").split(",");
         const cpfCList = (record.cpfComprador || "").split(",");
         const endList = (record.enderecoComprador || "").split(",");
-        const maxC = Math.max(nomeCList.length, rnmList.length, cpfCList.length, endList.length);
+        const ecCList = (record.estado_civil_compradores || "").split(",");
+        const maxC = Math.max(nomeCList.length, rnmList.length, cpfCList.length, endList.length, ecCList.length);
         const compradores = maxC > 0
           ? Array.from({ length: maxC }, (_, i) => ({ 
               nome: nomeCList[i] || "", 
               rnm: rnmList[i] || "", 
               cpf: cpfCList[i] || "", 
-              endereco: endList[i] || "" 
+              endereco: endList[i] || "",
+              estadoCivil: ecCList[i] || ""
             }))
-          : [{ nome: "", rnm: "", cpf: "", endereco: "" }];
+          : [{ nome: "", rnm: "", cpf: "", endereco: "", estadoCivil: "" }];
         setEditableCompradores(compradores);
 
         const data: CaseData = {
@@ -696,6 +702,8 @@ export default function CompraVendaDetailsPage() {
         rnmComprador: (editableCompradores || []).map(c => c.rnm || "").join(","),
         cpfComprador: (editableCompradores || []).map(c => c.cpf || "").join(","),
         enderecoComprador: (editableCompradores || []).map(c => c.endereco || "").join(","),
+        estado_civil_vendedores: (editableSellers || []).map(s => s.estadoCivil || "").join(","),
+        estado_civil_compradores: (editableCompradores || []).map(c => c.estadoCivil || "").join(","),
       };
 
       const res = await fetch(`/api/compra-venda-imoveis?id=${params.id}`, {
@@ -923,7 +931,7 @@ export default function CompraVendaDetailsPage() {
                         <X className="w-3 h-3" />
                       </button>
                     )}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
                       {renderRow("Nome", undefined, "", isEditingDocuments, undefined,
                         isEditingDocuments ? <Input value={seller.nome || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, nome: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800 truncate">{seller.nome || '-'}</div>, stepId
                       )}
@@ -935,6 +943,24 @@ export default function CompraVendaDetailsPage() {
                       )}
                       {renderRow("Nascimento", undefined, "", isEditingDocuments, undefined,
                         isEditingDocuments ? <Input type="date" value={seller.dataNascimento || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, dataNascimento: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800 truncate">{formatDateBR(seller.dataNascimento)}</div>, stepId
+                      )}
+                      {renderRow("Est. Civil", undefined, `certidaoEstadoCivilVendedorDoc_${idx}`, isEditingDocuments, undefined,
+                        isEditingDocuments ? (
+                          <Select 
+                            value={seller.estadoCivil || ""} 
+                            onValueChange={(val) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, estadoCivil: val } : s))}
+                          >
+                            <SelectTrigger className="h-8 bg-white text-sm">
+                              <SelectValue placeholder="Selecione..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Solteiro">Solteiro</SelectItem>
+                              <SelectItem value="Casado">Casado</SelectItem>
+                              <SelectItem value="Divorciado">Divorciado</SelectItem>
+                              <SelectItem value="Viúvo">Viúvo</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : <div className="text-sm font-semibold text-slate-800 truncate">{seller.estadoCivil || '-'}</div>, stepId
                       )}
                     </div>
                   </div>
@@ -979,6 +1005,24 @@ export default function CompraVendaDetailsPage() {
                       )}
                       {renderRow("Endereço", undefined, "", isEditingDocuments, undefined,
                         isEditingDocuments ? <Input value={comp.endereco || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, endereco: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800 truncate">{comp.endereco || '-'}</div>, stepId
+                      )}
+                      {renderRow("Est. Civil", undefined, `certidaoEstadoCivilCompradorDoc_${idx}`, isEditingDocuments, undefined,
+                        isEditingDocuments ? (
+                          <Select 
+                            value={comp.estadoCivil || ""} 
+                            onValueChange={(val) => setEditableCompradores(prev => prev.map((c, i) => i === idx ? { ...c, estadoCivil: val } : c))}
+                          >
+                            <SelectTrigger className="h-8 bg-white text-sm">
+                              <SelectValue placeholder="Selecione..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Solteiro">Solteiro</SelectItem>
+                              <SelectItem value="Casado">Casado</SelectItem>
+                              <SelectItem value="Divorciado">Divorciado</SelectItem>
+                              <SelectItem value="Viúvo">Viúvo</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : <div className="text-sm font-semibold text-slate-800 truncate">{comp.estadoCivil || '-'}</div>, stepId
                       )}
                     </div>
                   </div>
