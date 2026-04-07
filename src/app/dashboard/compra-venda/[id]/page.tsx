@@ -819,7 +819,7 @@ export default function CompraVendaDetailsPage() {
     return (
       <div className="flex flex-col gap-1 w-full min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">{label}</Label>
+          <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{label}</Label>
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {isUploading && <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin" />}
             {fileKey && (
@@ -846,7 +846,7 @@ export default function CompraVendaDetailsPage() {
                 className="h-8 bg-white text-sm"
               />
             ) : (
-              <div className="text-sm font-semibold text-slate-800 truncate">
+              <div className="text-sm font-semibold text-slate-800">
                 {String(caseData?.[valueKey] || "-")}
               </div>
             )
@@ -938,16 +938,16 @@ export default function CompraVendaDetailsPage() {
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
                       {renderRow("Nome", undefined, "", isEditingDocuments, undefined,
-                        isEditingDocuments ? <Input value={seller.nome || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, nome: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800 truncate">{seller.nome || '-'}</div>, stepId
+                        isEditingDocuments ? <Input value={seller.nome || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, nome: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{seller.nome || '-'}</div>, stepId
                       )}
                       {renderRow("RG", undefined, `rgVendedorDoc_${idx}`, isEditingDocuments, undefined,
-                        isEditingDocuments ? <Input value={seller.rg || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, rg: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800 truncate">{seller.rg || '-'}</div>, stepId
+                        isEditingDocuments ? <Input value={seller.rg || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, rg: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{seller.rg || '-'}</div>, stepId
                       )}
                       {renderRow("CPF", undefined, `cpfVendedorDoc_${idx}`, isEditingDocuments, undefined,
-                        isEditingDocuments ? <Input value={seller.cpf || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, cpf: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800 truncate">{seller.cpf || '-'}</div>, stepId
+                        isEditingDocuments ? <Input value={seller.cpf || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, cpf: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{seller.cpf || '-'}</div>, stepId
                       )}
                       {renderRow("Nascimento", undefined, "", isEditingDocuments, undefined,
-                        isEditingDocuments ? <Input type="date" value={seller.dataNascimento || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, dataNascimento: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800 truncate">{formatDateBR(seller.dataNascimento)}</div>, stepId
+                        isEditingDocuments ? <Input type="date" value={seller.dataNascimento || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, dataNascimento: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{formatDateBR(seller.dataNascimento)}</div>, stepId
                       )}
                       {renderRow("Est. Civil", undefined, `certidaoEstadoCivilVendedorDoc_${idx}`, isEditingDocuments, undefined,
                         isEditingDocuments ? (
@@ -965,7 +965,7 @@ export default function CompraVendaDetailsPage() {
                               <SelectItem value="Viúvo">Viúvo</SelectItem>
                             </SelectContent>
                           </Select>
-                        ) : <div className="text-sm font-semibold text-slate-800 truncate">{seller.estadoCivil || '-'}</div>, stepId
+                        ) : <div className="text-sm font-semibold text-slate-800">{seller.estadoCivil || '-'}</div>, stepId
                       )}
                     </div>
                   </div>
@@ -1000,16 +1000,16 @@ export default function CompraVendaDetailsPage() {
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                       {renderRow("Nome", undefined, "", isEditingDocuments, undefined,
-                        isEditingDocuments ? <Input value={comp.nome || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, nome: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800 truncate">{comp.nome || '-'}</div>, stepId
+                        isEditingDocuments ? <Input value={comp.nome || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, nome: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{comp.nome || '-'}</div>, stepId
                       )}
                       {renderRow("RNM", undefined, `rnmCompradorDoc_${idx}`, isEditingDocuments, undefined,
-                        isEditingDocuments ? <Input value={comp.rnm || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, rnm: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800 truncate">{comp.rnm || '-'}</div>, stepId
+                        isEditingDocuments ? <Input value={comp.rnm || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, rnm: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{comp.rnm || '-'}</div>, stepId
                       )}
                       {renderRow("CPF", undefined, `cpfCompradorDoc_${idx}`, isEditingDocuments, undefined,
-                        isEditingDocuments ? <Input value={comp.cpf || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, cpf: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800 truncate">{comp.cpf || '-'}</div>, stepId
+                        isEditingDocuments ? <Input value={comp.cpf || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, cpf: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{comp.cpf || '-'}</div>, stepId
                       )}
                       {renderRow("Endereço", undefined, "", isEditingDocuments, undefined,
-                        isEditingDocuments ? <Input value={comp.endereco || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, endereco: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800 truncate">{comp.endereco || '-'}</div>, stepId
+                        isEditingDocuments ? <Input value={comp.endereco || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, endereco: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{comp.endereco || '-'}</div>, stepId
                       )}
                       {renderRow("Est. Civil", undefined, `certidaoEstadoCivilCompradorDoc_${idx}`, isEditingDocuments, undefined,
                         isEditingDocuments ? (
@@ -1027,7 +1027,7 @@ export default function CompraVendaDetailsPage() {
                               <SelectItem value="Viúvo">Viúvo</SelectItem>
                             </SelectContent>
                           </Select>
-                        ) : <div className="text-sm font-semibold text-slate-800 truncate">{comp.estadoCivil || '-'}</div>, stepId
+                        ) : <div className="text-sm font-semibold text-slate-800">{comp.estadoCivil || '-'}</div>, stepId
                       )}
                     </div>
                   </div>
