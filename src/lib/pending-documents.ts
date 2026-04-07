@@ -613,33 +613,52 @@ export function getAcoesCriminaisDocRequirements(): PendingDocGroup[] {
   ];
 }
 
-export function getCompraVendaDocRequirements(): PendingDocGroup[] {
+export function getCompraVendaDocRequirements(record: any): PendingDocGroup[] {
+  const nomeVList = (record?.nomeVendedores || "").split(",").filter(Boolean);
+  const nomeCList = (record?.nomeCompradores || "").split(",").filter(Boolean);
+
+  const cadastroFields = [
+    { key: "matriculaDoc", label: "Matrícula" },
+    { key: "cadastroContribuinteDoc", label: "Cadastro Contribuinte" },
+  ];
+
+  // Adicionar documentos por vendedor
+  nomeVList.forEach((nome: string, i: number) => {
+    cadastroFields.push(
+      { key: `rgVendedorDoc_${i}`, label: `RG Vendedor: ${nome}` },
+      { key: `cpfVendedorDoc_${i}`, label: `CPF Vendedor: ${nome}` },
+      { key: `certidaoEstadoCivilVendedorDoc_${i}`, label: `Certidão Estado Civil: ${nome}` }
+    );
+  });
+
+  // Adicionar documentos por comprador
+  nomeCList.forEach((nome: string, i: number) => {
+    cadastroFields.push(
+      { key: `rnmCompradorDoc_${i}`, label: `RNM Comprador: ${nome}` },
+      { key: `cpfCompradorDoc_${i}`, label: `CPF Comprador: ${nome}` },
+      { key: `certidaoEstadoCivilCompradorDoc_${i}`, label: `Certidão Estado Civil: ${nome}` }
+    );
+  });
+
   return [
     {
       title: "Cadastro Documentos",
       step: "Cadastro Documentos",
-      fields: [
-        { key: "matriculaDoc", label: "Matrícula" },
-        { key: "cadastroContribuinteDoc", label: "Cadastro Contribuinte" },
-        { key: "rgVendedorDoc", label: "RG Vendedores" },
-        { key: "cpfVendedorDoc", label: "CPF Vendedores" },
-        { key: "rnmCompradorDoc", label: "RNM Comprador" },
-        { key: "cpfCompradorDoc", label: "CPF Comprador" },
-      ],
+      fields: cadastroFields,
     },
     {
       title: "Certidões",
-      step: "Certidões",
+      step: "Emitir Certidões",
       fields: [{ key: "certidoesDoc", label: "Certidões Negativas" }],
     },
     {
       title: "Contrato",
-      step: "Contrato",
+      step: "Fazer/Analisar Contrato",
       fields: [{ key: "contratoDoc", label: "Minuta do Contrato" }],
     },
     {
       title: "Assinatura",
-      step: "Assinatura",
+      step: "Assinatura de contrato",
       fields: [{ key: "assinaturaContratoDoc", label: "Contrato Assinado" }],
     },
     {
@@ -649,7 +668,7 @@ export function getCompraVendaDocRequirements(): PendingDocGroup[] {
     },
     {
       title: "Registro",
-      step: "Registro",
+      step: "Cobrar a Matrícula",
       fields: [{ key: "matriculaCartorioDoc", label: "Matrícula Atualizada" }],
     },
   ];

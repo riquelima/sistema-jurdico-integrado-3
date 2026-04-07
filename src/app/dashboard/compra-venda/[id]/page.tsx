@@ -78,6 +78,7 @@ import { subscribeTable, unsubscribe } from "@/lib/realtime";
 import { toast } from "sonner";
 import { RESPONSAVEIS } from "@/constants/responsibles";
 import { ObservationResponsibleModal } from "@/components/modals/ObservationResponsibleModal";
+import { getCompraVendaDocRequirements, computePendingByFlow, extractDocumentsFromRecord } from "@/lib/pending-documents";
 
 // Workflow Steps for Compra e Venda
 const WORKFLOW_STEPS = [
@@ -186,6 +187,13 @@ export default function CompraVendaDetailsPage() {
   const [assignDue, setAssignDue] = useState<string>("");
   const [showNotesModal, setShowNotesModal] = useState(false);
 
+  // Pending Documents State
+  const [pendingDocs, setPendingDocs] = useState<any[]>([]);
+  const [totalDocs, setTotalDocs] = useState(0);
+  const [completedDocs, setCompletedDocs] = useState(0);
+
+  const progress = totalDocs > 0 ? Math.round((completedDocs / totalDocs) * 100) : 0;
+
   // Realtime
   const purchaseSubscriptionRef = useRef<any>(null);
   const docsSubscriptionRef = useRef<any>(null);
@@ -266,6 +274,41 @@ export default function CompraVendaDetailsPage() {
     }
   };
 
+  useEffect(() => {
+    if (property && documents) {
+      const requirements = getCompraVendaDocRequirements(property);
+
+      const uploaded = new Set<string>();
+      // Add existing docs
+      documents.forEach(d => {
+        const k = (d as any).field_name || (d as any).fieldName || (d as any).document_type;
+        if (k) uploaded.add(k);
+      });
+      // Add record fields if they contain document-like substrings
+      const recordDocs = extractDocumentsFromRecord(property);
+      recordDocs.forEach(k => uploaded.add(k));
+
+      const { pending, totalCount, missingCount } = computePendingByFlow(requirements, uploaded);
+
+      // Flatten pending for the list component
+      const flatPending: any[] = [];
+      pending.forEach(group => {
+        group.docs.forEach(doc => {
+          flatPending.push({
+            key: doc.key,
+            label: doc.label,
+            group: group.flow,
+            status: "pending",
+          });
+        });
+      });
+
+      setPendingDocs(flatPending);
+      setTotalDocs(totalCount);
+      setCompletedDocs(totalCount - missingCount);
+    }
+  }, [property, documents]);
+
   const fetchCaseData = async () => {
     try {
       const res = await fetch(`/api/compra-venda-imoveis?id=${params.id}`);
@@ -297,7 +340,7 @@ export default function CompraVendaDetailsPage() {
         const rgList = (record.rgVendedores || "").split(",");
         const cpfList = (record.cpfVendedores || "").split(",");
         const dobList = (record.dataNascimentoVendedores || "").split(",");
-        const ecVList = (record.estado_civil_vendedores || "").split(",");
+        const ecVList = (record.estadoCivilVendedores || record.estado_civil_vendedores || "").split(",");
         const maxLen = Math.max(nomeVList.length, rgList.length, cpfList.length, dobList.length, ecVList.length);
         const sellers = maxLen > 0
           ? Array.from({ length: maxLen }, (_, i) => ({ 
@@ -314,7 +357,7 @@ export default function CompraVendaDetailsPage() {
         const rnmList = (record.rnmComprador || "").split(",");
         const cpfCList = (record.cpfComprador || "").split(",");
         const endList = (record.enderecoComprador || "").split(",");
-        const ecCList = (record.estado_civil_compradores || "").split(",");
+        const ecCList = (record.estadoCivilCompradores || record.estado_civil_compradores || "").split(",");
         const maxC = Math.max(nomeCList.length, rnmList.length, cpfCList.length, endList.length, ecCList.length);
         const compradores = maxC > 0
           ? Array.from({ length: maxC }, (_, i) => ({ 
@@ -843,44 +886,6 @@ export default function CompraVendaDetailsPage() {
     );
   };
 
-  const getDocRequirements = () => {
-    const reqs = [
-      { label: "Comprovante de Endereço", key: "comprovanteEnderecoImovelDoc", group: "Cadastro Documentos", required: true },
-      { label: "Matrícula do Imóvel", key: "numeroMatriculaDoc", group: "Cadastro Documentos", required: true },
-      { label: "Cadastro de Contribuinte", key: "cadastroContribuinteDoc", group: "Cadastro Documentos", required: true },
-    ];
-
-    editableSellers.forEach((_, i) => {
-      reqs.push({ label: `RG Vendedor ${i + 1}`, key: `rgVendedorDoc_${i}`, group: "Cadastro Documentos", required: true });
-      reqs.push({ label: `CPF Vendedor ${i + 1}`, key: `cpfVendedorDoc_${i}`, group: "Cadastro Documentos", required: true });
-      reqs.push({ label: `Certidão Estado Civil Vendedor ${i + 1}`, key: `certidaoEstadoCivilVendedorDoc_${i}`, group: "Cadastro Documentos", required: true });
-    });
-
-    editableCompradores.forEach((_, i) => {
-      reqs.push({ label: `RNM Comprador ${i + 1}`, key: `rnmCompradorDoc_${i}`, group: "Cadastro Documentos", required: true });
-      reqs.push({ label: `CPF Comprador ${i + 1}`, key: `cpfCompradorDoc_${i}`, group: "Cadastro Documentos", required: true });
-      reqs.push({ label: `Certidão Estado Civil Comprador ${i + 1}`, key: `certidaoEstadoCivilCompradorDoc_${i}`, group: "Cadastro Documentos", required: true });
-    });
-
-    reqs.push({ label: "Certidões", key: "certidoesDoc", group: "Emitir Certidões", required: false });
-    reqs.push({ label: "Minuta do Contrato", key: "contratoDoc", group: "Fazer/Analisar Contrato", required: true });
-    reqs.push({ label: "Contrato Assinado", key: "assinaturaContratoDoc", group: "Assinatura de contrato", required: true });
-    reqs.push({ label: "Comprovante Pagamento Sinal", key: "comprovanteSinalDoc", group: "Assinatura de contrato", required: false });
-    reqs.push({ label: "Escritura", key: "escrituraDoc", group: "Escritura", required: true });
-    reqs.push({ label: "Matrícula Atualizada", key: "matriculaCartorioDoc", group: "Cobrar a Matrícula", required: true });
-
-    return reqs;
-  };
-
-  const pendingDocs = getDocRequirements().filter(req =>
-    !documents.some(doc => (doc.fieldName === req.key || (doc as any).field_name === req.key))
-  ).map(doc => ({
-    ...doc,
-    priority: doc.required ? "high" : "medium" as any,
-    status: "pending" as any
-  }));
-  const totalDocs = getDocRequirements().length;
-  const completedDocs = totalDocs - pendingDocs.length;
 
   const renderStepContent = (step: StepData) => {
     const stepId = step.id;
@@ -1102,7 +1107,6 @@ export default function CompraVendaDetailsPage() {
 
   // Lógica espelhada de Vistos: O passo atual é o pointer salvo no banco (baseado em ID 1-indexed)
   const currentStepIndex = Math.max(0, Math.min(Number(caseData.currentStep || 1) - 1, WORKFLOW_STEPS.length - 1));
-  const progress = totalDocs > 0 ? Math.round((completedDocs / totalDocs) * 100) : 0;
 
   return (
     <div className="w-full p-4 space-y-6 bg-gray-50 min-h-screen">
@@ -1286,28 +1290,8 @@ export default function CompraVendaDetailsPage() {
                                             setAssignDue(`${y}-${m}-${d}`);
                                           }
                                         }}
-                                        className="p-0 pointer-events-auto"
-                                        classNames={{
-                                          months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-                                          month: "space-y-4",
-                                          caption: "flex justify-center pt-1 relative items-center mb-2",
-                                          caption_label: "text-sm font-bold text-slate-700",
-                                          nav: "space-x-1 flex items-center",
-                                          nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 transition-opacity",
-                                          nav_button_previous: "absolute left-1",
-                                          nav_button_next: "absolute right-1",
-                                          table: "w-full border-collapse space-y-1",
-                                          head_row: "flex",
-                                          head_cell: "text-slate-500 rounded-md w-9 font-normal text-[0.8rem] mb-2",
-                                          row: "flex w-full mt-2",
-                                          cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                                          day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-slate-200 rounded-lg transition-all",
-                                          day_selected: "bg-blue-600 text-white hover:bg-blue-700 hover:text-white rounded-lg font-bold shadow-md shadow-blue-200",
-                                          day_today: "bg-slate-200 text-slate-900 border border-slate-300 rounded-lg",
-                                          day_outside: "text-slate-400 opacity-50",
-                                          day_disabled: "text-slate-300 opacity-50",
-                                          day_hidden: "invisible",
-                                        }}
+                                        className="p-3 pointer-events-auto"
+                                        captionLayout="dropdown"
                                       />
                                     </div>
                                     {assignDue && (
@@ -1356,33 +1340,106 @@ export default function CompraVendaDetailsPage() {
             </CardContent>
           </Card>
           {/* DOCUMENTOS DO CLIENTE */}
-          <Card className="rounded-xl border-gray-200 shadow-sm mt-8">
-            <CardHeader className="bg-white border-b border-gray-100 py-4 px-6 rounded-t-xl flex flex-row items-center justify-between">
+          <Card className="rounded-xl border-gray-200 shadow-sm mt-8 bg-white overflow-hidden">
+            <CardHeader className="bg-white border-b border-gray-50 py-4 px-6 rounded-t-xl flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-blue-600" />
-                <span className="text-slate-800">Documentos do Cliente</span>
+                <span className="text-slate-800 text-sm font-bold uppercase tracking-wider">Documentos do Cliente</span>
               </CardTitle>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-slate-900">{progress}%</span>
-                <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                  <div className={`h-full transition-all duration-500 ${progress === 100 ? 'bg-green-500' : 'bg-blue-600'}`} style={{ width: `${progress}%` }} />
-                </div>
-              </div>
             </CardHeader>
             <CardContent className="p-6">
               <div className="space-y-6">
+                {/* Barra de Progresso Expansível */}
+                <div 
+                  className="space-y-3 cursor-pointer group select-none bg-slate-50/50 p-4 rounded-xl border border-slate-100 hover:border-blue-200 transition-all"
+                  onClick={() => setIsPendingDocsOpen(!isPendingDocsOpen)}
+                  role="button"
+                >
+                  <div className="flex justify-between text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-700 font-bold text-xs uppercase tracking-tight">Progresso da Documentação</span>
+                      {pendingDocs.length > 0 && (
+                        isPendingDocsOpen ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />
+                      )}
+                    </div>
+                    <span className="text-slate-900 font-bold text-xs">{progress}% ({completedDocs}/{totalDocs})</span>
+                  </div>
+                  <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full transition-all duration-700 ease-out ${progress === 100 ? 'bg-green-500' : 'bg-blue-600'}`} 
+                      style={{ width: `${progress}%` }} 
+                    />
+                  </div>
+                </div>
+
+                {/* Lista de Documentos Pendentes (Expansível) */}
+                {pendingDocs.length > 0 ? (
+                  <div 
+                    className={`grid transition-all duration-300 ease-in-out ${isPendingDocsOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="bg-amber-50/50 border border-amber-100 rounded-xl p-5 mt-2">
+                        <div className="flex items-start justify-between mb-4">
+                          <h4 className="flex items-center gap-2 text-amber-800 font-bold text-xs uppercase tracking-wider">
+                            <AlertCircle className="h-4 w-4" />
+                            Documentos Pendentes
+                          </h4>
+                        </div>
+                        <p className="text-[11px] text-amber-700 mb-4 font-medium italic">
+                          Os documentos abaixo ainda não foram identificados nesta pasta.
+                        </p>
+                        <div className="space-y-4">
+                          {Object.entries(
+                            pendingDocs.reduce((acc, doc) => {
+                              if (!acc[doc.group]) acc[doc.group] = [];
+                              acc[doc.group].push(doc);
+                              return acc;
+                            }, {} as Record<string, typeof pendingDocs>)
+                          ).map(([group, docs]) => (
+                            <div key={group} className="space-y-2">
+                              <h5 className="text-[10px] font-black text-amber-900/60 uppercase tracking-widest border-b border-amber-200 pb-1">
+                                {group}
+                              </h5>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                {docs.map((doc) => (
+                                  <div key={doc.key} className="flex items-center gap-2 text-xs text-amber-800 group/item">
+                                    <div className="w-1 h-1 rounded-full bg-amber-400 group-hover/item:scale-150 transition-transform" />
+                                    <span className="font-semibold">{doc.label}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={`transition-all duration-500 ${isPendingDocsOpen ? 'block' : 'hidden'}`}>
+                    <div className="bg-green-50 border border-green-100 rounded-xl p-5 flex items-start gap-4 text-green-800">
+                      <div className="p-2 bg-green-100 rounded-full flex-shrink-0">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-xs uppercase tracking-wider mb-1">Documentação Completa!</h4>
+                        <p className="text-[11px] text-green-700 font-medium">Todos os documentos obrigatórios foram anexados com sucesso.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div
-                  className="p-4 bg-slate-50 rounded-xl border border-dashed border-slate-300 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-100 transition-colors group"
+                  className="p-4 bg-slate-50/50 rounded-xl border border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-100 hover:border-blue-300 transition-all group"
                   onDragOver={(e) => { e.preventDefault(); }}
                   onDrop={(e) => { e.preventDefault(); const files = Array.from(e.dataTransfer.files); handleSpecificFileUpload(files as any, "general", 0); }}
                   onClick={() => document.getElementById('general-upload')?.click()}
                 >
-                  <div className="p-2 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform">
-                    <Upload className="h-5 w-5 text-blue-600" />
+                  <div className="p-2 bg-white rounded-xl shadow-sm group-hover:scale-110 transition-transform border border-slate-100">
+                    <UploadCloud className="h-5 w-5 text-blue-600" />
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-semibold text-slate-700">Arraste ou clique para anexar documentos</p>
-                    <p className="text-xs text-slate-500">Formatos aceitos: PDF, DOCX, Imagens (Máx: 50MB)</p>
+                    <p className="text-[11px] font-bold text-slate-700 uppercase tracking-tight">Anexar Documentos</p>
+                    <p className="text-[10px] text-slate-500 font-medium">PDF, DOCX, Imagens (Máx: 50MB)</p>
                   </div>
                   <input
                     type="file"
@@ -1399,23 +1456,23 @@ export default function CompraVendaDetailsPage() {
                       const displayName = doc.document_name || doc.file_name || doc.name || "Documento";
                       const fileUrl = doc.url || doc.file_path;
                       return (
-                        <div key={doc.id} className="group relative flex flex-col items-center gap-2 p-3 bg-white border border-slate-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all">
-                          <div className="relative w-12 h-12 flex items-center justify-center bg-blue-50 rounded-lg text-blue-600">
-                            <FileText className="w-6 h-6" />
+                        <div key={doc.id} className="group relative flex flex-col items-center gap-2 p-3 bg-white border border-slate-100 rounded-xl hover:border-blue-200 hover:shadow-sm transition-all hover:-translate-y-0.5">
+                          <div className="relative w-10 h-10 flex items-center justify-center bg-blue-50/50 rounded-lg text-blue-600">
+                            <FileText className="w-5 h-5" />
                             <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                               <button
-                                onClick={() => handleEditDocument(doc)}
-                                className="p-1 bg-white border border-slate-200 rounded-full shadow-sm hover:bg-slate-50 text-slate-600"
+                                onClick={(e) => { e.stopPropagation(); handleEditDocument(doc); }}
+                                className="p-1 bg-white border border-slate-100 rounded-lg shadow-sm hover:bg-slate-50 text-slate-600"
                                 title="Renomear"
                               >
-                                <Edit2 className="w-3 h-3" />
+                                <Edit2 className="w-2.5 h-2.5" />
                               </button>
                               <button
-                                onClick={() => handleDeleteDocument(doc)}
-                                className="p-1 bg-white border border-slate-200 rounded-full shadow-sm hover:bg-red-50 text-red-600"
+                                onClick={(e) => { e.stopPropagation(); handleDeleteDocument(doc); }}
+                                className="p-1 bg-white border border-slate-100 rounded-lg shadow-sm hover:bg-red-50 text-red-600"
                                 title="Excluir"
                               >
-                                <X className="w-3 h-3" />
+                                <X className="w-2.5 h-2.5" />
                               </button>
                             </div>
                           </div>
@@ -1423,7 +1480,7 @@ export default function CompraVendaDetailsPage() {
                             href={fileUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[11px] font-medium text-slate-700 text-center line-clamp-2 hover:text-blue-600 transition-colors px-1"
+                            className="text-[10px] font-bold text-slate-700 text-center line-clamp-2 hover:text-blue-600 transition-colors px-1"
                             title={displayName}
                           >
                             {displayName}
@@ -1433,9 +1490,9 @@ export default function CompraVendaDetailsPage() {
                     })}
                   </div>
                 ) : (
-                  <div className="text-center py-10 bg-slate-50/50 rounded-xl border border-slate-100">
-                    <FileText className="h-10 w-10 mx-auto mb-3 text-slate-300 opacity-50" />
-                    <p className="text-sm font-medium text-slate-500">Nenhum documento anexado ainda.</p>
+                  <div className="text-center py-10 bg-slate-50/50 rounded-xl border border-slate-100 border-dashed">
+                    <FileText className="h-8 w-8 mx-auto mb-2 text-slate-300 opacity-50" />
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Pasta Vazia</p>
                   </div>
                 )}
               </div>

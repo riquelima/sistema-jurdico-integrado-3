@@ -40,6 +40,8 @@ function mapDbFieldsToFrontend(record: any) {
     enderecoComprador: record.endereco_comprador,
     nomeVendedores: record.nome_vendedores,
     nomeCompradores: record.nome_compradores,
+    estadoCivilVendedores: record.estado_civil_vendedores,
+    estadoCivilCompradores: record.estado_civil_compradores,
     currentStep: record.current_step,
     status: record.status,
     prazoSinal: record.prazo_sinal,
@@ -164,6 +166,8 @@ export async function POST(request: NextRequest) {
       endereco_comprador: toNullIfEmpty(body.enderecoComprador),
       nome_vendedores: toNullIfEmpty(body.nomeVendedores),
       nome_compradores: toNullIfEmpty(body.nomeCompradores),
+      estado_civil_vendedores: toNullIfEmpty(body.estadoCivilVendedores || body.estado_civil_vendedores),
+      estado_civil_compradores: toNullIfEmpty(body.estadoCivilCompradores || body.estado_civil_compradores),
       current_step: body.currentStep ?? 0,
       status: body.status ?? 'Em Andamento',
       prazo_sinal: toNullIfEmpty(body.prazoSinal),
@@ -257,6 +261,12 @@ export async function PUT(request: NextRequest) {
     if (body.enderecoComprador !== undefined) updateData.endereco_comprador = toNullIfEmpty(body.enderecoComprador);
     if (body.nomeVendedores !== undefined) updateData.nome_vendedores = toNullIfEmpty(body.nomeVendedores);
     if (body.nomeCompradores !== undefined) updateData.nome_compradores = toNullIfEmpty(body.nomeCompradores);
+    if (body.estadoCivilVendedores !== undefined || body.estado_civil_vendedores !== undefined) {
+      updateData.estado_civil_vendedores = toNullIfEmpty(body.estadoCivilVendedores ?? body.estado_civil_vendedores);
+    }
+    if (body.estadoCivilCompradores !== undefined || body.estado_civil_compradores !== undefined) {
+      updateData.estado_civil_compradores = toNullIfEmpty(body.estadoCivilCompradores ?? body.estado_civil_compradores);
+    }
     if (body.currentStep !== undefined) updateData.current_step = body.currentStep;
     if (body.status !== undefined) updateData.status = body.status;
     if (body.prazoSinal !== undefined) updateData.prazo_sinal = toNullIfEmpty(body.prazoSinal);
