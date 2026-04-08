@@ -286,7 +286,7 @@ export default function PastaVistosDetail({ params }: { params: Promise<{ id: st
               </PopoverTrigger>
               <PopoverContent className="p-0 w-[420px]" align="end">
                 <Command>
-                  <CommandInput placeholder="Buscar cliente..." />
+                  <CommandInput placeholder="Buscar" />
                   <CommandList>
                     <CommandEmpty>Nenhum cadastro encontrado.</CommandEmpty>
                     <CommandGroup heading="Clientes Disponíveis">
@@ -319,7 +319,7 @@ export default function PastaVistosDetail({ params }: { params: Promise<{ id: st
             </span>
             <input
               className="w-full bg-white/40 dark:bg-slate-900/40 border-transparent rounded-xl py-2.5 pl-12 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400"
-              placeholder="Pesquisar clientes pelo nome ou documento..."
+              placeholder="Buscar"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

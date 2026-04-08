@@ -99,7 +99,7 @@ function Sidebar({
         <div className="relative group">
           <SearchIcon className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
           <Input
-            placeholder="Buscar em todo o sistema..."
+            placeholder="Buscar"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.currentTarget.value)}
             className="pl-9 bg-white/50 border-slate-200 focus:border-blue-400 focus:ring-blue-400/20 transition-all font-medium"

@@ -54,6 +54,7 @@ function mapDbFieldsToFrontend(record: any) {
     assinaturaContratoDoc: record.assinatura_contrato_doc,
     escrituraDoc: record.escritura_doc,
     matriculaCartorioDoc: record.matricula_cartorio_doc,
+    certidoesVendedores: record.certidoes_vendedores,
     createdAt: record.created_at,
     updatedAt: record.updated_at
   };
@@ -173,6 +174,7 @@ export async function POST(request: NextRequest) {
       prazo_sinal: toNullIfEmpty(body.prazoSinal),
       prazo_escritura: toNullIfEmpty(body.prazoEscritura),
       contract_notes: toNullIfEmpty(body.contractNotes),
+      certidoes_vendedores: toNullIfEmpty(body.certidoesVendedores || body.certidoes_vendedores),
       step_notes: normalizeJson(body.stepNotes),
       completed_steps: normalizeJson(body.completedSteps),
     };
@@ -274,6 +276,9 @@ export async function PUT(request: NextRequest) {
     if (body.contractNotes !== undefined) updateData.contract_notes = toNullIfEmpty(body.contractNotes);
     if (body.stepNotes !== undefined) updateData.step_notes = toNullIfEmpty(body.stepNotes);
     if (body.completedSteps !== undefined) updateData.completed_steps = normalizeJson(body.completedSteps);
+    if (body.certidoesVendedores !== undefined || body.certidoes_vendedores !== undefined) {
+      updateData.certidoes_vendedores = toNullIfEmpty(body.certidoesVendedores ?? body.certidoes_vendedores);
+    }
 
     const { data: updated, error } = await supabase
       .from('compra_venda_imoveis')

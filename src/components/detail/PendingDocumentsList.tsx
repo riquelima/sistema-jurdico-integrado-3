@@ -158,7 +158,7 @@ export function PendingDocumentsList({
               <div className="relative flex-1 md:w-48">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Buscar documento..."
+                  placeholder="Buscar"
                   className="pl-9 h-9 bg-white"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}

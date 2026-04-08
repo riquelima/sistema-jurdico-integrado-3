@@ -627,7 +627,8 @@ export function getCompraVendaDocRequirements(record: any): PendingDocGroup[] {
     cadastroFields.push(
       { key: `rgVendedorDoc_${i}`, label: `RG Vendedor: ${nome}` },
       { key: `cpfVendedorDoc_${i}`, label: `CPF Vendedor: ${nome}` },
-      { key: `certidaoEstadoCivilVendedorDoc_${i}`, label: `Certidão Estado Civil: ${nome}` }
+      { key: `certidaoEstadoCivilVendedorDoc_${i}`, label: `Certidão Estado Civil: ${nome}` },
+      { key: `certidoesVendedorDoc_${i}`, label: `Certidões: ${nome}` }
     );
   });
 
@@ -645,11 +646,6 @@ export function getCompraVendaDocRequirements(record: any): PendingDocGroup[] {
       title: "Cadastro Documentos",
       step: "Cadastro Documentos",
       fields: cadastroFields,
-    },
-    {
-      title: "Certidões",
-      step: "Emitir Certidões",
-      fields: [{ key: "certidoesDoc", label: "Certidões Negativas" }],
     },
     {
       title: "Contrato",

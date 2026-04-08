@@ -252,7 +252,6 @@ export default function PendenciasPage() {
     if (t.moduleType === "compra_venda_imoveis" || t.moduleType === "compra-venda") {
       const steps = [
         "Cadastro Documentos",
-        "Emitir Certidões",
         "Fazer/Analisar Contrato Compra e Venda",
         "Assinatura de contrato",
         "Escritura",

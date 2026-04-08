@@ -32,6 +32,7 @@ interface Vendedor {
   cpf: string;
   dataNascimento: string;
   estadoCivil: string;
+  certidoes: string;
 }
 
 interface Comprador {
@@ -214,7 +215,7 @@ export default function NovaCompraVendaPage() {
 
   // State for dynamic lists
   const [vendedores, setVendedores] = useState<Vendedor[]>([
-    { nome: "", rg: "", cpf: "", dataNascimento: "", estadoCivil: "" }
+    { nome: "", rg: "", cpf: "", dataNascimento: "", estadoCivil: "", certidoes: "" }
   ]);
   const [compradores, setCompradores] = useState<Comprador[]>([
     { nome: "", rnm: "", cpf: "", endereco: "", estadoCivil: "" }
@@ -264,6 +265,7 @@ export default function NovaCompraVendaPage() {
           enderecoComprador: compradores.map(c => c.endereco).filter(Boolean).join(","),
           estado_civil_vendedores: vendedores.map(v => v.estadoCivil).join(","),
           estado_civil_compradores: compradores.map(c => c.estadoCivil).join(","),
+          certidoes_vendedores: vendedores.map(v => v.certidoes).join(","),
           currentStep: 1, // Start at step 1
           status: "Em Andamento",
         }),
@@ -303,7 +305,7 @@ export default function NovaCompraVendaPage() {
   };
 
   const addVendedor = () => {
-    setVendedores([...vendedores, { nome: "", rg: "", cpf: "", dataNascimento: "", estadoCivil: "" }]);
+    setVendedores([...vendedores, { nome: "", rg: "", cpf: "", dataNascimento: "", estadoCivil: "", certidoes: "" }]);
   };
 
   const removeVendedor = (index: number) => {
@@ -513,6 +515,7 @@ export default function NovaCompraVendaPage() {
       ...vendedores.map((_, i) => `rgVendedorDoc_${i}`),
       ...vendedores.map((_, i) => `cpfVendedorDoc_${i}`),
       ...vendedores.map((_, i) => `certidaoEstadoCivilVendedorDoc_${i}`),
+      ...vendedores.map((_, i) => `certidoesVendedorDoc_${i}`),
       ...compradores.map((_, i) => `rnmCompradorDoc_${i}`),
       ...compradores.map((_, i) => `cpfCompradorDoc_${i}`),
       ...compradores.map((_, i) => `certidaoEstadoCivilCompradorDoc_${i}`),
@@ -737,7 +740,7 @@ export default function NovaCompraVendaPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="md:col-span-4 mt-2">
+                    <div className="md:col-span-4 mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                        <DynamicDocumentRow
                         label="Certidão de Estado Civil"
                         docField={`certidaoEstadoCivilVendedorDoc_${index}`}
@@ -746,6 +749,25 @@ export default function NovaCompraVendaPage() {
                         handleDocumentUpload={handleDocumentUpload}
                         handleRemoveFile={handleRemoveFile}
                       />
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Outras Certidões (CNDs, etc)</Label>
+                        <Input
+                          value={vendedor.certidoes}
+                          onChange={(e) => handleVendedorChange(index, "certidoes", e.target.value)}
+                          placeholder="Descrição das certidões..."
+                          className="w-full"
+                        />
+                        <div className="mt-2">
+                          <DynamicDocumentRow
+                            label="Documentos de Certidões"
+                            docField={`certidoesVendedorDoc_${index}`}
+                            extraUploads={extraUploads}
+                            uploadingDocs={uploadingDocs}
+                            handleDocumentUpload={handleDocumentUpload}
+                            handleRemoveFile={handleRemoveFile}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

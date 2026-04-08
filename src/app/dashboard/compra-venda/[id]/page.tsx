@@ -36,7 +36,8 @@ import {
   History,
   Loader2,
   Paperclip,
-  UploadCloud
+  UploadCloud,
+  FileCheck
 } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -83,12 +84,11 @@ import { getCompraVendaDocRequirements, computePendingByFlow, extractDocumentsFr
 // Workflow Steps for Compra e Venda
 const WORKFLOW_STEPS = [
   { id: 1, title: "Cadastro Documentos", description: "Informações de cadastro" },
-  { id: 2, title: "Emitir Certidões", description: "Emissão de documentos" },
-  { id: 3, title: "Fazer/Analisar Contrato", description: "Elaboração e análise contratual" },
-  { id: 4, title: "Assinatura de contrato", description: "Coleta de assinaturas" },
-  { id: 5, title: "Escritura", description: "Prazos para escritura e pagamentos" },
-  { id: 6, title: "Cobrar a Matrícula", description: "Finalização do processo" },
-  { id: 7, title: "Processo Finalizado", description: "Encerramento da ação" },
+  { id: 2, title: "Fazer/Analisar Contrato", description: "Elaboração e análise contratual" },
+  { id: 3, title: "Assinatura de contrato", description: "Coleta de assinaturas" },
+  { id: 4, title: "Escritura", description: "Prazos para escritura e pagamentos" },
+  { id: 5, title: "Cobrar a Matrícula", description: "Finalização do processo" },
+  { id: 6, title: "Processo Finalizado", description: "Encerramento da ação" },
 ];
 
 interface StepData {
@@ -141,6 +141,7 @@ interface CaseData {
   nomeCompradores?: string;
   estado_civil_vendedores?: string;
   estado_civil_compradores?: string;
+  certidoes_vendedores?: string;
   prazoSinal?: string;
   prazoEscritura?: string;
   contractNotes?: string;
@@ -170,6 +171,9 @@ export default function CompraVendaDetailsPage() {
   const [pendingNote, setPendingNote] = useState<string | null>(null);
   const [noteResponsible, setNoteResponsible] = useState("");
   const [isPendingDocsOpen, setIsPendingDocsOpen] = useState(false);
+  const [isCertidoesOpen, setIsCertidoesOpen] = useState(false);
+  const [isVendedoresOpen, setIsVendedoresOpen] = useState(false);
+  const [isCompradoresOpen, setIsCompradoresOpen] = useState(false);
 
   // Edição de Documento
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -177,7 +181,7 @@ export default function CompraVendaDetailsPage() {
   const [newDocumentName, setNewDocumentName] = useState("");
 
   // Specific lists
-  const [editableSellers, setEditableSellers] = useState<{ nome?: string; rg?: string; cpf?: string; dataNascimento?: string; estadoCivil?: string }[]>([]);
+  const [editableSellers, setEditableSellers] = useState<{ nome?: string; rg?: string; cpf?: string; dataNascimento?: string; estadoCivil?: string; certidoes?: string }[]>([]);
   const [editableCompradores, setEditableCompradores] = useState<{ nome?: string; rnm?: string; cpf?: string; endereco?: string; estadoCivil?: string }[]>([]);
 
   const [assignments, setAssignments] = useState<Record<number, { responsibleName?: string; dueDate?: string }>>({});
@@ -341,16 +345,18 @@ export default function CompraVendaDetailsPage() {
         const cpfList = (record.cpfVendedores || "").split(",");
         const dobList = (record.dataNascimentoVendedores || "").split(",");
         const ecVList = (record.estadoCivilVendedores || record.estado_civil_vendedores || "").split(",");
-        const maxLen = Math.max(nomeVList.length, rgList.length, cpfList.length, dobList.length, ecVList.length);
+        const certVList = (record.certidoes_vendedores || "").split(",");
+        const maxLen = Math.max(nomeVList.length, rgList.length, cpfList.length, dobList.length, ecVList.length, certVList.length);
         const sellers = maxLen > 0
           ? Array.from({ length: maxLen }, (_, i) => ({ 
               nome: nomeVList[i] || "", 
               rg: rgList[i] || "", 
               cpf: cpfList[i] || "", 
               dataNascimento: dobList[i] || "",
-              estadoCivil: ecVList[i] || ""
+              estadoCivil: ecVList[i] || "",
+              certidoes: certVList[i] || ""
             }))
-          : [{ nome: "", rg: "", cpf: "", dataNascimento: "", estadoCivil: "" }];
+          : [{ nome: "", rg: "", cpf: "", dataNascimento: "", estadoCivil: "", certidoes: "" }];
         setEditableSellers(sellers);
 
         const nomeCList = (record.nomeCompradores || "").split(",");
@@ -747,6 +753,7 @@ export default function CompraVendaDetailsPage() {
         enderecoComprador: (editableCompradores || []).map(c => c.endereco || "").join(","),
         estado_civil_vendedores: (editableSellers || []).map(s => s.estadoCivil || "").join(","),
         estado_civil_compradores: (editableCompradores || []).map(c => c.estadoCivil || "").join(","),
+        certidoes_vendedores: (editableSellers || []).map(s => s.certidoes || "").join(","),
       };
 
       const res = await fetch(`/api/compra-venda-imoveis?id=${params.id}`, {
@@ -913,133 +920,179 @@ export default function CompraVendaDetailsPage() {
 
             {/* Vendedores */}
             <div className="space-y-4 pt-2">
-              <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+              <div 
+                className="flex justify-between items-center bg-slate-50 hover:bg-slate-100 p-3 rounded-xl border border-slate-200 cursor-pointer transition-colors"
+                onClick={() => setIsVendedoresOpen(!isVendedoresOpen)}
+              >
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-4 bg-blue-500 rounded-full" />
-                  <h4 className="font-bold text-xs uppercase text-slate-700 tracking-tight">Vendedores</h4>
+                  <h4 className="font-bold text-sm uppercase text-slate-700 tracking-tight">Vendedores</h4>
+                  <Badge variant="secondary" className="ml-2 bg-slate-200 text-slate-600 border-none">
+                    {editableSellers.length}
+                  </Badge>
                 </div>
-                {isEditingDocuments && (
-                  <Button size="xs" variant="outline" className="h-6 text-[10px] font-bold uppercase" onClick={() => setEditableSellers(prev => [...prev, { nome: "", rg: "", cpf: "", dataNascimento: "" }])}>
-                    <Plus className="w-3 h-3 mr-1" /> Adicionar
-                  </Button>
-                )}
+                <div className="flex items-center gap-3">
+                  {isEditingDocuments && (
+                    <Button 
+                      size="xs" 
+                      variant="outline" 
+                      className="h-6 text-[10px] font-bold uppercase" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditableSellers(prev => [...prev, { nome: "", rg: "", cpf: "", dataNascimento: "", estadoCivil: "", certidoes: "" }]);
+                        setIsVendedoresOpen(true);
+                      }}
+                    >
+                      <Plus className="w-3 h-3 mr-1" /> Adicionar
+                    </Button>
+                  )}
+                  {isVendedoresOpen ? <ChevronUp className="h-5 w-5 text-slate-500" /> : <ChevronDown className="h-5 w-5 text-slate-500" />}
+                </div>
               </div>
-              <div className="grid grid-cols-1 gap-3">
-                {editableSellers.map((seller, idx) => (
-                  <div key={idx} className="bg-slate-50/50 p-4 rounded-xl border border-slate-100 relative group transition-all hover:border-blue-100 hover:bg-white shadow-sm">
-                    {isEditingDocuments && (
-                      <button 
-                        onClick={() => setEditableSellers(prev => prev.filter((_, i) => i !== idx))} 
-                        className="absolute -top-2 -right-2 bg-white text-red-500 border border-red-100 shadow-sm p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
-                        title="Remover Vendedor"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    )}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
-                      {renderRow("Nome", undefined, "", isEditingDocuments, undefined,
-                        isEditingDocuments ? <Input value={seller.nome || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, nome: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{seller.nome || '-'}</div>, stepId
+              {isVendedoresOpen && (
+                <div className="grid grid-cols-1 gap-3 px-1">
+                  {editableSellers.length === 0 ? (
+                    <div className="text-sm text-slate-500 py-2 text-center">Nenhum vendedor adicionado.</div>
+                  ) : editableSellers.map((seller, idx) => (
+                    <div key={idx} className="bg-slate-50/50 p-4 rounded-xl border border-slate-100 relative group transition-all hover:border-blue-100 hover:bg-white shadow-sm">
+                      {isEditingDocuments && (
+                        <button 
+                          onClick={() => setEditableSellers(prev => prev.filter((_, i) => i !== idx))} 
+                          className="absolute -top-2 -right-2 bg-white text-red-500 border border-red-100 shadow-sm p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                          title="Remover Vendedor"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
                       )}
-                      {renderRow("RG", undefined, `rgVendedorDoc_${idx}`, isEditingDocuments, undefined,
-                        isEditingDocuments ? <Input value={seller.rg || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, rg: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{seller.rg || '-'}</div>, stepId
-                      )}
-                      {renderRow("CPF", undefined, `cpfVendedorDoc_${idx}`, isEditingDocuments, undefined,
-                        isEditingDocuments ? <Input value={seller.cpf || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, cpf: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{seller.cpf || '-'}</div>, stepId
-                      )}
-                      {renderRow("Nascimento", undefined, "", isEditingDocuments, undefined,
-                        isEditingDocuments ? <Input type="date" value={seller.dataNascimento || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, dataNascimento: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{formatDateBR(seller.dataNascimento)}</div>, stepId
-                      )}
-                      {renderRow("Est. Civil", undefined, `certidaoEstadoCivilVendedorDoc_${idx}`, isEditingDocuments, undefined,
-                        isEditingDocuments ? (
-                          <Select 
-                            value={seller.estadoCivil || ""} 
-                            onValueChange={(val) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, estadoCivil: val } : s))}
-                          >
-                            <SelectTrigger className="h-8 bg-white text-sm">
-                              <SelectValue placeholder="Selecione..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Solteiro">Solteiro</SelectItem>
-                              <SelectItem value="Casado">Casado</SelectItem>
-                              <SelectItem value="Divorciado">Divorciado</SelectItem>
-                              <SelectItem value="Viúvo">Viúvo</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : <div className="text-sm font-semibold text-slate-800">{seller.estadoCivil || '-'}</div>, stepId
-                      )}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+                        {renderRow("Nome", undefined, "", isEditingDocuments, undefined,
+                          isEditingDocuments ? <Input value={seller.nome || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, nome: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{seller.nome || '-'}</div>, stepId
+                        )}
+                        {renderRow("RG", undefined, `rgVendedorDoc_${idx}`, isEditingDocuments, undefined,
+                          isEditingDocuments ? <Input value={seller.rg || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, rg: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{seller.rg || '-'}</div>, stepId
+                        )}
+                        {renderRow("CPF", undefined, `cpfVendedorDoc_${idx}`, isEditingDocuments, undefined,
+                          isEditingDocuments ? <Input value={seller.cpf || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, cpf: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{seller.cpf || '-'}</div>, stepId
+                        )}
+                        {renderRow("Nascimento", undefined, "", isEditingDocuments, undefined,
+                          isEditingDocuments ? <Input type="date" value={seller.dataNascimento || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, dataNascimento: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{formatDateBR(seller.dataNascimento)}</div>, stepId
+                        )}
+                        {renderRow("Est. Civil", undefined, `certidaoEstadoCivilVendedorDoc_${idx}`, isEditingDocuments, undefined,
+                          isEditingDocuments ? (
+                            <Select 
+                              value={seller.estadoCivil || ""} 
+                              onValueChange={(val) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, estadoCivil: val } : s))}
+                            >
+                              <SelectTrigger className="h-8 bg-white text-sm">
+                                <SelectValue placeholder="Selecione..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Solteiro">Solteiro</SelectItem>
+                                <SelectItem value="Casado">Casado</SelectItem>
+                                <SelectItem value="Divorciado">Divorciado</SelectItem>
+                                <SelectItem value="Viúvo">Viúvo</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          ) : <div className="text-sm font-semibold text-slate-800">{seller.estadoCivil || '-'}</div>, stepId
+                        )}
+                        {renderRow("Certidões", undefined, `certidoesVendedorDoc_${idx}`, isEditingDocuments, undefined,
+                          isEditingDocuments ? <Input value={seller.certidoes || ""} onChange={(e) => setEditableSellers(prev => prev.map((s, i) => i === idx ? { ...s, certidoes: e.target.value } : s))} className="h-8 bg-white text-sm" placeholder="Ex: CND federal, CND estadual..." /> : <div className="text-sm font-semibold text-slate-800">{seller.certidoes || '-'}</div>, stepId
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Compradores */}
             <div className="space-y-4 pt-2">
-              <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+              <div 
+                className="flex justify-between items-center bg-slate-50 hover:bg-slate-100 p-3 rounded-xl border border-slate-200 cursor-pointer transition-colors"
+                onClick={() => setIsCompradoresOpen(!isCompradoresOpen)}
+              >
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-4 bg-green-500 rounded-full" />
-                  <h4 className="font-bold text-xs uppercase text-slate-700 tracking-tight">Compradores</h4>
+                  <h4 className="font-bold text-sm uppercase text-slate-700 tracking-tight">Compradores</h4>
+                  <Badge variant="secondary" className="ml-2 bg-slate-200 text-slate-600 border-none">
+                    {editableCompradores.length}
+                  </Badge>
                 </div>
-                {isEditingDocuments && (
-                  <Button size="xs" variant="outline" className="h-6 text-[10px] font-bold uppercase" onClick={() => setEditableCompradores(prev => [...prev, { nome: "", rnm: "", cpf: "", endereco: "" }])}>
-                    <Plus className="w-3 h-3 mr-1" /> Adicionar
-                  </Button>
-                )}
+                <div className="flex items-center gap-3">
+                  {isEditingDocuments && (
+                    <Button 
+                      size="xs" 
+                      variant="outline" 
+                      className="h-6 text-[10px] font-bold uppercase" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditableCompradores(prev => [...prev, { nome: "", rnm: "", cpf: "", endereco: "", estadoCivil: "" }]);
+                        setIsCompradoresOpen(true);
+                      }}
+                    >
+                      <Plus className="w-3 h-3 mr-1" /> Adicionar
+                    </Button>
+                  )}
+                  {isCompradoresOpen ? <ChevronUp className="h-5 w-5 text-slate-500" /> : <ChevronDown className="h-5 w-5 text-slate-500" />}
+                </div>
               </div>
-              <div className="grid grid-cols-1 gap-3">
-                {editableCompradores.map((comp, idx) => (
-                  <div key={idx} className="bg-slate-50/50 p-4 rounded-xl border border-slate-100 relative group transition-all hover:border-green-100 hover:bg-white shadow-sm">
-                    {isEditingDocuments && (
-                      <button 
-                        onClick={() => setEditableCompradores(prev => prev.filter((_, i) => i !== idx))} 
-                        className="absolute -top-2 -right-2 bg-white text-red-500 border border-red-100 shadow-sm p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
-                        title="Remover Comprador"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    )}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      {renderRow("Nome", undefined, "", isEditingDocuments, undefined,
-                        isEditingDocuments ? <Input value={comp.nome || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, nome: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{comp.nome || '-'}</div>, stepId
+              {isCompradoresOpen && (
+                <div className="grid grid-cols-1 gap-3 px-1">
+                  {editableCompradores.length === 0 ? (
+                    <div className="text-sm text-slate-500 py-2 text-center">Nenhum comprador adicionado.</div>
+                  ) : editableCompradores.map((comp, idx) => (
+                    <div key={idx} className="bg-slate-50/50 p-4 rounded-xl border border-slate-100 relative group transition-all hover:border-green-100 hover:bg-white shadow-sm">
+                      {isEditingDocuments && (
+                        <button 
+                          onClick={() => setEditableCompradores(prev => prev.filter((_, i) => i !== idx))} 
+                          className="absolute -top-2 -right-2 bg-white text-red-500 border border-red-100 shadow-sm p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                          title="Remover Comprador"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
                       )}
-                      {renderRow("RNM", undefined, `rnmCompradorDoc_${idx}`, isEditingDocuments, undefined,
-                        isEditingDocuments ? <Input value={comp.rnm || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, rnm: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{comp.rnm || '-'}</div>, stepId
-                      )}
-                      {renderRow("CPF", undefined, `cpfCompradorDoc_${idx}`, isEditingDocuments, undefined,
-                        isEditingDocuments ? <Input value={comp.cpf || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, cpf: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{comp.cpf || '-'}</div>, stepId
-                      )}
-                      {renderRow("Endereço", undefined, "", isEditingDocuments, undefined,
-                        isEditingDocuments ? <Input value={comp.endereco || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, endereco: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{comp.endereco || '-'}</div>, stepId
-                      )}
-                      {renderRow("Est. Civil", undefined, `certidaoEstadoCivilCompradorDoc_${idx}`, isEditingDocuments, undefined,
-                        isEditingDocuments ? (
-                          <Select 
-                            value={comp.estadoCivil || ""} 
-                            onValueChange={(val) => setEditableCompradores(prev => prev.map((c, i) => i === idx ? { ...c, estadoCivil: val } : c))}
-                          >
-                            <SelectTrigger className="h-8 bg-white text-sm">
-                              <SelectValue placeholder="Selecione..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Solteiro">Solteiro</SelectItem>
-                              <SelectItem value="Casado">Casado</SelectItem>
-                              <SelectItem value="Divorciado">Divorciado</SelectItem>
-                              <SelectItem value="Viúvo">Viúvo</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : <div className="text-sm font-semibold text-slate-800">{comp.estadoCivil || '-'}</div>, stepId
-                      )}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {renderRow("Nome", undefined, "", isEditingDocuments, undefined,
+                          isEditingDocuments ? <Input value={comp.nome || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, nome: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{comp.nome || '-'}</div>, stepId
+                        )}
+                        {renderRow("RNM", undefined, `rnmCompradorDoc_${idx}`, isEditingDocuments, undefined,
+                          isEditingDocuments ? <Input value={comp.rnm || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, rnm: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{comp.rnm || '-'}</div>, stepId
+                        )}
+                        {renderRow("CPF", undefined, `cpfCompradorDoc_${idx}`, isEditingDocuments, undefined,
+                          isEditingDocuments ? <Input value={comp.cpf || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, cpf: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{comp.cpf || '-'}</div>, stepId
+                        )}
+                        {renderRow("Endereço", undefined, "", isEditingDocuments, undefined,
+                          isEditingDocuments ? <Input value={comp.endereco || ""} onChange={(e) => setEditableCompradores(prev => prev.map((s, i) => i === idx ? { ...s, endereco: e.target.value } : s))} className="h-8 bg-white text-sm" /> : <div className="text-sm font-semibold text-slate-800">{comp.endereco || '-'}</div>, stepId
+                        )}
+                        {renderRow("Est. Civil", undefined, `certidaoEstadoCivilCompradorDoc_${idx}`, isEditingDocuments, undefined,
+                          isEditingDocuments ? (
+                            <Select 
+                              value={comp.estadoCivil || ""} 
+                              onValueChange={(val) => setEditableCompradores(prev => prev.map((c, i) => i === idx ? { ...c, estadoCivil: val } : c))}
+                            >
+                              <SelectTrigger className="h-8 bg-white text-sm">
+                                <SelectValue placeholder="Selecione..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Solteiro">Solteiro</SelectItem>
+                                <SelectItem value="Casado">Casado</SelectItem>
+                                <SelectItem value="Divorciado">Divorciado</SelectItem>
+                                <SelectItem value="Viúvo">Viúvo</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          ) : <div className="text-sm font-semibold text-slate-800">{comp.estadoCivil || '-'}</div>, stepId
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
       );
     }
 
-    if (stepId === 4) { // Assinatura - Prazos
+    if (stepId === 3) { // Assinatura - Prazos
       return (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           {renderHeader("Assinatura e Prazos", undefined, false)}
@@ -1068,10 +1121,9 @@ export default function CompraVendaDetailsPage() {
 
     // Default Steps
     const docKeys: Record<number, string> = {
-      2: "certidoesDoc",
-      3: "contratoDoc",
-      5: "escrituraDoc",
-      6: "matriculaCartorioDoc"
+      2: "contratoDoc",
+      4: "escrituraDoc",
+      5: "matriculaCartorioDoc"
     };
     const key = docKeys[stepId];
 
@@ -1107,6 +1159,15 @@ export default function CompraVendaDetailsPage() {
 
   // Lógica espelhada de Vistos: O passo atual é o pointer salvo no banco (baseado em ID 1-indexed)
   const currentStepIndex = Math.max(0, Math.min(Number(caseData.currentStep || 1) - 1, WORKFLOW_STEPS.length - 1));
+
+  // Agrupamento de certidões por vendedor para o dropdown
+  const sellersWithCertificates = (editableSellers || []).map((seller, idx) => {
+    const sellerCerts = (documents || []).filter(d => (d.fieldName || d.field_name) === `certidoesVendedorDoc_${idx}`);
+    return {
+      name: seller.nome || `Vendedor ${idx + 1}`,
+      docs: sellerCerts
+    };
+  }).filter(s => s.docs.length > 0);
 
   return (
     <div className="w-full p-4 space-y-6 bg-gray-50 min-h-screen">
@@ -1427,6 +1488,68 @@ export default function CompraVendaDetailsPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Dropdown de Certidões por Vendedor */}
+                <div 
+                  className="space-y-3 cursor-pointer group select-none bg-slate-50/50 p-4 rounded-xl border border-slate-100 hover:border-blue-200 transition-all mt-4"
+                  onClick={() => setIsCertidoesOpen(!isCertidoesOpen)}
+                  role="button"
+                >
+                  <div className="flex justify-between text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <FileCheck className="h-4 w-4 text-blue-600" />
+                      <span className="text-slate-700 font-bold text-xs uppercase tracking-tight">Certidões</span>
+                      {isCertidoesOpen ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                    </div>
+                    {sellersWithCertificates.length > 0 && (
+                      <span className="text-slate-900 font-bold text-xs">
+                        {sellersWithCertificates.reduce((acc, curr) => acc + curr.docs.length, 0)} arquivos
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Lista de Certidões (Expansível) */}
+                <div 
+                  className={`grid transition-all duration-300 ease-in-out ${isCertidoesOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+                >
+                  <div className="overflow-hidden">
+                    <div className="bg-white border border-slate-100 rounded-xl p-5 mt-2 space-y-4">
+                      {sellersWithCertificates.length > 0 ? (
+                        sellersWithCertificates.map((seller, sIdx) => (
+                          <div key={sIdx} className="space-y-2">
+                            <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-50 pb-1 flex items-center gap-2">
+                              <User className="h-3 w-3" />
+                              {seller.name}
+                            </h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {seller.docs.map((doc) => {
+                                const displayName = doc.document_name || doc.file_name || doc.name || "Certidão";
+                                return (
+                                  <a
+                                    key={doc.id}
+                                    href={doc.url || doc.file_path}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-xs text-blue-700 hover:text-blue-800 hover:bg-blue-50 p-2 rounded-lg border border-blue-50 transition-all font-semibold"
+                                  >
+                                    <FileText className="h-3.5 w-3.5 flex-shrink-0" />
+                                    <span className="truncate">{displayName}</span>
+                                  </a>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-6 text-slate-400">
+                          <AlertCircle className="h-6 w-6 mx-auto mb-2 opacity-30" />
+                          <p className="text-[11px] font-bold uppercase tracking-widest">Nenhuma certidão anexada até o momento.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
                 <div
                   className="p-4 bg-slate-50/50 rounded-xl border border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-100 hover:border-blue-300 transition-all group"

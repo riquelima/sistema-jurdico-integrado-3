@@ -187,7 +187,7 @@ export default function PastasVistosPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
             <input
               type="text"
-              placeholder="Pesquisar pastas..."
+              placeholder="Buscar"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={`w-full bg-white/40 dark:bg-slate-900/40 border-transparent rounded-xl py-2.5 pl-12 pr-4 focus:ring-2 ${PRIMARY_RING_CLASS} focus:border-transparent transition-all outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400`}
