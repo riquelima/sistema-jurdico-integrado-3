@@ -205,19 +205,19 @@ export default function DashboardPage() {
               </motion.div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12 relative z-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-12 relative z-10">
               <motion.div
                 whileHover={{ y: -5 }}
                 onClick={() => router.push('/dashboard/acoes')}
-                className="rounded-2xl p-6 bg-white/60 border border-white hover:bg-white/80 transition-all cursor-pointer shadow-lg shadow-blue-500/5"
+                className="rounded-2xl p-6 bg-white/60 border border-white hover:bg-white/80 transition-all cursor-pointer shadow-lg shadow-blue-500/5 h-full"
               >
                 <div className="flex items-center gap-5">
-                  <div className="p-3 rounded-xl bg-blue-100 flex items-center justify-center">
+                  <div className="p-3 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
                     <img src="https://cdn-icons-png.flaticon.com/512/17728/17728633.png" alt="" className="w-8 h-8 object-contain" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Ações</p>
-                    <p className="text-3xl font-bold text-slate-900">{isDataLoading ? '...' : totalCount}</p>
+                    <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Ações</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-slate-900">{isDataLoading ? '...' : totalCount}</p>
                   </div>
                 </div>
               </motion.div>
@@ -225,15 +225,15 @@ export default function DashboardPage() {
               <motion.div
                 whileHover={{ y: -5 }}
                 onClick={() => router.push('/dashboard/pendencias')}
-                className="rounded-2xl p-6 bg-purple-50/60 border border-white hover:bg-purple-50/80 transition-all cursor-pointer shadow-lg shadow-purple-500/5"
+                className="rounded-2xl p-6 bg-purple-50/60 border border-white hover:bg-purple-50/80 transition-all cursor-pointer shadow-lg shadow-purple-500/5 h-full"
               >
                 <div className="flex items-center gap-5">
-                  <div className="p-3 rounded-xl bg-purple-100 flex items-center justify-center">
+                  <div className="p-3 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
                     <img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png" alt="" className="w-8 h-8 object-contain" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Pendências</p>
-                    <p className="text-lg font-bold text-slate-900">Acesse o calendário de pendências</p>
+                    <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Pendências</p>
+                    <p className="text-sm sm:text-base font-bold text-slate-900 leading-tight">Calendário de pendências</p>
                   </div>
                 </div>
               </motion.div>
@@ -241,15 +241,31 @@ export default function DashboardPage() {
               <motion.div
                 whileHover={{ y: -5 }}
                 onClick={() => router.push('/dashboard/procuracao/novo')}
-                className="rounded-2xl p-6 bg-amber-50/60 border border-white hover:bg-amber-50/80 transition-all cursor-pointer shadow-lg shadow-amber-500/5"
+                className="rounded-2xl p-6 bg-amber-50/60 border border-white hover:bg-amber-50/80 transition-all cursor-pointer shadow-lg shadow-amber-500/5 h-full"
               >
                 <div className="flex items-center gap-5">
-                  <div className="p-3 rounded-xl bg-amber-100 flex items-center justify-center">
+                  <div className="p-3 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
                     <img src="https://cdn-icons-png.flaticon.com/512/15182/15182162.png" alt="" className="w-8 h-8 object-contain" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Elaborar Procuração</p>
-                    <p className="text-lg font-bold text-slate-900">Criar rapidamente uma procuração</p>
+                    <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Procuração</p>
+                    <p className="text-sm sm:text-base font-bold text-slate-900 leading-tight">Criar uma procuração</p>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                whileHover={{ y: -5 }}
+                onClick={() => router.push('/dashboard/consulta-processual')}
+                className="rounded-2xl p-6 bg-sky-50/60 border border-white hover:bg-sky-50/80 transition-all cursor-pointer shadow-lg shadow-sky-500/5 h-full"
+              >
+                <div className="flex items-center gap-5">
+                  <div className="p-3 rounded-xl bg-sky-100 flex items-center justify-center shrink-0">
+                    <img src="https://cdn-icons-png.flaticon.com/512/6008/6008851.png" alt="Search" className="w-8 h-8 object-contain" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Consultar Processo</p>
+                    <p className="text-sm sm:text-base font-bold text-slate-900 leading-tight">Buscar dados (CNJ)</p>
                   </div>
                 </div>
               </motion.div>

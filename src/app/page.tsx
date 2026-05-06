@@ -214,7 +214,7 @@ export default function LoginPage() {
                             transition={{ delay: 0.7 }}
                             className="mt-8 text-center"
                         >
-                            <p className="text-xs text-slate-500 font-medium">© 2025 Silva & Ferrari Advogados Associados.</p>
+                            <p className="text-xs text-slate-500 font-medium">© {new Date().getFullYear()} Silva & Ferrari Advogados Associados.</p>
                             <p className="text-[10px] text-slate-400 mt-1">Todos os direitos reservados.</p>
                         </motion.div>
                     </PageTransition>
