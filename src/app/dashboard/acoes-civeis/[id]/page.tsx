@@ -1101,7 +1101,7 @@ export default function AcoesCiveisDetailsPage() {
       baseReqs.push({ title: "Guia", step: "Emissão da Guia Judicial", fields: [{ key: "guiaJudicialFile", label: "Guia Judicial" }] });
       baseReqs.push({ title: "Procuração", step: "Elaboração Procuração", fields: [{ key: "procuracaoFile", label: "Procuração" }] });
       baseReqs.push({ title: "Petição", step: "Peticionar", fields: [{ key: "peticaoInicialFile", label: "Petição Inicial" }] });
-    } else if (type === "Guarda" || type === "Acordos de Guarda") {
+    } else if (type === "Guarda" || type === "Acordos de Guarda" || type === "Outro (a)") {
       baseReqs[0].fields = [
         { key: "rnmMae", label: "RNM/RG Mãe" },
         { key: "cpfMae", label: "CPF Mãe" },
@@ -1111,7 +1111,7 @@ export default function AcoesCiveisDetailsPage() {
         { key: "comprovanteEndereco", label: "Comprovante Endereço" },
       ];
       baseReqs.push({ title: "Procuração", step: "Fazer Procuração (WENDEL/GUILHERME/FÁBIO)", fields: [{ key: "procuracaoFile", label: "Procuração Assinada" }] });
-      if (type === "Acordos de Guarda") {
+      if (type === "Acordos de Guarda" || type === "Outro (a)") {
         baseReqs.push({ title: "Acordo", step: "Fazer a Procuração e o Acordo de Guarda (WENDEL/GUILHERME/FÁBIO)", fields: [{ key: "acordoGuardaFile", label: "Termo de Acordo" }] });
       }
       baseReqs.push({ title: "Petição", step: "Verificar se há Petição", fields: [{ key: "peticaoInicialFile", label: "Petição Inicial" }] });
@@ -1127,7 +1127,7 @@ export default function AcoesCiveisDetailsPage() {
       baseReqs.push({ title: "Petição", step: "Petição Conjunta", fields: [{ key: "peticaoInicialFile", label: "Petição Conjunta" }] });
       baseReqs.push({ title: "Partilha", step: "Termo de Partilhas", fields: [{ key: "termoPartilhaFile", label: "Termo de Partilha" }] });
       baseReqs.push({ title: "Procuração", step: "Procuração", fields: [{ key: "procuracaoFile", label: "Procuração" }] });
-    } else if (type === "Divórcio Litígio" || type === "Outro (a)") {
+    } else if (type === "Divórcio Litígio") {
       baseReqs[0].fields = [
         { key: "certidaoNascimento", label: "Certidão de Casamento" },
         { key: "rnmMae", label: "RNM/RG Requerente" },
