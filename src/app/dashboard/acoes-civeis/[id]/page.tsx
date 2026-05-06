@@ -1099,7 +1099,7 @@ export default function AcoesCiveisDetailsPage() {
       baseReqs.push({ title: "Guia", step: "Emissão da Guia Judicial", fields: [{ key: "guiaJudicialFile", label: "Guia Judicial" }] });
       baseReqs.push({ title: "Procuração", step: "Elaboração Procuração", fields: [{ key: "procuracaoFile", label: "Procuração" }] });
       baseReqs.push({ title: "Petição", step: "Peticionar", fields: [{ key: "peticaoInicialFile", label: "Petição Inicial" }] });
-    } else if (type === "Guarda" || type === "Acordos de Guarda" || type === "Outro (a)" || !["Exame DNA", "Usucapião", "Alteração de Nome", "Divórcio Consensual", "Divórcio Litígio", "Pensão Alimentícia", "Ação de Alimentos"].includes(type)) {
+    } else if (type === "Guarda" || type === "Acordos de Guarda") {
       baseReqs[0].fields = [
         { key: "rnmMae", label: "RNM/RG Mãe" },
         { key: "cpfMae", label: "CPF Mãe" },
@@ -1112,6 +1112,32 @@ export default function AcoesCiveisDetailsPage() {
       if (type === "Acordos de Guarda") {
         baseReqs.push({ title: "Acordo", step: "Fazer a Procuração e o Acordo de Guarda", fields: [{ key: "acordoGuardaFile", label: "Termo de Acordo" }] });
       }
+      baseReqs.push({ title: "Petição", step: "Verificar se há Petição", fields: [{ key: "peticaoInicialFile", label: "Petição Inicial" }] });
+    } else if (type === "Outro (a)" || !["Exame DNA", "Usucapião", "Alteração de Nome", "Divórcio Consensual", "Divórcio Litígio", "Pensão Alimentícia", "Ação de Alimentos", "Guarda", "Acordos de Guarda"].includes(type || "")) {
+      const fields = [
+        { key: "rnmMae", label: "RNM/RG Parte 1" },
+        { key: "cpfMae", label: "CPF Parte 1" },
+        { key: "rnmPai", label: "RNM/RG Parte 2" },
+        { key: "cpfPai", label: "CPF Parte 2" },
+      ];
+
+      const partIndices: number[] = [];
+      Object.keys(caseData).forEach(key => {
+        const match = key.match(/^nomeParte_(\d+)$/);
+        if (match && caseData[key]) {
+          partIndices.push(parseInt(match[1], 10));
+        }
+      });
+      partIndices.sort((a, b) => a - b);
+      partIndices.forEach(idx => {
+        fields.push({ key: `rnmParte_${idx}`, label: `RNM/RG Parte ${idx}` });
+        fields.push({ key: `cpfParte_${idx}`, label: `CPF Parte ${idx}` });
+      });
+
+      fields.push({ key: "comprovanteEndereco", label: "Comprovante Endereço" });
+
+      baseReqs[0].fields = fields;
+      baseReqs.push({ title: "Procuração", step: "Fazer Procuração", fields: [{ key: "procuracaoFile", label: "Procuração Assinada" }] });
       baseReqs.push({ title: "Petição", step: "Verificar se há Petição", fields: [{ key: "peticaoInicialFile", label: "Petição Inicial" }] });
     } else if (type === "Divórcio Consensual") {
       baseReqs[0].fields = [
@@ -1253,8 +1279,8 @@ export default function AcoesCiveisDetailsPage() {
                   {renderRow("IPTU", undefined, "iptuFile")}
                 </>
               )}
-              {/* Fallback for other types */}
-              {!['Exame DNA', 'Usucapião'].includes(type) && (
+              {/* Fallback for other standard types */}
+              {!['Exame DNA', 'Usucapião', 'Outro (a)'].includes(type) && ["Alteração de Nome", "Divórcio Consensual", "Divórcio Litígio", "Pensão Alimentícia", "Ação de Alimentos", "Guarda", "Acordos de Guarda"].includes(type) && (
                 <>
                   {renderRow("Nome Mãe", "nomeMae")}
                   {renderRow("Nome Pai", "nomePaiRegistral")}
@@ -1264,6 +1290,39 @@ export default function AcoesCiveisDetailsPage() {
                   {renderRow("Certidão Nascimento", "certidaoNascimento", "certidaoNascimentoFile")}
                 </>
               )}
+              {/* Dynamic fields for Outro (a) and other custom/unmapped types */}
+              {(type === 'Outro (a)' || !["Exame DNA", "Usucapião", "Alteração de Nome", "Divórcio Consensual", "Divórcio Litígio", "Pensão Alimentícia", "Ação de Alimentos", "Guarda", "Acordos de Guarda"].includes(type || "")) && (() => {
+                const fields: React.ReactNode[] = [];
+                
+                const partIndices: number[] = [];
+                Object.keys(caseData).forEach(key => {
+                  const match = key.match(/^nomeParte_(\d+)$/);
+                  if (match && caseData[key]) {
+                    partIndices.push(parseInt(match[1], 10));
+                  }
+                });
+                partIndices.sort((a, b) => a - b);
+
+                fields.push(renderRow("Nome da Parte 1", "nomeMae"));
+                fields.push(renderRow("Nome da Parte 2", "nomePaiRegistral"));
+                partIndices.forEach(idx => {
+                  fields.push(renderRow(`Nome da Parte ${idx}`, `nomeParte_${idx}`));
+                });
+
+                fields.push(renderRow("RNM/RG Parte 1", "rnmMae", "rnmMaeFile"));
+                fields.push(renderRow("CPF Parte 1", "cpfMae", "cpfMaeFile"));
+                fields.push(renderRow("RNM/RG Parte 2", "rnmPai", "rnmPaiFile"));
+                fields.push(renderRow("CPF Parte 2", "cpfPai", "cpfPaiFile"));
+                partIndices.forEach(idx => {
+                  fields.push(renderRow(`RNM/RG Parte ${idx}`, `rnmParte_${idx}`, `rnmParte_${idx}File`));
+                  fields.push(renderRow(`CPF Parte ${idx}`, `cpfParte_${idx}`, `cpfParte_${idx}File`));
+                });
+
+                fields.push(renderRow("Comprovante Endereço", "comprovanteEndereco", "comprovanteEnderecoFile"));
+                fields.push(renderRow("Documentos do Processo", undefined, "documentosProcessoFile"));
+
+                return <>{fields}</>;
+              })()}
             </div>
           </div>
         </div>
