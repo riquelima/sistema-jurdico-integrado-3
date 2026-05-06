@@ -29,6 +29,7 @@ import {
   Info
 } from "lucide-react";
 import Link from "next/link";
+import { DatajudSearch } from "@/components/DatajudSearch";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -116,6 +117,12 @@ const WORKFLOWS = {
     "Processo Finalizado",
   ],
   "Divórcio Litígio": [
+    "Cadastro de Documentos",
+    "Procuração, Petição e Guia Judicial",
+    "À Protocolar",
+    "Processo Finalizado",
+  ],
+  "Outro (a)": [
     "Cadastro de Documentos",
     "Procuração, Petição e Guia Judicial",
     "À Protocolar",
@@ -646,8 +653,14 @@ export default function AcoesCiveisDetailsPage() {
         const record = await res.json();
 
         // Map steps based on workflow
-        const flowType = (record.type as AcaoType) || "Exame DNA";
-        const workflowSteps = WORKFLOWS[flowType] || WORKFLOWS["Exame DNA"];
+        const flowType = (record.type as string) || "Outros";
+        const workflowSteps = (WORKFLOWS as any)[flowType] || [
+          "Cadastro de Documentos",
+          "Elaboração Procuração",
+          "À Protocolar",
+          "Processo Protocolado",
+          "Processo Finalizado"
+        ];
 
         const steps: StepData[] = workflowSteps.map((title: string, index: number) => ({
           id: index,
@@ -1114,7 +1127,7 @@ export default function AcoesCiveisDetailsPage() {
       baseReqs.push({ title: "Petição", step: "Petição Conjunta", fields: [{ key: "peticaoInicialFile", label: "Petição Conjunta" }] });
       baseReqs.push({ title: "Partilha", step: "Termo de Partilhas", fields: [{ key: "termoPartilhaFile", label: "Termo de Partilha" }] });
       baseReqs.push({ title: "Procuração", step: "Procuração", fields: [{ key: "procuracaoFile", label: "Procuração" }] });
-    } else if (type === "Divórcio Litígio") {
+    } else if (type === "Divórcio Litígio" || type === "Outro (a)") {
       baseReqs[0].fields = [
         { key: "certidaoNascimento", label: "Certidão de Casamento" },
         { key: "rnmMae", label: "RNM/RG Requerente" },
@@ -1419,7 +1432,8 @@ export default function AcoesCiveisDetailsPage() {
             <p className="text-muted-foreground">{caseData.type}</p>
           </div>
         </div>
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 flex items-center gap-2">
+          <DatajudSearch initialNpu={caseData.numeroProtocolo || ""} />
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" size="sm" className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700">

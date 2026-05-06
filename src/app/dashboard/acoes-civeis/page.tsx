@@ -42,6 +42,7 @@ const CASE_TYPES = [
   "Divórcio Consensual",
   "Divórcio Litígio",
   "Usucapião",
+  "Outro (a)",
 ];
 
 export default function AcoesCiveisPage() {
@@ -277,7 +278,7 @@ export default function AcoesCiveisPage() {
       ? EXAME_DNA_STEPS
       : (type === "Alteração de Nome" || type === "Guarda" || type === "Acordos de Guarda")
         ? ALTERACAO_NOME_STEPS
-        : (type === "Usucapião" ? USUCAPIAO_STEPS : ((type === "Divórcio Litígio" || type === "Divórcio Consensual") ? DIVORCIO_LITIGIO_STEPS : STANDARD_CIVIL_STEPS));
+        : (type === "Usucapião" ? USUCAPIAO_STEPS : ((type === "Divórcio Litígio" || type === "Divórcio Consensual" || type === "Outro (a)") ? DIVORCIO_LITIGIO_STEPS : STANDARD_CIVIL_STEPS));
     const clampedIndex = Math.min(Math.max(index, 0), steps.length - 1);
     return steps[clampedIndex];
   };
