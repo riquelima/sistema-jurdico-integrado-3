@@ -31,7 +31,8 @@ const CASE_TYPES = [
   "Acordos de Guarda",
   "Divórcio Consensual",
   "Divórcio Litígio",
-  "Usucapião"
+  "Usucapião",
+  "Outro (a)"
 ];
 
 interface FormData {
@@ -101,19 +102,109 @@ interface FormData {
   [key: string]: string;
 }
 
+
+// Helper component matching Vistos design
+const DocumentRow = ({
+  label, field, docField, placeholder = "Status ou informações do documento",
+  formData, handleChange, extraUploads, uploadingDocs, handleDocumentUpload, removeDocument
+}: {
+  label: string; field?: string; docField: string; placeholder?: string;
+  formData: any; handleChange: any; extraUploads: any; uploadingDocs: any; handleDocumentUpload: any; removeDocument: any;
+}) => {
+    // Collect all attached files (main + extra)
+    const attachedFiles: string[] = [];
+    const mainFile = formData[`${docField}File`];
+    if (mainFile) attachedFiles.push(mainFile);
+    if (extraUploads[docField]) {
+      attachedFiles.push(...extraUploads[docField]);
+    }
+
+    return (
+      <div className="space-y-2">
+        <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{label}</Label>
+        <div className="flex gap-3 items-start">
+          {field && (
+            <Input
+              value={formData[field] || ""}
+              onChange={(e) => handleChange(field, e.target.value)}
+              className="flex-1 rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5"
+              placeholder={placeholder}
+            />
+          )}
+          {!field && (
+            <div className="flex-1 flex items-center p-2.5 rounded-md border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-sm">
+              <span className={`text-xs ${attachedFiles.length > 0 ? "text-green-600 font-medium" : "italic"}`}>
+                {attachedFiles.length > 0 ? `${attachedFiles.length} documento(s) anexado(s)` : "Nenhum arquivo selecionado"}
+              </span>
+            </div>
+          )}
+          <div className="relative">
+            <input
+              type="file"
+              id={`upload-${docField}`}
+              className="hidden"
+              multiple
+              onChange={(e) => handleDocumentUpload(e, docField)}
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf"
+            />
+            <Button
+              type="button"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-sm font-medium text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors whitespace-nowrap shadow-sm"
+              onClick={() => document.getElementById(`upload-${docField}`)?.click()}
+              disabled={uploadingDocs[docField]}
+            >
+              <Upload className="h-5 w-5 text-slate-500" />
+              {uploadingDocs[docField] ? "Enviando..." : "Upload"}
+            </Button>
+          </div>
+        </div>
+
+        {/* File Preview List - Vistos Style */}
+        {attachedFiles.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {attachedFiles.map((url, idx) => (
+              <DocumentChip
+                key={idx}
+                name={decodeURIComponent((url.split("/").pop() || "Documento"))}
+                href={url}
+                onDelete={() => removeDocument(docField, url)}
+                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:border-sky-200 dark:hover:border-sky-800 transition-all"
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+
 export default function NovaAcaoCivelPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [customType, setCustomType] = useState("");
+  const [partes, setPartes] = useState<string[]>(["Parte 1", "Parte 2"]);
+
+  const handleAddParte = () => {
+    setPartes((prev) => [...prev, `Parte ${prev.length + 1}`]);
+  };
+
+  const handleRemoveParte = (indexToRemove: number) => {
+    setPartes((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+    // Clear the form fields for that removed index
+    handleChange(`nomeParte_${indexToRemove + 1}`, "");
+    handleChange(`rnmParte_${indexToRemove + 1}`, "");
+    handleChange(`cpfParte_${indexToRemove + 1}`, "");
+    handleChange(`rnmParte_${indexToRemove + 1}File`, "");
+    handleChange(`cpfParte_${indexToRemove + 1}File`, "");
+  };
 
   const getStepTitle = (type: string, index: number) => {
     const standard = [
-      "Cadastro de Informações",
-      "Agendar Exame DNA",
+      "Cadastro de Documentos",
       "Elaboração Procuração",
-      "Aguardar procuração assinada",
       "À Protocolar",
-      "Protocolado",
+      "Processo Protocolado",
       "Processo Finalizado",
     ];
     const exameDna = [
@@ -398,8 +489,14 @@ export default function NovaAcaoCivelPage() {
       'procuracaoAnexadaFile', 'peticaoAnexadaFile', 'processoAnexadoFile',
       'documentosFinaisAnexadosFile', 'documentosProcessoFinalizadoFile',
       'passaporteMaeFile', 'passaportePaiRegistralFile', 'passaporteSupostoPaiFile',
-      'passaportePaiFile', 'passaporteCriancaFile'
+      'passaportePaiFile', 'passaporteCriancaFile', 'documentosProcessoFile'
     ];
+
+    // Adiciona dinamicamente campos de partes adicionais
+    for (let i = 3; i <= partes.length; i++) {
+      documentFields.push(`rnmParte_${i}File`);
+      documentFields.push(`cpfParte_${i}File`);
+    }
 
     const documentsToConvert: { fieldName: string, fileUrl: string }[] = [];
 
@@ -445,10 +542,29 @@ export default function NovaAcaoCivelPage() {
   const doCreate = async () => {
     setLoading(true);
     try {
+      const payload = { ...formData };
+      if (formData.type === "Outro (a)") {
+        if (customType.trim() !== "") {
+          payload.type = customType.trim();
+        }
+        const partsText = partes.map((_, i) => {
+          const nome = i === 0 ? formData.nomeMae : i === 1 ? formData.nomePaiRegistral : formData[`nomeParte_${i + 1}`] || "";
+          const rnm = i === 0 ? formData.rnmMae : i === 1 ? formData.rnmPai : formData[`rnmParte_${i + 1}`] || "";
+          const cpf = i === 0 ? formData.cpfMae : i === 1 ? formData.cpfPai : formData[`cpfParte_${i + 1}`] || "";
+          return `Parte ${i + 1}: ${nome || "Não informado"} (RNM: ${rnm || "Não informado"}, CPF: ${cpf || "Não informado"})`;
+        }).join("\n");
+        
+        if (partsText) {
+          payload.notes = (payload.notes ? payload.notes + "\n\n" : "") + "--- Partes do Processo ---\n" + partsText;
+        }
+      } else if (payload.type === "Outro (a)" && customType.trim() !== "") {
+        payload.type = customType.trim();
+      }
+
       const response = await fetch("/api/acoes-civeis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
@@ -464,7 +580,7 @@ export default function NovaAcaoCivelPage() {
                 moduleType: 'Ações Cíveis',
                 recordId: data.id,
                 alertFor: 'admin',
-                message: `${getStepTitle(formData.type, 0)} concluído para: ${formData.clientName} - ${formData.type}`,
+                message: `${getStepTitle(payload.type, 0)} concluído para: ${payload.clientName} - ${payload.type}`,
                 isRead: false
               })
             });
@@ -561,76 +677,15 @@ export default function NovaAcaoCivelPage() {
         "camposExigencias"
       ].includes(field);
     }
+    if (formData.type === "Outro (a)") {
+      return [
+        "comprovanteEndereco",
+        "documentosProcesso"
+      ].includes(field);
+    }
     return ["rnmMae", "rnmPai", "certidaoNascimento", "comprovanteEndereco", "passaporte"].includes(field);
   };
 
-  // Helper component matching Vistos design
-  const DocumentRow = ({ label, field, docField, placeholder = "Status ou informações do documento" }: { label: string; field?: string; docField: string; placeholder?: string }) => {
-    // Collect all attached files (main + extra)
-    const attachedFiles: string[] = [];
-    const mainFile = formData[`${docField}File`];
-    if (mainFile) attachedFiles.push(mainFile);
-    if (extraUploads[docField]) {
-      attachedFiles.push(...extraUploads[docField]);
-    }
-
-    return (
-      <div className="space-y-2">
-        <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{label}</Label>
-        <div className="flex gap-3 items-start">
-          {field && (
-            <Input
-              value={formData[field] || ""}
-              onChange={(e) => handleChange(field, e.target.value)}
-              className="flex-1 rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5"
-              placeholder={placeholder}
-            />
-          )}
-          {!field && (
-            <div className="flex-1 flex items-center p-2.5 rounded-md border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-sm">
-              <span className={`text-xs ${attachedFiles.length > 0 ? "text-green-600 font-medium" : "italic"}`}>
-                {attachedFiles.length > 0 ? `${attachedFiles.length} documento(s) anexado(s)` : "Nenhum arquivo selecionado"}
-              </span>
-            </div>
-          )}
-          <div className="relative">
-            <input
-              type="file"
-              id={`upload-${docField}`}
-              className="hidden"
-              multiple
-              onChange={(e) => handleDocumentUpload(e, docField)}
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.txt,.rtf"
-            />
-            <Button
-              type="button"
-              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-sm font-medium text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors whitespace-nowrap shadow-sm"
-              onClick={() => document.getElementById(`upload-${docField}`)?.click()}
-              disabled={uploadingDocs[docField]}
-            >
-              <Upload className="h-5 w-5 text-slate-500" />
-              {uploadingDocs[docField] ? "Enviando..." : "Upload"}
-            </Button>
-          </div>
-        </div>
-
-        {/* File Preview List - Vistos Style */}
-        {attachedFiles.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {attachedFiles.map((url, idx) => (
-              <DocumentChip
-                key={idx}
-                name={decodeURIComponent((url.split("/").pop() || "Documento"))}
-                href={url}
-                onDelete={() => removeDocument(docField, url)}
-                className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-sky-50 dark:hover:bg-sky-900/30 hover:border-sky-200 dark:hover:border-sky-800 transition-all"
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 min-h-screen flex flex-col font-sans">
@@ -674,24 +729,35 @@ export default function NovaAcaoCivelPage() {
               </div>
               <div className="md:col-span-6">
                 <Label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-200">Tipo de Ação *</Label>
-                <Select
-                  value={formData.type}
-                  onValueChange={(value) => handleChange("type", value)}
-                >
-                  <SelectTrigger className="w-full rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 py-2.5 h-auto">
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel className="font-bold text-slate-900 dark:text-slate-100">Tipos de Ação</SelectLabel>
-                      {CASE_TYPES.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
+                <div className="space-y-3">
+                  <Select
+                    value={formData.type}
+                    onValueChange={(value) => handleChange("type", value)}
+                  >
+                    <SelectTrigger className="w-full rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 py-2.5 h-auto">
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel className="font-bold text-slate-900 dark:text-slate-100">Tipos de Ação</SelectLabel>
+                        {CASE_TYPES.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {formData.type === "Outro (a)" && (
+                    <Input
+                      value={customType}
+                      onChange={(e) => setCustomType(e.target.value)}
+                      placeholder="Especifique o tipo de ação"
+                      className="w-full rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 focus:ring-sky-500 focus:border-sky-500 text-sm py-2.5"
+                      required
+                    />
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -701,7 +767,7 @@ export default function NovaAcaoCivelPage() {
             <div className="space-y-8">
 
               {/* Cadastro / Dados de Nomes */}
-              {(formData.type === "Exame DNA" || formData.type === "Alteração de Nome" || formData.type === "Guarda" || formData.type === "Acordos de Guarda" || formData.type === "Divórcio Consensual" || formData.type === "Divórcio Litígio") && (
+              {(formData.type === "Exame DNA" || formData.type === "Alteração de Nome" || formData.type === "Guarda" || formData.type === "Acordos de Guarda" || formData.type === "Divórcio Consensual" || formData.type === "Divórcio Litígio" || formData.type === "Outro (a)") && (
                 <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                   <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
                     <h2 className="text-lg font-semibold text-slate-800 dark:text-white flex items-center gap-3">
@@ -709,49 +775,96 @@ export default function NovaAcaoCivelPage() {
                       Cadastro de Nomes
                     </h2>
                   </div>
-                  <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
-                    {showFieldForType("nomeMae") && (
-                      <div className="space-y-2">
-                        <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Nome da Mãe / Parte 1</Label>
-                        <Input
-                          value={formData.nomeMae}
-                          onChange={(e) => handleChange("nomeMae", e.target.value)}
-                          className="w-full rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5"
-                          placeholder="Nome completo"
-                        />
+                  <div className="p-8">
+                    {formData.type === "Outro (a)" ? (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                          {partes.map((_, index) => (
+                            <div key={index} className="space-y-2 relative group">
+                              <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                Nome da Parte {index + 1} {index < 2 && "*"}
+                              </Label>
+                              <div className="flex gap-2">
+                                <Input
+                                  value={index === 0 ? formData.nomeMae : index === 1 ? formData.nomePaiRegistral : formData[`nomeParte_${index + 1}`] || ""}
+                                  onChange={(e) => {
+                                    if (index === 0) handleChange("nomeMae", e.target.value);
+                                    else if (index === 1) handleChange("nomePaiRegistral", e.target.value);
+                                    else handleChange(`nomeParte_${index + 1}`, e.target.value);
+                                  }}
+                                  className="w-full rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5"
+                                  placeholder={`Nome completo da Parte ${index + 1}`}
+                                  required={index < 2}
+                                />
+                                {index >= 2 && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => handleRemoveParte(index)}
+                                    className="px-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                                  >
+                                    <X className="h-5 w-5" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleAddParte}
+                          className="mt-2 border-dashed border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-300 flex items-center gap-2"
+                        >
+                          + Adicionar mais nomes às partes
+                        </Button>
                       </div>
-                    )}
-                    {showFieldForType("nomePaiRegistral") && (
-                      <div className="space-y-2">
-                        <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Nome do Pai / Parte 2</Label>
-                        <Input
-                          value={formData.nomePaiRegistral}
-                          onChange={(e) => handleChange("nomePaiRegistral", e.target.value)}
-                          className="w-full rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5"
-                          placeholder="Nome completo"
-                        />
-                      </div>
-                    )}
-                    {showFieldForType("nomeSupostoPai") && (
-                      <div className="space-y-2">
-                        <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Nome do Suposto Pai</Label>
-                        <Input
-                          value={formData.nomeSupostoPai}
-                          onChange={(e) => handleChange("nomeSupostoPai", e.target.value)}
-                          className="w-full rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5"
-                          placeholder="Nome completo"
-                        />
-                      </div>
-                    )}
-                    {showFieldForType("nomeCrianca") && (
-                      <div className="space-y-2">
-                        <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Nome da Criança</Label>
-                        <Input
-                          value={formData.nomeCrianca}
-                          onChange={(e) => handleChange("nomeCrianca", e.target.value)}
-                          className="w-full rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5"
-                          placeholder="Nome completo"
-                        />
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
+                        {showFieldForType("nomeMae") && (
+                          <div className="space-y-2">
+                            <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Nome da Mãe / Parte 1</Label>
+                            <Input
+                              value={formData.nomeMae}
+                              onChange={(e) => handleChange("nomeMae", e.target.value)}
+                              className="w-full rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5"
+                              placeholder="Nome completo"
+                            />
+                          </div>
+                        )}
+                        {showFieldForType("nomePaiRegistral") && (
+                          <div className="space-y-2">
+                            <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Nome do Pai / Parte 2</Label>
+                            <Input
+                              value={formData.nomePaiRegistral}
+                              onChange={(e) => handleChange("nomePaiRegistral", e.target.value)}
+                              className="w-full rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5"
+                              placeholder="Nome completo"
+                            />
+                          </div>
+                        )}
+                        {showFieldForType("nomeSupostoPai") && (
+                          <div className="space-y-2">
+                            <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Nome do Suposto Pai</Label>
+                            <Input
+                              value={formData.nomeSupostoPai}
+                              onChange={(e) => handleChange("nomeSupostoPai", e.target.value)}
+                              className="w-full rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5"
+                              placeholder="Nome completo"
+                            />
+                          </div>
+                        )}
+                        {showFieldForType("nomeCrianca") && (
+                          <div className="space-y-2">
+                            <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Nome da Criança</Label>
+                            <Input
+                              value={formData.nomeCrianca}
+                              onChange={(e) => handleChange("nomeCrianca", e.target.value)}
+                              className="w-full rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5"
+                              placeholder="Nome completo"
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -780,17 +893,17 @@ export default function NovaAcaoCivelPage() {
                       </div>
                     )}
                     {showFieldForType("ownerCpf") && (
-                      <DocumentRow label="CPF do Dono" field="ownerCpf" docField="ownerCpf" placeholder="000.000.000-00" />
+                      <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="CPF do Dono" field="ownerCpf" docField="ownerCpf" placeholder="000.000.000-00" />
                     )}
                     {showFieldForType("ownerRnm") && (
-                      <DocumentRow label="RNM do Dono" field="ownerRnm" docField="ownerRnm" placeholder="RNM / RNE / RG" />
+                      <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="RNM do Dono" field="ownerRnm" docField="ownerRnm" placeholder="RNM / RNE / RG" />
                     )}
                   </div>
                 </div>
               )}
 
               {/* Documentos de Identificação */}
-              {(showFieldForType("rnmMae") || showFieldForType("rnmPai") || showFieldForType("rnmSupostoPai") || showFieldForType("cpfMae") || showFieldForType("cpfPai") || showFieldForType("cpfSupostoPai")) && (
+              {(showFieldForType("rnmMae") || showFieldForType("rnmPai") || showFieldForType("rnmSupostoPai") || showFieldForType("cpfMae") || showFieldForType("cpfPai") || showFieldForType("cpfSupostoPai") || formData.type === "Outro (a)") && (
                 <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                   <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
                     <h2 className="text-lg font-semibold text-slate-800 dark:text-white flex items-center gap-3">
@@ -798,30 +911,68 @@ export default function NovaAcaoCivelPage() {
                       Documentos de Identificação
                     </h2>
                   </div>
-                  <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
-                    {showFieldForType("rnmMae") && (
-                      <DocumentRow label="RNM / RG (Mãe/Parte 1)" field="rnmMae" docField="rnmMae" />
-                    )}
-                    {showFieldForType("rnmPai") && (
-                      <DocumentRow label="RNM / RG (Pai/Parte 2)" field="rnmPai" docField="rnmPai" />
-                    )}
-                    {showFieldForType("rnmSupostoPai") && (
-                      <DocumentRow label="RNM / RG (Suposto Pai)" field="rnmSupostoPai" docField="rnmSupostoPai" />
-                    )}
-                    {showFieldForType("cpfMae") && (
-                      <DocumentRow label="CPF (Mãe/Parte 1)" field="cpfMae" docField="cpfMae" />
-                    )}
-                    {showFieldForType("cpfPai") && (
-                      <DocumentRow label="CPF (Pai/Parte 2)" field="cpfPai" docField="cpfPai" />
-                    )}
-                    {showFieldForType("cpfSupostoPai") && (
-                      <div className="space-y-2">
-                        <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">CPF (Suposto Pai)</Label>
-                        <Input
-                          value={formData.cpfSupostoPai}
-                          onChange={(e) => handleChange("cpfSupostoPai", e.target.value)}
-                          className="w-full rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5"
-                        />
+                  <div className="p-8">
+                    {formData.type === "Outro (a)" ? (
+                      <div className="space-y-8">
+                        {partes.map((_, index) => (
+                          <div key={index} className="p-6 bg-slate-50/50 dark:bg-slate-900/30 rounded-xl border border-slate-100 dark:border-slate-800/50 space-y-6">
+                            <h3 className="text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                              Documentos da Parte {index + 1}: <span className="text-slate-800 dark:text-slate-100 font-black">{index === 0 ? formData.nomeMae || "Parte 1" : index === 1 ? formData.nomePaiRegistral || "Parte 2" : formData[`nomeParte_${index + 1}`] || `Parte ${index + 1}`}</span>
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <DocumentRow
+                                formData={formData}
+                                handleChange={handleChange}
+                                extraUploads={extraUploads}
+                                uploadingDocs={uploadingDocs}
+                                handleDocumentUpload={handleDocumentUpload}
+                                removeDocument={removeDocument}
+                                label={`RNM / RG (Parte ${index + 1})`}
+                                field={index === 0 ? "rnmMae" : index === 1 ? "rnmPai" : `rnmParte_${index + 1}`}
+                                docField={index === 0 ? "rnmMae" : index === 1 ? "rnmPai" : `rnmParte_${index + 1}`}
+                              />
+                              <DocumentRow
+                                formData={formData}
+                                handleChange={handleChange}
+                                extraUploads={extraUploads}
+                                uploadingDocs={uploadingDocs}
+                                handleDocumentUpload={handleDocumentUpload}
+                                removeDocument={removeDocument}
+                                label={`CPF (Parte ${index + 1})`}
+                                field={index === 0 ? "cpfMae" : index === 1 ? "cpfPai" : `cpfParte_${index + 1}`}
+                                docField={index === 0 ? "cpfMae" : index === 1 ? "cpfPai" : `cpfParte_${index + 1}`}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
+                        {showFieldForType("rnmMae") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="RNM / RG (Mãe/Parte 1)" field="rnmMae" docField="rnmMae" />
+                        )}
+                        {showFieldForType("rnmPai") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="RNM / RG (Pai/Parte 2)" field="rnmPai" docField="rnmPai" />
+                        )}
+                        {showFieldForType("rnmSupostoPai") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="RNM / RG (Suposto Pai)" field="rnmSupostoPai" docField="rnmSupostoPai" />
+                        )}
+                        {showFieldForType("cpfMae") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="CPF (Mãe/Parte 1)" field="cpfMae" docField="cpfMae" />
+                        )}
+                        {showFieldForType("cpfPai") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="CPF (Pai/Parte 2)" field="cpfPai" docField="cpfPai" />
+                        )}
+                        {showFieldForType("cpfSupostoPai") && (
+                          <div className="space-y-2">
+                            <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">CPF (Suposto Pai)</Label>
+                            <Input
+                              value={formData.cpfSupostoPai}
+                              onChange={(e) => handleChange("cpfSupostoPai", e.target.value)}
+                              className="w-full rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm py-2.5"
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -838,7 +989,7 @@ export default function NovaAcaoCivelPage() {
                     </h2>
                   </div>
                   <div className="p-8 grid grid-cols-1 gap-6">
-                    <DocumentRow
+                    <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument}
                       label={formData.type.includes("Divórcio") ? "Certidão de Nascimento da Criança (se houver)" : "Certidão de Nascimento da Criança"}
                       field="certidaoNascimento"
                       docField="certidaoNascimento"
@@ -869,10 +1020,10 @@ export default function NovaAcaoCivelPage() {
                       </div>
                     )}
                     {showFieldForType("comprovanteEndereco") && (
-                      <DocumentRow label="Comprovante de Endereço" field="comprovanteEndereco" docField="comprovanteEndereco" />
+                      <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Comprovante de Endereço" field="comprovanteEndereco" docField="comprovanteEndereco" />
                     )}
                     {showFieldForType("declaracaoVizinhos") && (
-                      <DocumentRow label="Declaração dos Vizinhos" docField="declaracaoVizinhos" />
+                      <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Declaração dos Vizinhos" docField="declaracaoVizinhos" />
                     )}
                   </div>
                 </div>
@@ -889,26 +1040,26 @@ export default function NovaAcaoCivelPage() {
                   </div>
                   <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
                     {showFieldForType("passaporteMae") && (
-                      <DocumentRow label="Passaporte Mãe" docField="passaporteMae" />
+                      <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Passaporte Mãe" docField="passaporteMae" />
                     )}
                     {showFieldForType("passaportePaiRegistral") && (
-                      <DocumentRow label="Passaporte Pai Registral" docField="passaportePaiRegistral" />
+                      <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Passaporte Pai Registral" docField="passaportePaiRegistral" />
                     )}
                     {showFieldForType("passaporteSupostoPai") && (
-                      <DocumentRow label="Passaporte Suposto Pai" docField="passaporteSupostoPai" />
+                      <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Passaporte Suposto Pai" docField="passaporteSupostoPai" />
                     )}
                     {showFieldForType("passaportePai") && (
-                      <DocumentRow label="Passaporte Pai" docField="passaportePai" />
+                      <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Passaporte Pai" docField="passaportePai" />
                     )}
                     {showFieldForType("passaporteCrianca") && (
-                      <DocumentRow label="Passaporte Criança" docField="passaporteCrianca" />
+                      <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Passaporte Criança" docField="passaporteCrianca" />
                     )}
                   </div>
                 </div>
               )}
 
               {/* Documentos Jurídicos e Processuais */}
-              {(showFieldForType("peticaoConjunta") || showFieldForType("termoPartilhas") || showFieldForType("guarda") || showFieldForType("procuracao") || showFieldForType("peticaoCliente") || showFieldForType("procuracaoCliente") || showFieldForType("custas") || showFieldForType("peticaoInicial") || showFieldForType("matriculaImovel") || showFieldForType("aguaLuzIptu") || showFieldForType("guiaPaga") || showFieldForType("camposExigencias")) && (
+              {(showFieldForType("peticaoConjunta") || showFieldForType("termoPartilhas") || showFieldForType("guarda") || showFieldForType("procuracao") || showFieldForType("peticaoCliente") || showFieldForType("procuracaoCliente") || showFieldForType("custas") || showFieldForType("peticaoInicial") || showFieldForType("matriculaImovel") || showFieldForType("aguaLuzIptu") || showFieldForType("guiaPaga") || showFieldForType("camposExigencias") || formData.type === "Outro (a)") && (
                 <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                   <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
                     <h2 className="text-lg font-semibold text-slate-800 dark:text-white flex items-center gap-3">
@@ -916,60 +1067,81 @@ export default function NovaAcaoCivelPage() {
                       Documentos do Processo
                     </h2>
                   </div>
-                  <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
-                    {showFieldForType("peticaoConjunta") && (
-                      <DocumentRow label="Petição Conjunta" field="peticaoConjunta" docField="peticaoConjunta" />
-                    )}
-                    {showFieldForType("termoPartilhas") && (
-                      <DocumentRow label="Termo de Partilhas" field="termoPartilhas" docField="termoPartilhas" />
-                    )}
-                    {showFieldForType("guarda") && (
-                      <DocumentRow label="Guarda" field="guarda" docField="guarda" />
-                    )}
-                    {showFieldForType("procuracao") && (
-                      <DocumentRow label="Procuração" field="procuracao" docField="procuracao" />
-                    )}
-                    {showFieldForType("peticaoCliente") && (
-                      <DocumentRow label="Petição Cliente" field="peticaoCliente" docField="peticaoCliente" />
-                    )}
-                    {showFieldForType("procuracaoCliente") && (
-                      <DocumentRow label="Procuração Cliente" field="procuracaoCliente" docField="procuracaoCliente" />
-                    )}
-                    {showFieldForType("custas") && (
-                      <DocumentRow label="Custas" field="custas" docField="custas" />
-                    )}
-                    {showFieldForType("peticaoInicial") && (
-                      <DocumentRow label="Petição Inicial" field="peticaoInicial" docField="peticaoInicial" />
-                    )}
-                    {showFieldForType("matriculaImovel") && (
-                      <DocumentRow label="Matrícula do Imóvel" field="matriculaImovel" docField="matriculaImovel" />
-                    )}
-                    {showFieldForType("aguaLuzIptu") && (
-                      <DocumentRow label="Água / Luz / IPTU" field="aguaLuzIptu" docField="aguaLuzIptu" />
-                    )}
-                    {showFieldForType("iptu") && (
-                      <DocumentRow label="IPTU" field="iptu" docField="iptu" />
-                    )}
-                    {showFieldForType("contaAgua") && (
-                      <DocumentRow label="Conta de Água" field="contaAgua" docField="contaAgua" />
-                    )}
-                    {showFieldForType("contaLuz") && (
-                      <DocumentRow label="Conta de Luz" field="contaLuz" docField="contaLuz" />
-                    )}
-                    {showFieldForType("guiaPaga") && (
-                      <DocumentRow label="Guia Paga" field="guiaPaga" docField="guiaPaga" />
-                    )}
-                    {showFieldForType("camposExigencias") && (
-                      <div className="col-span-2 space-y-2">
-                        <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Exigências</Label>
-                        <Textarea
-                          value={formData.camposExigencias}
-                          onChange={(e) => handleChange("camposExigencias", e.target.value)}
-                          placeholder="Descreva as exigências"
-                          className="w-full rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm"
-                          rows={3}
+                  <div className="p-8">
+                    {formData.type === "Outro (a)" ? (
+                      <div className="space-y-4 max-w-xl">
+                        <DocumentRow
+                          formData={formData}
+                          handleChange={handleChange}
+                          extraUploads={extraUploads}
+                          uploadingDocs={uploadingDocs}
+                          handleDocumentUpload={handleDocumentUpload}
+                          removeDocument={removeDocument}
+                          label="Upload de Documentos do Processo"
+                          docField="documentosProcesso"
+                          placeholder="Anexe múltiplos arquivos do processo simultaneamente"
                         />
-                        <DocumentRow label="Upload Exigências" docField="camposExigencias" />
+                        <span className="text-xs text-slate-500 dark:text-slate-400 block italic">
+                          * Permite anexar múltiplos PDFs, imagens, planilhas ou documentos do Word ao mesmo tempo.
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
+                        {showFieldForType("peticaoConjunta") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Petição Conjunta" field="peticaoConjunta" docField="peticaoConjunta" />
+                        )}
+                        {showFieldForType("termoPartilhas") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Termo de Partilhas" field="termoPartilhas" docField="termoPartilhas" />
+                        )}
+                        {showFieldForType("guarda") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Guarda" field="guarda" docField="guarda" />
+                        )}
+                        {showFieldForType("procuracao") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Procuração" field="procuracao" docField="procuracao" />
+                        )}
+                        {showFieldForType("peticaoCliente") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Petição Cliente" field="peticaoCliente" docField="peticaoCliente" />
+                        )}
+                        {showFieldForType("procuracaoCliente") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Procuração Cliente" field="procuracaoCliente" docField="procuracaoCliente" />
+                        )}
+                        {showFieldForType("custas") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Custas" field="custas" docField="custas" />
+                        )}
+                        {showFieldForType("peticaoInicial") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Petição Inicial" field="peticaoInicial" docField="peticaoInicial" />
+                        )}
+                        {showFieldForType("matriculaImovel") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Matrícula do Imóvel" field="matriculaImovel" docField="matriculaImovel" />
+                        )}
+                        {showFieldForType("aguaLuzIptu") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Água / Luz / IPTU" field="aguaLuzIptu" docField="aguaLuzIptu" />
+                        )}
+                        {showFieldForType("iptu") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="IPTU" field="iptu" docField="iptu" />
+                        )}
+                        {showFieldForType("contaAgua") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Conta de Água" field="contaAgua" docField="contaAgua" />
+                        )}
+                        {showFieldForType("contaLuz") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Conta de Luz" field="contaLuz" docField="contaLuz" />
+                        )}
+                        {showFieldForType("guiaPaga") && (
+                          <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Guia Paga" field="guiaPaga" docField="guiaPaga" />
+                        )}
+                        {showFieldForType("camposExigencias") && (
+                          <div className="col-span-2 space-y-2">
+                            <Label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Exigências</Label>
+                            <Textarea
+                              value={formData.camposExigencias}
+                              onChange={(e) => handleChange("camposExigencias", e.target.value)}
+                              placeholder="Descreva as exigências"
+                              className="w-full rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 text-sm"
+                              rows={3}
+                            />
+                            <DocumentRow formData={formData} handleChange={handleChange} extraUploads={extraUploads} uploadingDocs={uploadingDocs} handleDocumentUpload={handleDocumentUpload} removeDocument={removeDocument} label="Upload Exigências" docField="camposExigencias" />
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1027,7 +1199,7 @@ export default function NovaAcaoCivelPage() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Confirmar criação da ação</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Criar ação para <span className="font-semibold">{formData.clientName}</span> do tipo <span className="font-semibold">{formData.type || '—'}</span>?
+                  Criar ação para <span className="font-semibold">{formData.clientName}</span> do tipo <span className="font-semibold">{formData.type === "Outro (a)" ? customType || '—' : formData.type || '—'}</span>?
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
