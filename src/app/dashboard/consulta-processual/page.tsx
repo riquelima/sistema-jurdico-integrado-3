@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -23,6 +23,54 @@ export default function ConsultaProcessualPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const initialNpu = params.get("npu");
+      if (initialNpu) {
+        const cleanNpu = initialNpu.replace(/\D/g, "");
+        
+        // Format as NNNNNNN-DD.AAAA.J.TR.OOOO
+        let formatted = cleanNpu;
+        if (cleanNpu.length > 7) formatted = cleanNpu.substring(0, 7) + "-" + cleanNpu.substring(7);
+        if (cleanNpu.length > 9) formatted = formatted.substring(0, 10) + "." + formatted.substring(10);
+        if (cleanNpu.length > 13) formatted = formatted.substring(0, 15) + "." + formatted.substring(15);
+        if (cleanNpu.length > 14) formatted = formatted.substring(0, 17) + "." + formatted.substring(17);
+        if (cleanNpu.length > 16) formatted = formatted.substring(0, 20) + "." + formatted.substring(20);
+        setNpu(formatted);
+
+        if (cleanNpu.length === 20) {
+          const runSearch = async () => {
+            setLoading(true);
+            setError(null);
+            setResult(null);
+
+            try {
+              const response = await fetch("/api/datajud", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ numeroProcesso: cleanNpu }),
+              });
+
+              const data = await response.json();
+
+              if (response.ok && data.success) {
+                setResult(data.processo);
+              } else {
+                setError(data.message || data.error || "Processo não encontrado. Pode estar em segredo de justiça.");
+              }
+            } catch (err) {
+              setError("Erro de conexão ao consultar a API do Datajud.");
+            } finally {
+              setLoading(false);
+            }
+          };
+          runSearch();
+        }
+      }
+    }
+  }, []);
 
   // Format NPU while typing
   const handleNpuChange = (e: React.ChangeEvent<HTMLInputElement>) => {

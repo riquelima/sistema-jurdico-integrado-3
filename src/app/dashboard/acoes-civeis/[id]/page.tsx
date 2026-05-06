@@ -26,7 +26,8 @@ import {
   Mail,
   CheckCircle2,
   AlertCircle,
-  Info
+  Info,
+  Scale
 } from "lucide-react";
 import Link from "next/link";
 import { DatajudSearch } from "@/components/DatajudSearch";
@@ -1490,7 +1491,12 @@ export default function AcoesCiveisDetailsPage() {
           </div>
         </div>
         <div className="flex-shrink-0 flex items-center gap-2">
-          <DatajudSearch initialNpu={caseData.numeroProtocolo || ""} />
+          <Link href={`/dashboard/consulta-processual?npu=${caseData.numeroProtocolo || ""}`}>
+            <Button variant="outline" size="sm" className="gap-2 border-sky-200 text-sky-700 hover:bg-sky-50 dark:border-sky-800 dark:text-sky-300 dark:hover:bg-sky-900/30">
+              <Scale className="h-4 w-4" />
+              Consulta Datajud
+            </Button>
+          </Link>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" size="sm" className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700">
