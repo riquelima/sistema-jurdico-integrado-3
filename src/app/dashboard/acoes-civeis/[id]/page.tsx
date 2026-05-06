@@ -72,9 +72,9 @@ const WORKFLOWS = {
   "Exame DNA": [
     "Cadastro dos Documentos",
     "Agendar Exame de DNA",
-    "Aguardar Resultado e Fazer Procuração (JAILDA → MARRONE)",
-    "Petição de Declaração de Paternidade (WENDEL/GUILHERME/FÁBIO)",
-    "Protocolar Processo (WENDEL/GUILHERME/FÁBIO)",
+    "Aguardar Resultado e Fazer Procuração",
+    "Petição de Declaração de Paternidade",
+    "Protocolar Processo",
     "Exigências do Juiz",
     "Processo Finalizado",
   ],
@@ -90,21 +90,21 @@ const WORKFLOWS = {
   ],
   "Guarda": [
     "Cadastro dos Documentos",
-    "Fazer Procuração (WENDEL/GUILHERME/FÁBIO)",
-    "Enviar Procuração (JESSICA → JAILDA)",
-    "Procuração e Acordo Assinados (WENDEL/GUILHERME/FÁBIO)",
+    "Fazer Procuração",
+    "Enviar Procuração",
+    "Procuração e Acordo Assinados",
     "Verificar se há Petição",
-    "Protocolar Processo (WENDEL/GUILHERME/FÁBIO)",
+    "Protocolar Processo",
     "Exigências do Juiz",
     "Processo Finalizado",
   ],
   "Acordos de Guarda": [
     "Cadastro dos Documentos",
-    "Fazer a Procuração e o Acordo de Guarda (WENDEL/GUILHERME/FÁBIO)",
-    "Enviar a procuração e o acordo de guarda e cobrar as assinaturas (JESSICA → JAILDA → MARRONE)",
-    "Com a Procuração e o Acordo assinados, seguir com a Petição (WENDEL/GUILHERME/FÁBIO)",
+    "Fazer a Procuração e o Acordo de Guarda",
+    "Enviar a procuração e o acordo de guarda e cobrar as assinaturas",
+    "Com a Procuração e o Acordo assinados, seguir com a Petição",
     "Verificar se há Petição",
-    "Protocolar Processo (WENDEL/GUILHERME/FÁBIO)",
+    "Protocolar Processo",
     "Exigências do Juiz",
     "Processo Finalizado",
   ],
@@ -123,9 +123,13 @@ const WORKFLOWS = {
     "Processo Finalizado",
   ],
   "Outro (a)": [
-    "Cadastro de Documentos",
-    "Procuração, Petição e Guia Judicial",
-    "À Protocolar",
+    "Cadastro dos Documentos",
+    "Fazer a Procuração e o Acordo de Guarda",
+    "Enviar a procuração e o acordo de guarda e cobrar as assinaturas",
+    "Com a Procuração e o Acordo assinados, seguir com a Petição",
+    "Verificar se há Petição",
+    "Protocolar Processo",
+    "Exigências do Juiz",
     "Processo Finalizado",
   ],
   "Usucapião": [
@@ -1075,7 +1079,7 @@ export default function AcoesCiveisDetailsPage() {
         { key: "passaporteSupostoPaiFile", label: "Passaporte Suposto Pai (Arquivo)" },
       ];
       baseReqs.push({ title: "Exame", step: "Agendar Exame de DNA", fields: [{ key: "resultadoExameDnaFile", label: "Resultado Exame DNA" }] });
-      baseReqs.push({ title: "Petição", step: "Petição de Declaração de Paternidade (WENDEL/GUILHERME/FÁBIO)", fields: [{ key: "peticaoInicialFile", label: "Petição Inicial" }] });
+      baseReqs.push({ title: "Petição", step: "Petição de Declaração de Paternidade", fields: [{ key: "peticaoInicialFile", label: "Petição Inicial" }] });
     } else if (type === "Usucapião") {
       baseReqs[0].fields = [
         { key: "ownerRnm", label: "RNM Dono" },
@@ -1110,9 +1114,9 @@ export default function AcoesCiveisDetailsPage() {
         { key: "certidaoNascimento", label: "Certidão Nascimento Criança" },
         { key: "comprovanteEndereco", label: "Comprovante Endereço" },
       ];
-      baseReqs.push({ title: "Procuração", step: "Fazer Procuração (WENDEL/GUILHERME/FÁBIO)", fields: [{ key: "procuracaoFile", label: "Procuração Assinada" }] });
+      baseReqs.push({ title: "Procuração", step: "Fazer Procuração", fields: [{ key: "procuracaoFile", label: "Procuração Assinada" }] });
       if (type === "Acordos de Guarda" || type === "Outro (a)") {
-        baseReqs.push({ title: "Acordo", step: "Fazer a Procuração e o Acordo de Guarda (WENDEL/GUILHERME/FÁBIO)", fields: [{ key: "acordoGuardaFile", label: "Termo de Acordo" }] });
+        baseReqs.push({ title: "Acordo", step: "Fazer a Procuração e o Acordo de Guarda", fields: [{ key: "acordoGuardaFile", label: "Termo de Acordo" }] });
       }
       baseReqs.push({ title: "Petição", step: "Verificar se há Petição", fields: [{ key: "peticaoInicialFile", label: "Petição Inicial" }] });
     } else if (type === "Divórcio Consensual") {
