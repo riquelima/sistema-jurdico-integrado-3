@@ -124,9 +124,9 @@ const WORKFLOWS = {
   ],
   "Outro (a)": [
     "Cadastro dos Documentos",
-    "Fazer a Procuração e o Acordo de Guarda",
-    "Enviar a procuração e o acordo de guarda e cobrar as assinaturas",
-    "Com a Procuração e o Acordo assinados, seguir com a Petição",
+    "Fazer Procuração",
+    "Enviar Procuração",
+    "Procuração e Acordo Assinados",
     "Verificar se há Petição",
     "Protocolar Processo",
     "Exigências do Juiz",
@@ -1115,7 +1115,7 @@ export default function AcoesCiveisDetailsPage() {
         { key: "comprovanteEndereco", label: "Comprovante Endereço" },
       ];
       baseReqs.push({ title: "Procuração", step: "Fazer Procuração", fields: [{ key: "procuracaoFile", label: "Procuração Assinada" }] });
-      if (type === "Acordos de Guarda" || type === "Outro (a)") {
+      if (type === "Acordos de Guarda") {
         baseReqs.push({ title: "Acordo", step: "Fazer a Procuração e o Acordo de Guarda", fields: [{ key: "acordoGuardaFile", label: "Termo de Acordo" }] });
       }
       baseReqs.push({ title: "Petição", step: "Verificar se há Petição", fields: [{ key: "peticaoInicialFile", label: "Petição Inicial" }] });
