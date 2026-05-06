@@ -658,13 +658,7 @@ export default function AcoesCiveisDetailsPage() {
 
         // Map steps based on workflow
         const flowType = (record.type as string) || "Outros";
-        const workflowSteps = (WORKFLOWS as any)[flowType] || [
-          "Cadastro de Documentos",
-          "Elaboração Procuração",
-          "À Protocolar",
-          "Processo Protocolado",
-          "Processo Finalizado"
-        ];
+        const workflowSteps = (WORKFLOWS as any)[flowType] || WORKFLOWS["Guarda"];
 
         const steps: StepData[] = workflowSteps.map((title: string, index: number) => ({
           id: index,
@@ -1105,7 +1099,7 @@ export default function AcoesCiveisDetailsPage() {
       baseReqs.push({ title: "Guia", step: "Emissão da Guia Judicial", fields: [{ key: "guiaJudicialFile", label: "Guia Judicial" }] });
       baseReqs.push({ title: "Procuração", step: "Elaboração Procuração", fields: [{ key: "procuracaoFile", label: "Procuração" }] });
       baseReqs.push({ title: "Petição", step: "Peticionar", fields: [{ key: "peticaoInicialFile", label: "Petição Inicial" }] });
-    } else if (type === "Guarda" || type === "Acordos de Guarda" || type === "Outro (a)") {
+    } else if (type === "Guarda" || type === "Acordos de Guarda" || type === "Outro (a)" || !["Exame DNA", "Usucapião", "Alteração de Nome", "Divórcio Consensual", "Divórcio Litígio", "Pensão Alimentícia", "Ação de Alimentos"].includes(type)) {
       baseReqs[0].fields = [
         { key: "rnmMae", label: "RNM/RG Mãe" },
         { key: "cpfMae", label: "CPF Mãe" },
